@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md — PS-Website (privatestock.co rebuild)
 
 You are building the public consumer website for Private Stock Cannabis Co.
