@@ -1,18 +1,16 @@
-import { Header } from "@/components/site/Header";
+import { HeroSwitcher } from "@/components/site/HeroSwitcher";
+import { getHeroesForPage } from "@/lib/data";
 
-export default function LandingPage() {
+export const revalidate = 300;
+
+export default async function LandingPage() {
+  const heroes = await getHeroesForPage("/");
+
   return (
     <main>
-      <section className="relative h-svh w-full overflow-hidden">
-        {/* Static placeholder — replaced by the content_heroes-driven HeroSwitcher */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/placeholders/hero-default.svg"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <Header />
-      </section>
+      <HeroSwitcher heroes={heroes} />
+      {/* Landing sections (banner, intro, flip-book, brands, merch, news,
+          follow, newsletter, footer) land in the next commits. */}
     </main>
   );
 }
