@@ -24,12 +24,10 @@ export const revalidate = 300;
 
 export async function generateStaticParams() {
   const products = await getCatalogProducts();
-  return products
-    .map((p) => {
-      const brand = brandByName(p.brand);
-      return brand ? { brand: brand.slug, slug: p.slug } : null;
-    })
-    .filter((x): x is { brand: string; slug: string } => x !== null);
+  return products.flatMap((p) => {
+    const brand = brandByName(p.brand);
+    return brand ? [{ brand: brand.slug, slug: p.slug }] : [];
+  });
 }
 
 export async function generateMetadata({
