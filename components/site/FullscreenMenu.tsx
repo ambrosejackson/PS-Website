@@ -36,7 +36,7 @@ export function FullscreenMenu({
             key={item.href}
             href={item.href}
             onClick={onClose}
-            className="nav-underline font-serif text-3xl tracking-[0.3em] md:text-4xl"
+            className="nav-underline font-condensed text-3xl font-bold uppercase tracking-tight md:text-4xl"
             style={{ transitionDelay: `${i * 40}ms` }}
           >
             {item.label}

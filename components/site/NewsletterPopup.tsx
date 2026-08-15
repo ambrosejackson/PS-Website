@@ -46,7 +46,7 @@ export function NewsletterPopup() {
         >
           <X className="h-5 w-5" />
         </button>
-        <p className="font-serif text-2xl tracking-[0.15em]">
+        <p className="font-condensed text-2xl font-bold uppercase tracking-tight">
           TAKE 15% OFF MERCH
         </p>
         <p className="mt-3 text-sm text-white/60">

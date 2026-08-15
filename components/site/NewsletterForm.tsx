@@ -54,7 +54,7 @@ export function NewsletterForm({
   if (state.status === "done") {
     return (
       <div className="text-center">
-        <p className="font-serif text-xl">You&apos;re on the list.</p>
+        <p className="font-condensed text-xl font-semibold uppercase tracking-tight">You&apos;re on the list.</p>
         {state.code ? (
           <p className="mt-2 text-sm opacity-80">
             Your one-time 15% merch code:{" "}

@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-5 text-center text-white">
       <Logo className="h-20 w-auto" />
-      <p className="mt-10 font-serif text-3xl tracking-[0.2em]">
+      <p className="mt-10 font-condensed text-3xl font-bold uppercase tracking-tight">
         PAGE NOT FOUND
       </p>
       <p className="mt-4 text-sm text-white/60">

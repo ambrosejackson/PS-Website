@@ -42,7 +42,7 @@ export function AgeGate() {
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-950 p-6 text-white">
       <div className="w-full max-w-md text-center">
         {brand ? (
-          <p className="font-serif text-3xl tracking-[0.2em]">
+          <p className="font-condensed text-3xl font-bold uppercase tracking-tight">
             {brand.name.toUpperCase()}
           </p>
         ) : (
@@ -54,7 +54,7 @@ export function AgeGate() {
           </p>
         ) : (
           <>
-            <p className="mt-10 font-serif text-xl tracking-widest">
+            <p className="mt-10 font-condensed text-xl font-semibold uppercase tracking-wide">
               ARE YOU 21 OR OLDER?
             </p>
             <p className="mt-3 text-xs text-white/50">

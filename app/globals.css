@@ -155,9 +155,6 @@
    type, slightly-navy captions. */
 @theme inline {
   --font-condensed: var(--font-oswald), "Arial Narrow", sans-serif;
-  /* Temporary alias: legacy font-serif headings render condensed until every
-     area is restyled; the alias is removed in the chrome commit. */
-  --font-serif: var(--font-oswald), "Arial Narrow", sans-serif;
   --color-ink: #111318;
   --color-caption: #24334a;
   --color-hairline: #e7e7e7;
