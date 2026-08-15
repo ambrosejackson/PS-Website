@@ -16,13 +16,36 @@ export interface Brand {
   name: string;
   /** URL subpath segment, e.g. /outfitters */
   slug: BrandSlug;
+  /** Placeholder accent until each brand's full design lands (phases 1–2). */
+  accentHex: string;
+  tagline: string;
 }
 
 export const BRANDS: readonly Brand[] = [
-  { name: "Outfitters", slug: "outfitters" },
-  { name: "TerpKings", slug: "terpkings" },
-  { name: "Higher Self", slug: "higherself" },
-  { name: "Savage Squad Strains", slug: "savagesquadstrains" },
+  {
+    name: "Outfitters",
+    slug: "outfitters",
+    accentHex: "#3e6b4f",
+    tagline: "Gear up. Head out.",
+  },
+  {
+    name: "TerpKings",
+    slug: "terpkings",
+    accentHex: "#7a4dbd",
+    tagline: "Chase the terps.",
+  },
+  {
+    name: "Higher Self",
+    slug: "higherself",
+    accentHex: "#c9a86a",
+    tagline: "Find your higher self.",
+  },
+  {
+    name: "Savage Squad Strains",
+    slug: "savagesquadstrains",
+    accentHex: "#b03a3a",
+    tagline: "Run with the squad.",
+  },
 ] as const;
 
 export const BRAND_SLUGS = BRANDS.map((b) => b.slug);
