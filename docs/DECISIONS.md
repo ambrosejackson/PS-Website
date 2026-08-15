@@ -20,3 +20,13 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - I-008: `product_availability` PK uses `variant text not null default ''` (build-plan §4 version, which supersedes the generated-column sketch in PS-MANAGEMENT-CONTEXT §6).
 - I-009: Mock PSM rows live in the real website DB with fixed `00000000-…` UUIDs, gated by `MOCK_PSM_DATA=true`; the publish pipeline will delete/replace them.
 - I-010: First-party analytics send only after explicit consent "Accept"; age-gate + consent cookies are the only pre-consent cookies.
+
+## 2026-08-15 — Design correction session (lovable screenshots)
+
+**Decisions made by Ambrose:**
+- D-004: Reference design = docs/reference/lovable/ screenshots. Everything BELOW the hero adopts that design system (white ground, hairline rules, condensed uppercase type, navy captions, 6-col product grids). The HEADER/HERO stays exactly as built per guardrail #5 — do NOT adopt the screenshots' white header bar or their nav labels (ABOUT US / DISPENSARY LOCATIONS / …).
+- D-005: The screenshots show a Kush League row; the brand allowlist exclusion still stands. Copy the layout language only, with the four allowlisted brands.
+
+**Implementation choices (flag if wrong):**
+- I-011: Condensed face = Oswald (next/font, weights 500–700); Cormorant serif removed. Caption color sampled as dark navy `#24334a` (token `--color-caption`, easy to adjust).
+- I-012: Seed catalog renamed to screenshot-style product names (6 per brand; Savage Squad names invented in the same style — not visible in screenshots). Merch seed renamed to SKU-style codes (TS-03, JC-08, …) since the screenshots caption merch with codes.

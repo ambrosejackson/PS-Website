@@ -150,9 +150,17 @@
   transform-origin: left center;
 }
 
-/* Serif display font for headings (placeholder until brand fonts land) */
+/* Design tokens — reference design system (docs/reference/lovable screenshots):
+   white ground, near-black ink, hairline dividers, condensed uppercase display
+   type, slightly-navy captions. */
 @theme inline {
-  --font-serif: var(--font-cormorant), Georgia, serif;
+  --font-condensed: var(--font-oswald), "Arial Narrow", sans-serif;
+  /* Temporary alias: legacy font-serif headings render condensed until every
+     area is restyled; the alias is removed in the chrome commit. */
+  --font-serif: var(--font-oswald), "Arial Narrow", sans-serif;
+  --color-ink: #111318;
+  --color-caption: #24334a;
+  --color-hairline: #e7e7e7;
 }
 
 /* FOLLOW US scrolling image strip */
