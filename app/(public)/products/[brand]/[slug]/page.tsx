@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { AvailabilityMap } from "@/components/site/AvailabilityMap";
+import { ProductCard } from "@/components/site/ProductCard";
+import { SectionHeader } from "@/components/site/SectionHeader";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
 import { brandByName, brandBySlug } from "@/lib/brands";
@@ -99,23 +101,23 @@ export default async function ProductPage({
       />
 
       <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-2 md:gap-16 md:py-24">
-        <div className="group overflow-hidden rounded-sm bg-neutral-100">
+        <div className="group flex items-center justify-center overflow-hidden bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={product.image_url ?? "/placeholders/product.svg"}
             alt={product.name}
-            className="aspect-square w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="aspect-square w-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
         </div>
 
         <div>
           <Link
             href={`/${brand.slug}`}
-            className="text-xs tracking-[0.25em] text-neutral-400 hover:text-neutral-900"
+            className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400 hover:text-ink"
           >
-            {product.brand.toUpperCase()}
+            {product.brand}
           </Link>
-          <h1 className="mt-2 font-serif text-4xl text-neutral-900">
+          <h1 className="mt-2 font-condensed text-3xl font-bold uppercase leading-tight tracking-tight text-ink md:text-4xl">
             {product.name}
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
@@ -127,14 +129,14 @@ export default async function ProductPage({
 
           {terps.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-xs font-semibold tracking-[0.25em] text-neutral-400">
-                TERPENE PROFILE
+              <h2 className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                Terpene Profile
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {terps.map((t) => (
                   <span
                     key={t.name}
-                    className="rounded-full border border-neutral-300 px-3 py-1 text-xs text-neutral-700"
+                    className="border border-hairline px-3 py-1 font-condensed text-xs font-semibold uppercase tracking-wide text-caption"
                   >
                     {t.name}
                     {t.note ? ` · ${t.note}` : ""}
@@ -146,8 +148,8 @@ export default async function ProductPage({
 
           {product.description && (
             <div className="mt-8">
-              <h2 className="text-xs font-semibold tracking-[0.25em] text-neutral-400">
-                DESCRIPTION
+              <h2 className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                Description
               </h2>
               <p className="mt-3 leading-relaxed text-neutral-600">
                 {product.description}
@@ -164,10 +166,10 @@ export default async function ProductPage({
         </div>
       </section>
 
-      <section className="border-t bg-neutral-50 py-16 md:py-24">
-        <div className="mx-auto max-w-6xl px-5">
-          <h2 className="font-serif text-2xl tracking-[0.15em] text-neutral-900 md:text-3xl">
-            BUY NOW AT THE BELOW LOCATIONS
+      <section className="border-t border-hairline py-14 md:py-20">
+        <div className="mx-auto max-w-screen-2xl px-6 md:px-12">
+          <h2 className="font-condensed text-[24px] font-bold uppercase tracking-tight text-ink md:text-[30px]">
+            Buy Now at the Below Locations
           </h2>
           {availability.length > 0 ? (
             <div className="mt-10 grid gap-10 md:grid-cols-2">
@@ -241,30 +243,22 @@ export default async function ProductPage({
       </section>
 
       {others.length > 0 && (
-        <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-          <h2 className="font-serif text-2xl tracking-[0.15em] text-neutral-900">
-            MORE FROM {product.brand.toUpperCase()}
-          </h2>
-          <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-4">
-            {others.map((p) => (
-              <Link
-                key={p.id}
-                href={`/products/${brand.slug}/${p.slug}`}
-                className="group block"
-              >
-                <div className="aspect-square overflow-hidden rounded-sm bg-neutral-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image_url ?? "/placeholders/product.svg"}
-                    alt={p.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <p className="mt-3 text-sm tracking-wide text-neutral-800">
-                  {p.name}
-                </p>
-              </Link>
-            ))}
+        <section className="border-t border-hairline">
+          <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
+            <SectionHeader
+              title={`More from ${product.brand}`}
+              seeMoreHref={`/${brand.slug}`}
+            />
+            <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
+              {others.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  href={`/products/${brand.slug}/${p.slug}`}
+                  imageUrl={p.image_url ?? "/placeholders/product.svg"}
+                  caption={p.name}
+                />
+              ))}
+            </div>
           </div>
         </section>
       )}

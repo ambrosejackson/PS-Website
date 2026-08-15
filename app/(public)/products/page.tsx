@@ -21,9 +21,9 @@ export default async function ProductsPage() {
   return (
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
-          PRODUCTS
+      <section className="mx-auto max-w-screen-2xl px-6 py-14 md:px-12 md:py-20">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
+          Products
         </h1>
         <p className="mt-3 max-w-xl text-sm text-neutral-500">
           Every product across our brands. Availability and where-to-buy live on
