@@ -18,7 +18,7 @@ export default async function RewardsPage() {
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
       <section className="mx-auto max-w-2xl px-5 py-20 text-center md:py-28">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           YOUR REWARDS
         </h1>
         <p className="mt-6 leading-relaxed text-neutral-600">

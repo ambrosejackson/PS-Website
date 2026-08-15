@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
+import { ProductCard } from "@/components/site/ProductCard";
 import { getHeroesForPage, getMerchProducts } from "@/lib/data";
 
 export const revalidate = 300;
@@ -18,32 +19,23 @@ export default async function ApparelPage() {
   return (
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
+      <section className="mx-auto max-w-screen-2xl px-6 py-14 md:px-12 md:py-20">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           APPAREL &amp; ACCESSORIES
         </h1>
         <p className="mt-3 max-w-xl text-sm text-neutral-500">
           The full shop — with secure checkout, Apple Pay, and Google Pay —
           opens soon. Newsletter members get a one-time 15% code.
         </p>
-        <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           {products.map((p) => {
             const images = Array.isArray(p.images) ? (p.images as string[]) : [];
             return (
-              <div key={p.id}>
-                <div className="aspect-square overflow-hidden rounded-sm bg-neutral-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={images[0] ?? "/placeholders/merch-1.svg"}
-                    alt={p.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <p className="mt-3 text-sm tracking-wide text-neutral-800">
-                  {p.name}
-                </p>
-                <p className="text-xs text-neutral-400">Coming soon</p>
-              </div>
+              <ProductCard
+                key={p.id}
+                imageUrl={images[0] ?? "/placeholders/merch-1.svg"}
+                caption={p.name}
+              />
             );
           })}
         </div>

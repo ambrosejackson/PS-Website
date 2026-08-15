@@ -21,8 +21,8 @@ export default async function NewsIndexPage() {
   return (
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
+      <section className="mx-auto max-w-screen-2xl px-6 py-14 md:px-12 md:py-20">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           IN THE NEWS
         </h1>
         <div className="mt-12 grid gap-10 md:grid-cols-3">
@@ -37,7 +37,7 @@ export default async function NewsIndexPage() {
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                <h2 className="mt-4 font-serif text-xl text-neutral-900">
+                <h2 className="mt-4 font-condensed text-lg font-semibold uppercase tracking-tight text-ink">
                   {post.title}
                 </h2>
               </Link>

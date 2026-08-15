@@ -17,7 +17,7 @@ export async function SimplePage({
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[40svh]" />
       <section className="mx-auto max-w-3xl px-5 py-16 md:py-24">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           {title}
         </h1>
         <div className="mt-8 space-y-5 leading-relaxed text-neutral-600">

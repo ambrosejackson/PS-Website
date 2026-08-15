@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { NewsletterSection } from "@/components/site/NewsletterSection";
 import { Footer } from "@/components/site/Footer";
+import { ProductCard } from "@/components/site/ProductCard";
+import { SectionHeader } from "@/components/site/SectionHeader";
 import { BRAND_SLUGS, brandBySlug } from "@/lib/brands";
 import {
   FALLBACK_HERO,
@@ -68,61 +69,40 @@ export default async function BrandPage({
   return (
     <main>
       <HeroSwitcher heroes={heroes}>
-        <div className="w-full px-5 pb-16 text-white md:px-10">
-          <h1 className="font-serif text-4xl tracking-[0.2em] md:text-6xl">
-            {brand.name.toUpperCase()}
+        <div className="w-full px-6 pb-16 text-white md:px-12">
+          <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight md:text-6xl">
+            {brand.name}
           </h1>
-          <p className="mt-3 text-sm tracking-widest text-white/70">
-            {brand.tagline.toUpperCase()}
+          <p className="mt-3 font-condensed text-sm font-semibold uppercase tracking-wide text-white/70">
+            {brand.tagline}
           </p>
         </div>
       </HeroSwitcher>
 
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <div className="flex items-end justify-between">
-          <h2 className="font-serif text-2xl tracking-[0.18em] text-neutral-900 md:text-3xl">
-            PRODUCTS
-          </h2>
-          <Link
-            href="/products"
-            className="nav-underline text-xs font-medium tracking-[0.2em] text-neutral-900"
-          >
-            VIEW ALL BRANDS
-          </Link>
-        </div>
+      <section className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
+        <SectionHeader
+          title="Products"
+          seeMoreHref="/products"
+          seeMoreLabel="VIEW ALL BRANDS"
+        />
         {products.length > 0 ? (
-          <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
             {products.map((p) => (
-              <Link
+              <ProductCard
                 key={p.id}
                 href={`/products/${brand.slug}/${p.slug}`}
-                className="group block"
-              >
-                <div className="aspect-square overflow-hidden rounded-sm bg-neutral-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image_url ?? "/placeholders/product.svg"}
-                    alt={p.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <p className="mt-3 text-sm tracking-wide text-neutral-800">
-                  {p.name}
-                </p>
-                <p className="text-xs text-neutral-400">
-                  {[p.category, p.weight].filter(Boolean).join(" · ")}
-                </p>
-              </Link>
+                imageUrl={p.image_url ?? "/placeholders/product.svg"}
+                caption={p.name}
+              />
             ))}
           </div>
         ) : (
-          <p className="mt-10 rounded border border-dashed p-10 text-center text-sm text-neutral-400">
+          <p className="mt-10 border border-dashed border-hairline p-10 text-center text-sm text-neutral-400">
             {brand.name} products are coming to the catalog soon.
           </p>
         )}
       </section>
 
-      <div style={{ backgroundColor: brand.accentHex }} className="h-1 w-full" />
       <NewsletterSection />
       <Footer />
     </main>

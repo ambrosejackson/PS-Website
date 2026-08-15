@@ -27,8 +27,8 @@ export default async function StoreLocatorPage() {
   return (
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
-      <section className="mx-auto max-w-6xl px-5 py-16 md:py-24">
-        <h1 className="font-serif text-4xl tracking-[0.15em] text-neutral-900">
+      <section className="mx-auto max-w-screen-2xl px-6 py-14 md:px-12 md:py-20">
+        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           STORE LOCATOR
         </h1>
         {stores.length > 0 ? (

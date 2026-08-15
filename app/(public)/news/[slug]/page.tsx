@@ -60,7 +60,7 @@ export default async function NewsPostPage({
         >
           ← IN THE NEWS
         </Link>
-        <h1 className="mt-4 font-serif text-4xl leading-tight text-neutral-900">
+        <h1 className="mt-4 font-condensed text-4xl font-bold uppercase leading-tight tracking-tight text-ink">
           {post.title}
         </h1>
         {post.published_at && (
