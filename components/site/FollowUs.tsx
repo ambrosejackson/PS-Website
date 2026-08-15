@@ -15,10 +15,10 @@ const FACEBOOK_URL = "https://www.facebook.com/privatestockcannabis";
 export function FollowUs() {
   const strip = [...STRIP_IMAGES, ...STRIP_IMAGES, ...STRIP_IMAGES];
   return (
-    <section className="py-20 md:py-28">
-      <div className="mx-auto max-w-6xl px-5 text-center">
-        <h2 className="font-serif text-3xl tracking-[0.18em] text-neutral-900 md:text-4xl">
-          FOLLOW US
+    <section className="border-t border-hairline py-12 md:py-14">
+      <div className="mx-auto max-w-screen-2xl px-6 text-center md:px-12">
+        <h2 className="font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
+          Follow Us
         </h2>
         <div className="mt-6 flex items-center justify-center gap-4">
           <a
@@ -26,7 +26,7 @@ export function FollowUs() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Private Stock on Instagram"
-            className="rounded-full border border-neutral-300 p-3 transition-colors hover:bg-neutral-900 hover:text-white"
+            className="border border-ink p-3 text-ink transition-colors hover:bg-ink hover:text-white"
           >
             <InstagramIcon className="h-5 w-5" />
           </a>
@@ -35,7 +35,7 @@ export function FollowUs() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Private Stock on Facebook"
-            className="rounded-full border border-neutral-300 p-3 transition-colors hover:bg-neutral-900 hover:text-white"
+            className="border border-ink p-3 text-ink transition-colors hover:bg-ink hover:text-white"
           >
             <FacebookIcon className="h-5 w-5" />
           </a>
@@ -49,7 +49,7 @@ export function FollowUs() {
               key={i}
               src={src}
               alt=""
-              className="h-40 w-40 rounded-sm object-cover md:h-52 md:w-52"
+              className="h-40 w-40 object-cover md:h-52 md:w-52"
             />
           ))}
         </div>

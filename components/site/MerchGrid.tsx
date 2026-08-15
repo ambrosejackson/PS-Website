@@ -1,41 +1,38 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/site/SectionHeader";
+import { ProductCard } from "@/components/site/ProductCard";
 import type { MerchProduct } from "@/lib/data";
 
-/** Merch & Apparel preview grid — placeholder products until the Stripe shop ships. */
-export function MerchGrid({ products }: { products: MerchProduct[] }) {
+/**
+ * Merch & Apparel section per the reference screenshots: same section pattern
+ * as the brand rows, SKU-style captions (TS-03, JC-08, …). Landing shows one
+ * row; /apparel shows the full multi-row grid.
+ */
+export function MerchGrid({
+  products,
+  limit = 6,
+}: {
+  products: MerchProduct[];
+  limit?: number;
+}) {
   if (products.length === 0) return null;
   return (
-    <section className="mx-auto max-w-6xl px-5 py-20 md:py-28">
-      <div className="flex items-end justify-between">
-        <h2 className="font-serif text-3xl tracking-[0.18em] text-neutral-900 md:text-4xl">
-          MERCH &amp; APPAREL
-        </h2>
-        <Button
-          render={<Link href="/apparel">See More</Link>}
-          variant="outline"
-        />
-      </div>
-      <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
-        {products.slice(0, 4).map((p) => {
-          const images = Array.isArray(p.images) ? (p.images as string[]) : [];
-          return (
-            <Link key={p.id} href="/apparel" className="group block">
-              <div className="aspect-square overflow-hidden rounded-sm bg-neutral-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={images[0] ?? "/placeholders/merch-1.svg"}
-                  alt={p.name}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <p className="mt-3 text-sm tracking-wide text-neutral-800">
-                {p.name}
-              </p>
-              <p className="text-xs text-neutral-400">Coming soon</p>
-            </Link>
-          );
-        })}
+    <section className="border-t border-hairline">
+      <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
+        <SectionHeader title="Merch & Apparel" seeMoreHref="/apparel" />
+        <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
+          {products.slice(0, limit).map((p) => {
+            const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+            return (
+              <ProductCard
+                key={p.id}
+                href="/apparel"
+                imageUrl={images[0] ?? "/placeholders/merch-1.svg"}
+                caption={p.name}
+                track={`merch-card:${p.slug}`}
+              />
+            );
+          })}
+        </div>
       </div>
     </section>
   );

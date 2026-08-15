@@ -3,6 +3,7 @@
 -- Phase-2 UI before the PSM geo backfill + publish pipeline exist. The site only
 -- reads them when MOCK_PSM_DATA=true. Fixed UUIDs prefixed 00000000-… mark them
 -- as mock; the real publish pipeline uses PSM retail_accounts ids.
+-- Product names follow the naming style in docs/reference/lovable screenshots.
 
 -- ===== Heroes: 1 default + 3 nav-hover assets for the landing page =====
 insert into public.content_heroes (id, page, nav_target, media_url, media_type, theme, is_default, sort_order, is_active) values
@@ -73,59 +74,110 @@ on conflict (id) do update set
   availability_tier = excluded.availability_tier, availability_checked_at = excluded.availability_checked_at;
 
 -- ===== MOCK product_availability (presence + link + image ONLY — no prices, ever) =====
+delete from public.product_availability where store_id in (select id from public.store_locations where id::text like '00000000%');
 insert into public.product_availability (store_id, brand, product_name, variant, menu_product_url, image_url, checked_at) values
-  ('00000000-0000-4000-8000-000000000001', 'Outfitters',           'Trail Mix Flower',     '3.5g',  'https://example.com/menus/river-north/trail-mix',   '/placeholders/product.svg', now() - interval '1 day'),
-  ('00000000-0000-4000-8000-000000000001', 'TerpKings',            'Citrus Haze Cart',     '1g',    'https://example.com/menus/river-north/citrus-haze', '/placeholders/product.svg', now() - interval '1 day'),
-  ('00000000-0000-4000-8000-000000000001', 'Higher Self',          'Calm Gummies',         '100mg', 'https://example.com/menus/river-north/calm',        '/placeholders/product.svg', now() - interval '1 day'),
-  ('00000000-0000-4000-8000-000000000002', 'Outfitters',           'Trail Mix Flower',     '3.5g',  'https://example.com/menus/wicker-park/trail-mix',   '/placeholders/product.svg', now() - interval '2 days'),
-  ('00000000-0000-4000-8000-000000000002', 'Savage Squad Strains', 'Savage OG',            '3.5g',  'https://example.com/menus/wicker-park/savage-og',   '/placeholders/product.svg', now() - interval '2 days'),
-  ('00000000-0000-4000-8000-000000000003', 'TerpKings',            'Citrus Haze Cart',     '1g',    'https://example.com/menus/evanston/citrus-haze',    '/placeholders/product.svg', now() - interval '20 days'),
-  ('00000000-0000-4000-8000-000000000003', 'Higher Self',          'Calm Gummies',         '100mg', 'https://example.com/menus/evanston/calm',           '/placeholders/product.svg', now() - interval '20 days'),
-  ('00000000-0000-4000-8000-000000000004', 'Savage Squad Strains', 'Savage OG',            '3.5g',  'https://example.com/menus/naperville/savage-og',    '/placeholders/product.svg', now() - interval '35 days')
-on conflict (store_id, brand, product_name, variant) do update set
-  menu_product_url = excluded.menu_product_url, image_url = excluded.image_url, checked_at = excluded.checked_at;
+  ('00000000-0000-4000-8000-000000000001', 'Outfitters',           '3.5G Top Shelf Flower',                              '3.5g',  'https://example.com/menus/river-north/top-shelf',  '/placeholders/product.svg', now() - interval '1 day'),
+  ('00000000-0000-4000-8000-000000000001', 'TerpKings',            '0.5G Live Rosin Astro Vape All-In-One (Fruit/Dessert/Gas)', '0.5g', 'https://example.com/menus/river-north/astro-vape', '/placeholders/product.svg', now() - interval '1 day'),
+  ('00000000-0000-4000-8000-000000000001', 'Higher Self',          '5-Pack 0.35G Infused Pre-Rolls',                     '5pk',   'https://example.com/menus/river-north/infused-prerolls', '/placeholders/product.svg', now() - interval '1 day'),
+  ('00000000-0000-4000-8000-000000000002', 'Outfitters',           '3.5G Top Shelf Flower',                              '3.5g',  'https://example.com/menus/wicker-park/top-shelf',  '/placeholders/product.svg', now() - interval '2 days'),
+  ('00000000-0000-4000-8000-000000000002', 'Savage Squad Strains', '3.5G Exotic Small-Batch Flower',                     '3.5g',  'https://example.com/menus/wicker-park/exotic',     '/placeholders/product.svg', now() - interval '2 days'),
+  ('00000000-0000-4000-8000-000000000003', 'TerpKings',            '0.5G Live Rosin Astro Vape All-In-One (Fruit/Dessert/Gas)', '0.5g', 'https://example.com/menus/evanston/astro-vape', '/placeholders/product.svg', now() - interval '20 days'),
+  ('00000000-0000-4000-8000-000000000003', 'Higher Self',          '5-Pack 0.35G Infused Pre-Rolls',                     '5pk',   'https://example.com/menus/evanston/infused-prerolls', '/placeholders/product.svg', now() - interval '20 days'),
+  ('00000000-0000-4000-8000-000000000004', 'Savage Squad Strains', '3.5G Exotic Small-Batch Flower',                     '3.5g',  'https://example.com/menus/naperville/exotic',      '/placeholders/product.svg', now() - interval '35 days');
 
--- ===== Catalog products: 2 per allowlisted brand so grids/detail pages render =====
+-- ===== Catalog: 6 per allowlisted brand, screenshot naming style =====
+delete from public.catalog_products where id::text like '40000000%';
 insert into public.catalog_products
   (id, brand, name, slug, category, format, weight, thc_range, description, image_url, terpene_profile, terp_category, is_active, sort_order) values
-  ('40000000-0000-4000-8000-000000000001', 'Outfitters', 'Trail Mix Flower', 'outfitters-trail-mix-flower', 'Flower', 'Whole Flower', '3.5g', '24–28%',
+  -- Outfitters
+  ('40000000-0000-4000-8000-000000000001', 'Outfitters', '3.5G Top Shelf Flower', 'outfitters-3-5g-top-shelf-flower', 'Flower', 'Whole Flower', '3.5g', '24–28%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
    '[{"name":"Myrcene","note":"earthy"},{"name":"Limonene","note":"citrus"}]', null, true, 1),
-  ('40000000-0000-4000-8000-000000000002', 'Outfitters', 'Basecamp Pre-Rolls', 'outfitters-basecamp-pre-rolls', 'Pre-Rolls', '5-pack', '2.5g', '20–24%',
+  ('40000000-0000-4000-8000-000000000002', 'Outfitters', '1G Top Shelf Flower', 'outfitters-1g-top-shelf-flower', 'Flower', 'Whole Flower', '1g', '24–28%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
-   '[{"name":"Pinene","note":"pine"},{"name":"Caryophyllene","note":"pepper"}]', null, true, 2),
-  ('40000000-0000-4000-8000-000000000003', 'TerpKings', 'Citrus Haze Cart', 'terpkings-citrus-haze-cart', 'Vapes', 'Cartridge', '1g', '80–85%',
+   '[{"name":"Myrcene","note":"earthy"},{"name":"Pinene","note":"pine"}]', null, true, 2),
+  ('40000000-0000-4000-8000-000000000003', 'Outfitters', '7G Gun Powder Premium Ground Flower', 'outfitters-7g-gun-powder-premium-ground-flower', 'Flower', 'Ground Flower', '7g', '22–26%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
-   '[{"name":"Limonene","note":"citrus"},{"name":"Terpinolene","note":"haze"}]', 'fruit', true, 1),
-  ('40000000-0000-4000-8000-000000000004', 'TerpKings', 'Gas Giant Flower', 'terpkings-gas-giant-flower', 'Flower', 'Whole Flower', '3.5g', '26–30%',
+   '[{"name":"Caryophyllene","note":"pepper"},{"name":"Myrcene","note":"earthy"}]', null, true, 3),
+  ('40000000-0000-4000-8000-000000000004', 'Outfitters', '7G Gun Powder Infused Ground Flower', 'outfitters-7g-gun-powder-infused-ground-flower', 'Flower', 'Infused Ground Flower', '7g', '30–35%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
-   '[{"name":"Caryophyllene","note":"gas"},{"name":"Myrcene","note":"earthy"}]', 'gas', true, 2),
-  ('40000000-0000-4000-8000-000000000005', 'Higher Self', 'Calm Gummies', 'higherself-calm-gummies', 'Edibles', 'Gummies', '100mg', '100mg',
+   '[{"name":"Caryophyllene","note":"pepper"},{"name":"Limonene","note":"citrus"}]', null, true, 4),
+  ('40000000-0000-4000-8000-000000000005', 'Outfitters', '5-Pack 0.7G Luckies Cigarette-Style Pre-Rolls', 'outfitters-5-pack-0-7g-luckies-pre-rolls', 'Pre-Rolls', '5-Pack', '3.5g', '22–26%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Pinene","note":"pine"},{"name":"Myrcene","note":"earthy"}]', null, true, 5),
+  ('40000000-0000-4000-8000-000000000006', 'Outfitters', '2G Rosin Infused Glasstip Blunt', 'outfitters-2g-rosin-infused-glasstip-blunt', 'Pre-Rolls', 'Blunt', '2g', '35–40%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Caryophyllene","note":"gas"},{"name":"Humulene","note":"hops"}]', null, true, 6),
+  -- TerpKings
+  ('40000000-0000-4000-8000-000000000007', 'TerpKings', '5-Pack Rosin Infused Kief Coated Pre-Rolls (Fruit)', 'terpkings-5-pack-rosin-kief-pre-rolls-fruit', 'Pre-Rolls', '5-Pack', '2.5g', '32–38%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Terpinolene","note":"fruity"}]', 'fruit', true, 1),
+  ('40000000-0000-4000-8000-000000000008', 'TerpKings', '5-Pack Rosin Infused Kief Coated Pre-Rolls (Dessert)', 'terpkings-5-pack-rosin-kief-pre-rolls-dessert', 'Pre-Rolls', '5-Pack', '2.5g', '32–38%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Linalool","note":"sweet"},{"name":"Caryophyllene","note":"spice"}]', 'dessert', true, 2),
+  ('40000000-0000-4000-8000-000000000009', 'TerpKings', '0.5G Live Rosin Astro Vape All-In-One (Fruit/Dessert/Gas)', 'terpkings-0-5g-live-rosin-astro-vape', 'Vapes', 'All-In-One', '0.5g', '75–82%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Myrcene","note":"gas"}]', 'gas', true, 3),
+  ('40000000-0000-4000-8000-000000000010', 'TerpKings', '0.5G Liquid Diamond Astro Vape All-In-One (Fruit)', 'terpkings-0-5g-liquid-diamond-astro-vape-fruit', 'Vapes', 'All-In-One', '0.5g', '80–88%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Terpinolene","note":"fruity"},{"name":"Limonene","note":"citrus"}]', 'fruit', true, 4),
+  ('40000000-0000-4000-8000-000000000011', 'TerpKings', '0.5G Liquid Diamond Astro Vape All-In-One (Dessert)', 'terpkings-0-5g-liquid-diamond-astro-vape-dessert', 'Vapes', 'All-In-One', '0.5g', '80–88%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Linalool","note":"sweet"},{"name":"Humulene","note":"rich"}]', 'dessert', true, 5),
+  ('40000000-0000-4000-8000-000000000012', 'TerpKings', 'TerpBurstz Fast-Acting Long-Lasting Gummies 100MG', 'terpkings-terpburstz-gummies-100mg', 'Edibles', 'Gummies', '100mg', '100mg',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Linalool","note":"floral"}]', 'fruit', true, 6),
+  -- Higher Self
+  ('40000000-0000-4000-8000-000000000013', 'Higher Self', '10-Pack 0.35G Infused Pre-Rolls', 'higherself-10-pack-0-35g-infused-pre-rolls', 'Pre-Rolls', '10-Pack', '3.5g', '30–36%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
    '[{"name":"Linalool","note":"floral"},{"name":"Limonene","note":"citrus"}]', null, true, 1),
-  ('40000000-0000-4000-8000-000000000006', 'Higher Self', 'Elevate Vape', 'higherself-elevate-vape', 'Vapes', 'Disposable', '0.5g', '78–82%',
+  ('40000000-0000-4000-8000-000000000014', 'Higher Self', '5-Pack 0.35G Infused Pre-Rolls', 'higherself-5-pack-0-35g-infused-pre-rolls', 'Pre-Rolls', '5-Pack', '1.75g', '30–36%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
-   '[{"name":"Terpinolene","note":"uplifting"},{"name":"Pinene","note":"pine"}]', null, true, 2),
-  ('40000000-0000-4000-8000-000000000007', 'Savage Squad Strains', 'Savage OG', 'savagesquadstrains-savage-og', 'Flower', 'Whole Flower', '3.5g', '28–32%',
+   '[{"name":"Linalool","note":"floral"},{"name":"Myrcene","note":"calm"}]', null, true, 2),
+  ('40000000-0000-4000-8000-000000000015', 'Higher Self', '2-Pack 0.35G Infused Pre-Rolls', 'higherself-2-pack-0-35g-infused-pre-rolls', 'Pre-Rolls', '2-Pack', '0.7g', '30–36%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Linalool","note":"floral"},{"name":"Pinene","note":"clear"}]', null, true, 3),
+  ('40000000-0000-4000-8000-000000000016', 'Higher Self', '3.5G / 7G / 14G Premium Flower', 'higherself-premium-flower', 'Flower', 'Whole Flower', '3.5g–14g', '22–28%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Myrcene","note":"earthy"},{"name":"Limonene","note":"citrus"}]', null, true, 4),
+  ('40000000-0000-4000-8000-000000000017', 'Higher Self', '1G / 2G Vape Stone All-In-One Vape', 'higherself-vape-stone-all-in-one', 'Vapes', 'All-In-One', '1g–2g', '78–85%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Terpinolene","note":"uplifting"},{"name":"Pinene","note":"pine"}]', null, true, 5),
+  ('40000000-0000-4000-8000-000000000018', 'Higher Self', '1G / 2G Vape Cartridge', 'higherself-vape-cartridge', 'Vapes', 'Cartridge', '1g–2g', '78–85%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Caryophyllene","note":"spice"}]', null, true, 6),
+  -- Savage Squad Strains (names invented in the same style — not visible in screenshots)
+  ('40000000-0000-4000-8000-000000000019', 'Savage Squad Strains', '3.5G Exotic Small-Batch Flower', 'savagesquadstrains-3-5g-exotic-small-batch-flower', 'Flower', 'Whole Flower', '3.5g', '28–32%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
    '[{"name":"Myrcene","note":"earthy"},{"name":"Caryophyllene","note":"gas"}]', null, true, 1),
-  ('40000000-0000-4000-8000-000000000008', 'Savage Squad Strains', 'Squad Snacks Gummies', 'savagesquadstrains-squad-snacks', 'Edibles', 'Gummies', '100mg', '100mg',
+  ('40000000-0000-4000-8000-000000000020', 'Savage Squad Strains', '7G Exotic Small-Batch Flower', 'savagesquadstrains-7g-exotic-small-batch-flower', 'Flower', 'Whole Flower', '7g', '28–32%',
    'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
-   '[{"name":"Limonene","note":"citrus"},{"name":"Humulene","note":"hops"}]', null, true, 2)
-on conflict (id) do update set
-  brand = excluded.brand, name = excluded.name, slug = excluded.slug, category = excluded.category,
-  format = excluded.format, weight = excluded.weight, thc_range = excluded.thc_range,
-  description = excluded.description, image_url = excluded.image_url,
-  terpene_profile = excluded.terpene_profile, terp_category = excluded.terp_category,
-  is_active = excluded.is_active, sort_order = excluded.sort_order;
+   '[{"name":"Myrcene","note":"earthy"},{"name":"Limonene","note":"citrus"}]', null, true, 2),
+  ('40000000-0000-4000-8000-000000000021', 'Savage Squad Strains', '2-Pack 1G Rosin Infused Pre-Rolls', 'savagesquadstrains-2-pack-1g-rosin-infused-pre-rolls', 'Pre-Rolls', '2-Pack', '2g', '34–40%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Caryophyllene","note":"gas"},{"name":"Humulene","note":"hops"}]', null, true, 3),
+  ('40000000-0000-4000-8000-000000000022', 'Savage Squad Strains', '5-Pack Rosin Infused Pre-Rolls', 'savagesquadstrains-5-pack-rosin-infused-pre-rolls', 'Pre-Rolls', '5-Pack', '2.5g', '34–40%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Caryophyllene","note":"gas"},{"name":"Pinene","note":"pine"}]', null, true, 4),
+  ('40000000-0000-4000-8000-000000000023', 'Savage Squad Strains', '1G Liquid Diamond All-In-One Vape', 'savagesquadstrains-1g-liquid-diamond-all-in-one-vape', 'Vapes', 'All-In-One', '1g', '82–88%',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Myrcene","note":"gas"}]', null, true, 5),
+  ('40000000-0000-4000-8000-000000000024', 'Savage Squad Strains', 'Fast-Acting Fruit Gummies 100MG', 'savagesquadstrains-fast-acting-fruit-gummies-100mg', 'Edibles', 'Gummies', '100mg', '100mg',
+   'Placeholder description — final copy syncs from the iHeartJane sheet.', '/placeholders/product.svg',
+   '[{"name":"Limonene","note":"citrus"},{"name":"Humulene","note":"hops"}]', null, true, 6);
 
--- ===== Merch placeholders so the landing Apparel grid renders =====
+-- ===== Merch: SKU-style captions per the reference screenshots =====
+delete from public.merch_products where id::text like '50000000%';
 insert into public.merch_products (id, name, slug, description, brand, images, is_active, sort_order) values
-  ('50000000-0000-4000-8000-000000000001', 'Private Stock Tee',       'private-stock-tee',      'Placeholder merch product.', null, '["/placeholders/merch-1.svg"]', true, 1),
-  ('50000000-0000-4000-8000-000000000002', 'Private Stock Hoodie',    'private-stock-hoodie',   'Placeholder merch product.', null, '["/placeholders/merch-2.svg"]', true, 2),
-  ('50000000-0000-4000-8000-000000000003', 'Outfitters Cap',          'outfitters-cap',         'Placeholder merch product.', 'Outfitters', '["/placeholders/merch-3.svg"]', true, 3),
-  ('50000000-0000-4000-8000-000000000004', 'Higher Self Crewneck',    'higherself-crewneck',    'Placeholder merch product.', 'Higher Self', '["/placeholders/merch-4.svg"]', true, 4)
-on conflict (id) do update set
-  name = excluded.name, slug = excluded.slug, description = excluded.description,
-  brand = excluded.brand, images = excluded.images, is_active = excluded.is_active,
-  sort_order = excluded.sort_order;
+  ('50000000-0000-4000-8000-000000000001', 'TS-03', 'ts-03',  'Placeholder merch product.', 'Savage Squad Strains', '["/placeholders/merch-1.svg"]', true, 1),
+  ('50000000-0000-4000-8000-000000000002', 'TS-07', 'ts-07',  'Placeholder merch product.', 'Savage Squad Strains', '["/placeholders/merch-2.svg"]', true, 2),
+  ('50000000-0000-4000-8000-000000000003', 'TT-06', 'tt-06',  'Placeholder merch product.', null,                   '["/placeholders/merch-3.svg"]', true, 3),
+  ('50000000-0000-4000-8000-000000000004', 'LS-03', 'ls-03',  'Placeholder merch product.', null,                   '["/placeholders/merch-4.svg"]', true, 4),
+  ('50000000-0000-4000-8000-000000000005', 'HD-10', 'hd-10',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-1.svg"]', true, 5),
+  ('50000000-0000-4000-8000-000000000006', 'JC-08', 'jc-08',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-2.svg"]', true, 6),
+  ('50000000-0000-4000-8000-000000000007', 'PK-01', 'pk-01',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-3.svg"]', true, 7),
+  ('50000000-0000-4000-8000-000000000008', 'HT-05', 'ht-05',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-4.svg"]', true, 8),
+  ('50000000-0000-4000-8000-000000000009', 'BG-02', 'bg-02',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-1.svg"]', true, 9),
+  ('50000000-0000-4000-8000-000000000010', 'GL-01', 'gl-01',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-2.svg"]', true, 10),
+  ('50000000-0000-4000-8000-000000000011', 'ZH-02', 'zh-02',  'Placeholder merch product.', 'Higher Self',          '["/placeholders/merch-3.svg"]', true, 11),
+  ('50000000-0000-4000-8000-000000000012', 'CP-04', 'cp-04',  'Placeholder merch product.', 'Higher Self',          '["/placeholders/merch-4.svg"]', true, 12);

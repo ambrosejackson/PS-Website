@@ -44,21 +44,21 @@ export default async function LandingPage() {
     ]);
 
   return (
-    <main>
+    <main className="bg-white">
       <HeroSwitcher heroes={heroes} />
       {/* Banners live BELOW the hero — never above or over it (guardrail #4) */}
       <RotatingBanner slides={banners} />
       <IntroSection />
       {brandBook && (
-        <section className="bg-neutral-50 py-20 md:py-28">
-          <div className="mx-auto max-w-6xl px-5">
-            <h2 className="text-center font-serif text-3xl tracking-[0.18em] text-neutral-900 md:text-4xl">
-              THE BRAND BOOK
+        <section className="border-t border-hairline">
+          <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
+            <h2 className="text-center font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
+              The Brand Book
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-sm text-neutral-500">
+            <p className="mx-auto mt-3 max-w-xl text-center text-sm text-neutral-500">
               Flip through the Private Stock product catalog.
             </p>
-            <div className="mt-12">
+            <div className="mt-10">
               <FlipBook
                 pageCount={brandBook.pageCount}
                 aspectRatio={brandBook.aspectRatio}

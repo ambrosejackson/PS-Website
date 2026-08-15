@@ -21,13 +21,38 @@ const LEGAL_LINKS = [
   { href: "/terms", label: "Terms of Use" },
 ];
 
+function FooterColumn({
+  heading,
+  links,
+}: {
+  heading: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <nav aria-label={heading}>
+      <p className="font-condensed text-sm font-semibold uppercase tracking-wide text-ink">
+        {heading}
+      </p>
+      <ul className="mt-4 space-y-2 text-sm">
+        {links.map((l) => (
+          <li key={l.href}>
+            <Link href={l.href} className="text-neutral-500 hover:text-ink">
+              {l.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 export function Footer() {
   return (
-    <footer className="bg-neutral-950 text-white">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[2fr_1fr_1fr_1fr]">
+    <footer className="border-t border-hairline bg-white text-ink">
+      <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 py-14 md:grid-cols-[2fr_1fr_1fr_1fr] md:px-12">
         <div>
-          <Logo className="h-16 w-auto" />
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/50">
+          <Logo className="h-24 w-auto" />
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-500">
             A dedication to the exceptional — from cultivation to retail to
             community.
           </p>
@@ -37,7 +62,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
-              className="rounded-full border border-white/20 p-2 transition-colors hover:bg-white hover:text-neutral-950"
+              className="border border-neutral-300 p-2 transition-colors hover:bg-ink hover:text-white"
             >
               <InstagramIcon className="h-4 w-4" />
             </a>
@@ -46,70 +71,25 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
-              className="rounded-full border border-white/20 p-2 transition-colors hover:bg-white hover:text-neutral-950"
+              className="border border-neutral-300 p-2 transition-colors hover:bg-ink hover:text-white"
             >
               <FacebookIcon className="h-4 w-4" />
             </a>
           </div>
         </div>
 
-        <nav aria-label="Shop">
-          <p className="text-xs font-semibold tracking-[0.2em] text-white/40">
-            SHOP
-          </p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {SHOP_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-white/70 hover:text-white">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <nav aria-label="Brands">
-          <p className="text-xs font-semibold tracking-[0.2em] text-white/40">
-            BRANDS
-          </p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {BRANDS.map((b) => (
-              <li key={b.slug}>
-                <Link
-                  href={`/${b.slug}`}
-                  className="text-white/70 hover:text-white"
-                >
-                  {b.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <nav aria-label="Company">
-          <p className="text-xs font-semibold tracking-[0.2em] text-white/40">
-            COMPANY
-          </p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {COMPANY_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-white/70 hover:text-white">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-            {LEGAL_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="text-white/70 hover:text-white">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <FooterColumn heading="Shop" links={SHOP_LINKS} />
+        <FooterColumn
+          heading="Brands"
+          links={BRANDS.map((b) => ({ href: `/${b.slug}`, label: b.name }))}
+        />
+        <FooterColumn
+          heading="Company"
+          links={[...COMPANY_LINKS, ...LEGAL_LINKS]}
+        />
       </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-6 text-xs text-white/40 md:flex-row md:items-center md:justify-between">
+      <div className="border-t border-hairline">
+        <div className="mx-auto flex max-w-screen-2xl flex-col gap-2 px-6 py-6 text-xs text-neutral-400 md:flex-row md:items-center md:justify-between md:px-12">
           <p>
             © {new Date().getFullYear()} Private Stock LLC. All rights
             reserved.

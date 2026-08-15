@@ -2,12 +2,12 @@ import { NewsletterForm } from "@/components/site/NewsletterForm";
 
 export function NewsletterSection() {
   return (
-    <section className="bg-neutral-950 py-20 text-white md:py-24">
-      <div className="mx-auto max-w-2xl px-5 text-center">
-        <h2 className="font-serif text-3xl tracking-[0.18em] md:text-4xl">
-          JOIN THE LIST
+    <section className="border-t border-hairline py-14 md:py-20">
+      <div className="mx-auto max-w-2xl px-6 text-center">
+        <h2 className="font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
+          Join the List
         </h2>
-        <p className="mt-4 text-sm text-white/60">
+        <p className="mt-3 text-sm text-neutral-500">
           Sign up for drops, stories, and a one-time 15% code for merch &amp;
           apparel.
         </p>
