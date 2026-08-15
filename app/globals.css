@@ -149,3 +149,30 @@
   transform: scaleX(1);
   transform-origin: left center;
 }
+
+/* Serif display font for headings (placeholder until brand fonts land) */
+@theme inline {
+  --font-serif: var(--font-cormorant), Georgia, serif;
+}
+
+/* FOLLOW US scrolling image strip */
+@keyframes ps-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ps-marquee {
+  animation: ps-marquee 30s linear infinite;
+}
+.ps-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Flip-book page turn */
+@keyframes ps-flip-next {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-180deg); }
+}
+@keyframes ps-flip-prev {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(180deg); }
+}
