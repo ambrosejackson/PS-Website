@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Header } from "@/components/site/Header";
 import { HeroContext } from "@/components/site/hero-context";
 import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
@@ -15,6 +22,13 @@ import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
  */
 
 const REVERT_GRACE_MS = 600;
+const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
+
+function subscribeToHoverCapability(callback: () => void) {
+  const mq = window.matchMedia(HOVER_QUERY);
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
 
 export function HeroSwitcher({
   heroes,
@@ -42,16 +56,14 @@ export function HeroSwitcher({
   }, [heroes]);
 
   const [activeId, setActiveId] = useState(defaultHero.id);
-  const [canHover, setCanHover] = useState(false);
   const revertTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    setCanHover(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setCanHover(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  // Mobile / touch (no hover capability) always shows the default asset.
+  const canHover = useSyncExternalStore(
+    subscribeToHoverCapability,
+    () => window.matchMedia(HOVER_QUERY).matches,
+    () => false,
+  );
 
   useEffect(
     () => () => {
