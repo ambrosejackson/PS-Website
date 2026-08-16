@@ -63,7 +63,7 @@ export function Header() {
               href={item.href}
               onMouseEnter={() => navEnter(item.label)}
               onMouseLeave={navLeave}
-              className="nav-underline hidden text-[13px] font-medium tracking-[0.22em] md:inline-block"
+              className="nav-underline hidden font-condensed text-[13px] font-semibold uppercase tracking-[0.22em] md:inline-block"
             >
               {item.label}
             </Link>
@@ -87,7 +87,7 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
-                <SheetTitle>Your cart</SheetTitle>
+                <SheetTitle className="font-condensed uppercase tracking-wide">Your cart</SheetTitle>
                 <SheetDescription>
                   Shop opening soon — merch and apparel checkout is on the way.
                 </SheetDescription>

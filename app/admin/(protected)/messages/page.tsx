@@ -35,7 +35,7 @@ export default async function AdminMessagesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Messages</h1>
+      <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Messages</h1>
       <p className="mt-2 max-w-prose text-sm text-neutral-600">
         Contact form submissions (brand pages and sitewide).
       </p>

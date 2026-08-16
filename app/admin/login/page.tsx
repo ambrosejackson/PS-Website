@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-neutral-950 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Private Stock Admin</CardTitle>
+          <CardTitle className="font-condensed uppercase tracking-wide">Private Stock Admin</CardTitle>
           <CardDescription>Staff sign-in</CardDescription>
         </CardHeader>
         <CardContent>

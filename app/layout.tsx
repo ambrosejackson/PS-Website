@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 const oswald = Oswald({
   variable: "--font-oswald",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 // Brand-page approximations of each brand's live-site typography (I-014).
