@@ -115,9 +115,12 @@ export default async function HigherSelfPage() {
       {/* Hero — global PS header overlays (D-006); giant sky-blue script over lifestyle photo */}
       <HeroSwitcher heroes={heroes}>
         <div className="flex w-full flex-col items-center justify-center pb-24 text-center">
-          <p className="font-script text-7xl leading-none text-[#7cc8f7] drop-shadow-sm md:text-[9rem]">
-            higher self
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand-assets/higherself-blue.svg"
+            alt="higher self"
+            className="w-72 max-w-[80vw] drop-shadow-sm md:w-[42rem]"
+          />
           <p className="mt-6 max-w-xl px-6 text-sm text-neutral-600 md:text-base">
             Premium cannabis products crafted for your Higher Self.
             <br />

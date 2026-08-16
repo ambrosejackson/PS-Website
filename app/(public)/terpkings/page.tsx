@@ -1,5 +1,3 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
@@ -67,13 +65,8 @@ export default async function TerpKingsPage() {
             theme: "dark" as const,
           },
         ];
-  // Prefer the real logo the moment Ambrose drops it in (I-013).
-  const realLogo = existsSync(
-    path.join(process.cwd(), "public/brand-pages/terpkings/terpkings-white.png"),
-  );
-  const logoSrc = realLogo
-    ? "/brand-pages/terpkings/terpkings-white.png"
-    : "/brand-pages/terpkings/terpkings-white-placeholder.svg";
+  // Real logo (landed in public/brand-assets/, alongside the other brand marks).
+  const logoSrc = "/brand-assets/terpkings-white.png";
   const stores = allStores.filter((s) => s.brands.includes("TerpKings"));
 
   return (

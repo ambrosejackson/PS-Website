@@ -1,4 +1,4 @@
-import { SectionHeader } from "@/components/site/SectionHeader";
+import Link from "next/link";
 import { ProductCard } from "@/components/site/ProductCard";
 import { BRANDS, brandByName } from "@/lib/brands";
 import type { CatalogProduct } from "@/lib/data";
@@ -19,11 +19,22 @@ export function BrandGrid({ products }: { products: CatalogProduct[] }) {
         return (
           <section key={brand.slug} className="border-t border-hairline">
             <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
-              <SectionHeader
-                title={brand.name}
-                titleHref={`/${brand.slug}`}
-                seeMoreHref={`/${brand.slug}`}
-              />
+              <div className="flex items-center justify-between">
+                <Link href={`/${brand.slug}`} className="hover:opacity-70">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={brand.logoOnLight}
+                    alt={brand.name}
+                    className="h-9 w-auto md:h-11"
+                  />
+                </Link>
+                <Link
+                  href={`/${brand.slug}`}
+                  className="nav-underline font-condensed text-xs font-semibold uppercase tracking-wide text-ink"
+                >
+                  SEE MORE
+                </Link>
+              </div>
               {brandProducts.length > 0 ? (
                 <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
                   {brandProducts.map((p) => {

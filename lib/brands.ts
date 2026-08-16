@@ -19,6 +19,10 @@ export interface Brand {
   /** Placeholder accent until each brand's full design lands (phases 1–2). */
   accentHex: string;
   tagline: string;
+  /** Real logo files in public/brand-assets/ — for dark backgrounds. */
+  logoOnDark: string;
+  /** Real logo files in public/brand-assets/ — for light backgrounds. */
+  logoOnLight: string;
 }
 
 export const BRANDS: readonly Brand[] = [
@@ -27,24 +31,32 @@ export const BRANDS: readonly Brand[] = [
     slug: "outfitters",
     accentHex: "#3e6b4f",
     tagline: "Gear up. Head out.",
+    logoOnDark: "/brand-assets/outfitters-white.png",
+    logoOnLight: "/brand-assets/outfitters-black.png",
   },
   {
     name: "TerpKings",
     slug: "terpkings",
     accentHex: "#7a4dbd",
-    tagline: "Chase the terps.",
+    tagline: "Choose your terpenes.",
+    logoOnDark: "/brand-assets/terpkings-white.png",
+    logoOnLight: "/brand-assets/terpkings-monogram.png",
   },
   {
     name: "Higher Self",
     slug: "higherself",
     accentHex: "#c9a86a",
     tagline: "Find your higher self.",
+    logoOnDark: "/brand-assets/higherself-white.svg",
+    logoOnLight: "/brand-assets/higherself-blue.svg",
   },
   {
     name: "Savage Squad Strains",
     slug: "savagesquadstrains",
     accentHex: "#b03a3a",
     tagline: "Run with the squad.",
+    logoOnDark: "/brand-assets/savagesquadstrains-white.png",
+    logoOnLight: "/brand-assets/savagesquadstrains-black.png",
   },
 ] as const;
 

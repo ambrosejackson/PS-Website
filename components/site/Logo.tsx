@@ -1,8 +1,6 @@
 /**
- * Private Stock badge mark from public/brand-assets/ — white SVG on dark
- * heroes, black PNG variant when the header themes light (decision 9).
- * Current files are placeholders approximating the real badge; dropping the
- * Drive exports in with the same filenames swaps them site-wide.
+ * Private Stock badge mark — the REAL brand files from public/brand-assets/:
+ * white PNG on dark heroes, black PNG when the header themes light (decision 9).
  */
 export function Logo({
   variant = "white",
@@ -14,7 +12,7 @@ export function Logo({
   const src =
     variant === "black"
       ? "/brand-assets/private-stock-black.png"
-      : "/brand-assets/private-stock-white.svg";
+      : "/brand-assets/private-stock-white.png";
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt="Private Stock Cannabis Co." className={className} />

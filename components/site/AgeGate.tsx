@@ -47,7 +47,7 @@ export function AgeGate() {
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand-pages/higherself/logo.png"
+            src="/brand-assets/higherself-blue.svg"
             alt="higher self"
             className="mx-auto h-8 w-auto"
           />
@@ -136,9 +136,12 @@ export function AgeGate() {
     return (
       <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0d0c0a] p-6 text-[#f5f2ea]">
         <div className="w-full max-w-md text-center">
-          <p className="font-condensed text-3xl font-semibold uppercase tracking-[0.35em]">
-            Outfitters
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand-assets/outfitters-white.png"
+            alt="Outfitters"
+            className="mx-auto h-10 w-auto"
+          />
           <div className="mx-auto mt-4 flex items-center justify-center gap-3">
             <span className="h-px w-16 bg-[#b8860b]/60" />
             <span className="h-2 w-2 rotate-45 border border-[#b8860b]" />

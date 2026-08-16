@@ -108,8 +108,13 @@ export default async function OutfittersPage() {
       {/* Hero — global PS header overlays (D-006) */}
       <HeroSwitcher heroes={heroes}>
         <div className="flex w-full flex-col items-center justify-center pb-16 text-center text-white">
-          <h1 className="font-condensed text-6xl font-semibold uppercase tracking-[0.25em] md:text-8xl md:tracking-[0.3em]">
-            Outfitters
+          <h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand-assets/outfitters-white.png"
+              alt="Outfitters"
+              className="w-80 max-w-[85vw] md:w-[36rem]"
+            />
           </h1>
           <Diamond />
           <p className="mt-6 font-condensed text-lg uppercase tracking-[0.2em] text-white/90 md:text-xl">
