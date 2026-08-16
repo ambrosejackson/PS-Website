@@ -35,8 +35,14 @@ export function IntroMedia() {
 
   // The 4:5 box is on the wrapper, not the media, so the still and the video
   // occupy exactly the same space and object-cover crops rather than letterboxes.
+  //
+  // Height cap (D-027): 430px, expressed as max-w-[344px] because 430 × 4/5 =
+  // 344 — capping the WIDTH is what keeps the 4:5 lock intact while bounding the
+  // height. A max-height would win over aspect-ratio and quietly crop the
+  // portrait to a letterbox slice instead. Narrower columns (mobile: 323px) stay
+  // under the cap and are unaffected.
   return (
-    <div className="aspect-[4/5] w-full overflow-hidden">
+    <div className="mx-auto aspect-[4/5] w-full max-w-[344px] overflow-hidden rounded-xl">
       {reducedMotion ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

@@ -239,3 +239,12 @@ Ambrose's correction, which supersedes those entries:
   downloaded blob URL. The decoder is stalled in this browser, not in the file:
   ffprobe confirms H.264 High@4.0 / yuv420p / faststart moov. Needs a playback
   check on the Vercel preview.
+- D-027: **Intro media height capped at 430px, with the 4:5 lock kept** — so the
+  box shrinks to 344×430 and centers in the column rather than cropping to a
+  letterbox slice. Ambrose chose "keep 4:5, shrink the box" when asked; the
+  alternative (full 688px width, ratio 1.6, portrait cropped top and bottom) was
+  rejected. Expressed as `max-w-[344px]` because 430 × 4/5 = 344 — capping the
+  WIDTH bounds the height without a `max-height` overriding `aspect-ratio`.
+  Mobile (323px column, 404px tall) is already under the cap and unchanged.
+  Corners rounded `rounded-xl` (14px); the wrapper's existing `overflow-hidden`
+  clips the video to it.
