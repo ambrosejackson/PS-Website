@@ -142,3 +142,62 @@ Ambrose's correction, which supersedes those entries:
   nav text 14.4px visible; nav icons 26.4px; gutters 40px both sides.
 - /outfitters at 375px: unchanged (bar 104px, glyph `[24,38,28,28]`, logo `[72,20,64,64]`),
   and still matched between closed and open states.
+
+## 2026-08-16 — Landing restructure: CATALOG modal + Private Stock Brands section
+
+- D-021: **"BRANDS" in the header is now "CATALOG", and it opens the Brand Book
+  flip-book in a full-screen modal** instead of navigating to `/#brands`. The
+  inline Brand Book section is gone from the landing page. Hover still swaps the
+  hero (the seeded asset's `nav_target` stays `BRANDS`; the nav item carries a
+  `heroTarget` alias so no data migration is needed). Modal: dark backdrop,
+  close X, ESC and backdrop-click to close, body scroll locked while open.
+- D-022: **New "PRIVATE STOCK BRANDS" section** takes the flip-book's place —
+  full-bleed black, no divider rules, centered white heading, one row per brand
+  alternating image-left / image-right, no product thumbnails. Order is editorial
+  (Outfitters, Higher Self, TerpKings, Savage Squad Strains) and deliberately
+  differs from `lib/brands.ts` order; descriptions are verbatim Brand Book copy.
+  Each row has exactly two buttons: BUY NOW → `/store-locator?brand={slug}`,
+  LEARN MORE → `/{slug}`.
+- D-023: **`/store-locator` accepts `?brand={slug}`** and filters the list AND the
+  map on load, with brand filter chips (ALL BRANDS + the four allowlisted brands).
+  Unknown slugs fall back to "all" rather than rendering an empty page.
+- D-024: **The intro section carries the landing page's only visual pointer to the
+  catalog** — a "VIEW THE BRAND BOOK" outline button under the body copy, opening
+  the same modal.
+
+**Implementation notes:**
+- I-031: Modal state lives in `components/site/catalog-context.tsx`, mounted once
+  per public page in `app/(public)/layout.tsx`, so ANY trigger opens the same
+  overlay. `useCatalog()` is safe outside the provider (reports unavailable) and
+  both triggers degrade to a `/#brands` link when the rendered brand book is
+  missing. `BrandBookSection.tsx` (the old inline cover + pop-out) was deleted.
+- I-032: **Why drag was broken:** `FlipBook` listened for `pointerdown`/`pointerup`
+  only — no `setPointerCapture`, no `draggable={false}` on the page images. The
+  browser's native image drag hijacked the gesture, so the `pointerup` never
+  arrived and nothing turned. Now: one captured pointer stream
+  (down/move/up/cancel), a 6px axis lock (vertical intent hands the gesture back
+  to the scroller), the book follows the pointer, and release past 48px snaps
+  forward/back — anything shorter springs back, which is what keeps a click from
+  reading as a drag. Arrows `stopPropagation` on pointerdown; keyboard arrows work
+  on the focused book and, in the modal, at window level.
+- I-033: `/store-locator` is now dynamically rendered (it reads `searchParams`),
+  where it used to be static. Content still server-renders in the HTML, so SEO is
+  unaffected; flag if the ISR cache matters more than the deep link.
+- I-034: TerpKings has no photography in `public/brand-pages/terpkings/` (only a
+  synthetic gradient SVG), so its row uses the labeled placeholder
+  `/placeholders/hero-terpkings.png`. Swap when real art lands.
+- I-035: The first `BrandGrid` row dropped its `border-t border-hairline` — it now
+  butts against the black section, where a hairline reads as a grey line.
+
+**Verified** (dev server, real Chrome; mobile via a 390px same-origin iframe):
+- Desktop 1568px: CATALOG opens the modal; mouse drag left turns 1 → 2–3, drag
+  right turns back, a 25px drag does nothing; arrow keys, arrow buttons, ESC and
+  backdrop-click all work; `body.overflow` restores on close; hover on CATALOG
+  still cross-fades the hero.
+- Mobile 390px: single page; touch-pointer swipe left 1 → 2, swipe right back,
+  short swipe no-ops; scroll locked. All four brand rows stack image-then-text.
+- Intro "VIEW THE BRAND BOOK" opens the same modal and drag works from there too.
+- `/store-locator?brand=outfitters` → 3 Outfitters stores, OUTFITTERS chip active,
+  map plotted from the filtered set.
+- Section order: hero → banner → intro → PRIVATE STOCK BRANDS → brand grid →
+  Merch & Apparel → In the News → Follow Us → Newsletter → Footer.

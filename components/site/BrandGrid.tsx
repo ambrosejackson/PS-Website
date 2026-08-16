@@ -12,12 +12,17 @@ import type { CatalogProduct } from "@/lib/data";
 export function BrandGrid({ products }: { products: CatalogProduct[] }) {
   return (
     <div id="brands">
-      {BRANDS.map((brand) => {
+      {BRANDS.map((brand, i) => {
         const brandProducts = products
           .filter((p) => p.brand === brand.name)
           .slice(0, 6);
         return (
-          <section key={brand.slug} className="border-t border-hairline">
+          // No rule on the first row: it butts against the black BRANDS
+          // section, where a hairline would read as a grey line (D-022).
+          <section
+            key={brand.slug}
+            className={i === 0 ? undefined : "border-t border-hairline"}
+          >
             <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
               <div className="flex items-center justify-between">
                 <Link href={`/${brand.slug}`} className="hover:opacity-70">

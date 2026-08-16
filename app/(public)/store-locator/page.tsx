@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { AvailabilityMap } from "@/components/site/AvailabilityMap";
 import { Footer } from "@/components/site/Footer";
+import { BRANDS, brandBySlug } from "@/lib/brands";
 import { getHeroesForPage, getStoreLocations } from "@/lib/data";
 
 export const revalidate = 300;
@@ -18,11 +20,28 @@ const TIER_LABEL: Record<string, string> = {
   listed: "Carries our brands",
 };
 
-export default async function StoreLocatorPage() {
-  const [heroes, stores] = await Promise.all([
+const FILTER_BASE =
+  "inline-flex items-center border px-4 py-2 font-condensed text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors";
+
+export default async function StoreLocatorPage({
+  searchParams,
+}: {
+  /** ?brand=<slug> — deep-linked from the landing page's BUY NOW buttons. */
+  searchParams: Promise<{ brand?: string }>;
+}) {
+  const [heroes, stores, params] = await Promise.all([
     getHeroesForPage("/store-locator"),
     getStoreLocations(),
+    searchParams,
   ]);
+
+  // Unknown slugs fall back to "all" rather than showing an empty list.
+  const brand = params.brand ? brandBySlug(params.brand.toLowerCase()) : undefined;
+  const visible = brand
+    ? stores.filter((s) =>
+        s.brands.some((b) => b.toLowerCase() === brand.name.toLowerCase()),
+      )
+    : stores;
 
   return (
     <main>
@@ -37,46 +56,83 @@ export default async function StoreLocatorPage() {
               Preview build — showing mock store data until the live feed
               connects.
             </p>
-            <div className="mt-10 grid gap-10 md:grid-cols-2">
-              <ul className="divide-y">
-                {stores.map((s) => (
-                  <li key={s.id} className="py-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        {s.menu_url ? (
-                          <a
-                            href={s.menu_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="nav-underline text-sm font-medium text-neutral-900"
-                          >
-                            {s.name}
-                          </a>
-                        ) : (
-                          <span className="text-sm font-medium text-neutral-900">
-                            {s.name}
-                          </span>
-                        )}
-                        <p className="text-xs text-neutral-500">
-                          {[s.address_line1, s.city, s.state, s.zip]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </p>
-                        {s.brands.length > 0 && (
-                          <p className="mt-1 text-[11px] text-neutral-400">
-                            {s.brands.join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                      <span className="shrink-0 rounded-full border px-3 py-1 text-[10px] tracking-widest text-neutral-500">
-                        {TIER_LABEL[s.availability_tier ?? ""] ?? "Listed"}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <AvailabilityMap stores={stores} />
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/store-locator"
+                aria-current={brand ? undefined : "page"}
+                className={`${FILTER_BASE} ${
+                  brand
+                    ? "border-hairline text-neutral-500 hover:border-ink hover:text-ink"
+                    : "border-ink bg-ink text-white"
+                }`}
+              >
+                All Brands
+              </Link>
+              {BRANDS.map((b) => {
+                const active = brand?.slug === b.slug;
+                return (
+                  <Link
+                    key={b.slug}
+                    href={`/store-locator?brand=${b.slug}`}
+                    aria-current={active ? "page" : undefined}
+                    className={`${FILTER_BASE} ${
+                      active
+                        ? "border-ink bg-ink text-white"
+                        : "border-hairline text-neutral-500 hover:border-ink hover:text-ink"
+                    }`}
+                  >
+                    {b.name}
+                  </Link>
+                );
+              })}
             </div>
+            {visible.length > 0 ? (
+              <div className="mt-10 grid gap-10 md:grid-cols-2">
+                <ul className="divide-y">
+                  {visible.map((s) => (
+                    <li key={s.id} className="py-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          {s.menu_url ? (
+                            <a
+                              href={s.menu_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="nav-underline text-sm font-medium text-neutral-900"
+                            >
+                              {s.name}
+                            </a>
+                          ) : (
+                            <span className="text-sm font-medium text-neutral-900">
+                              {s.name}
+                            </span>
+                          )}
+                          <p className="text-xs text-neutral-500">
+                            {[s.address_line1, s.city, s.state, s.zip]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                          {s.brands.length > 0 && (
+                            <p className="mt-1 text-[11px] text-neutral-400">
+                              {s.brands.join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                        <span className="shrink-0 rounded-full border px-3 py-1 text-[10px] tracking-widest text-neutral-500">
+                          {TIER_LABEL[s.availability_tier ?? ""] ?? "Listed"}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <AvailabilityMap stores={visible} />
+              </div>
+            ) : (
+              <p className="mt-10 rounded border border-dashed p-10 text-center text-sm text-neutral-400">
+                No listed stores are carrying {brand?.name} right now — try
+                another brand or view all stores.
+              </p>
+            )}
           </>
         ) : (
           <p className="mt-10 rounded border border-dashed p-10 text-center text-sm text-neutral-400">

@@ -6,6 +6,7 @@ import { Menu, ShoppingBag, User } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { FullscreenMenu } from "@/components/site/FullscreenMenu";
 import { useHeroChrome } from "@/components/site/hero-context";
+import { useCatalog } from "@/components/site/catalog-context";
 import {
   barClass,
   clusterClass,
@@ -28,7 +29,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Same structure everywhere (guardrail #5) — hamburger + PS badge left,
- * BRANDS  STORE LOCATOR  YOUR REWARDS  [login] [cart] right, underline hover —
+ * CATALOG  STORE LOCATOR  YOUR REWARDS  [login] [cart] right, underline hover —
  * in one of two chrome treatments:
  *
  * - "solid" (default, every non-brand page): a SOLID WHITE bar that sits ABOVE
@@ -38,14 +39,21 @@ import { Button } from "@/components/ui/button";
  * - "overlay" (brand landing pages only): the original transparent bar overlaid
  *   on the hero, text/logo themed off the active asset (decision 9).
  *
- * Nav hover drives the hero media swap in both treatments.
+ * Nav hover drives the hero media swap in both treatments; CATALOG's CLICK
+ * opens the Brand Book flip-book modal (D-021) instead of navigating.
  */
 
+/**
+ * CATALOG (D-021) opens the Brand Book flip-book modal instead of navigating;
+ * it keeps the hero hover-swap, which still keys off the seeded asset's
+ * nav_target "BRANDS" — hence `heroTarget`. `href` is the no-JS / no-brand-book
+ * fallback the button degrades to.
+ */
 const NAV_ITEMS = [
-  { label: "BRANDS", href: "/#brands" },
+  { label: "CATALOG", href: "/#brands", heroTarget: "BRANDS", opensCatalog: true },
   { label: "STORE LOCATOR", href: "/store-locator" },
   { label: "YOUR REWARDS", href: "/rewards" },
-];
+] as const;
 
 export function Header({
   variant = "solid",
@@ -54,6 +62,7 @@ export function Header({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, navEnter, navLeave } = useHeroChrome();
+  const catalog = useCatalog();
 
   const overlay = variant === "overlay";
   // Overlay only: "light" asset (bright top band) → dark text; "dark" → white.
@@ -86,17 +95,38 @@ export function Header({
           </div>
 
           <nav className={`flex items-center gap-5 ${overlay ? "md:gap-9" : "md:gap-11"}`}>
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onMouseEnter={() => navEnter(item.label)}
-                onMouseLeave={navLeave}
-                className={`nav-underline hidden font-condensed font-semibold uppercase md:inline-block ${navTextClass(variant)}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const itemClass = `nav-underline hidden font-condensed font-semibold uppercase md:inline-block ${navTextClass(variant)}`;
+              const hover = {
+                onMouseEnter: () =>
+                  navEnter("heroTarget" in item ? item.heroTarget : item.label),
+                onMouseLeave: navLeave,
+              };
+              // Hover still swaps the hero; the click opens the catalog modal.
+              if ("opensCatalog" in item && catalog.available) {
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={catalog.openCatalog}
+                    className={itemClass}
+                    {...hover}
+                  >
+                    {item.label}
+                  </button>
+                );
+              }
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={itemClass}
+                  {...hover}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <Link
               href="/rewards"
               aria-label="Log in"
