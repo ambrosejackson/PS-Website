@@ -20,24 +20,26 @@ export function FollowUs() {
         <h2 className="font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
           Follow Us
         </h2>
-        <div className="mt-6 flex items-center justify-center gap-4">
+        {/* Pill buttons with icon + label per the docx reference structure
+            (Instagram + Facebook ONLY), kept in our light visual style. */}
+        <div className="mt-6 flex items-center justify-center gap-3">
           <a
             href={INSTAGRAM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Private Stock on Instagram"
-            className="border border-ink p-3 text-ink transition-colors hover:bg-ink hover:text-white"
+            className="flex items-center gap-2 rounded-full border border-ink px-5 py-2.5 font-condensed text-xs font-semibold uppercase tracking-wide text-ink transition-colors hover:bg-ink hover:text-white"
           >
-            <InstagramIcon className="h-5 w-5" />
+            <InstagramIcon className="h-4 w-4" />
+            Instagram
           </a>
           <a
             href={FACEBOOK_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Private Stock on Facebook"
-            className="border border-ink p-3 text-ink transition-colors hover:bg-ink hover:text-white"
+            className="flex items-center gap-2 rounded-full border border-ink px-5 py-2.5 font-condensed text-xs font-semibold uppercase tracking-wide text-ink transition-colors hover:bg-ink hover:text-white"
           >
-            <FacebookIcon className="h-5 w-5" />
+            <FacebookIcon className="h-4 w-4" />
+            Facebook
           </a>
         </div>
       </div>
