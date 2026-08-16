@@ -51,9 +51,17 @@ function FilterSelect({
   );
 }
 
-export function ProductCatalog({ products }: { products: CatalogProduct[] }) {
-  const [brand, setBrand] = useState(ALL);
-  const [category, setCategory] = useState(ALL);
+export function ProductCatalog({
+  products,
+  initialBrand,
+  initialCategory,
+}: {
+  products: CatalogProduct[];
+  initialBrand?: string;
+  initialCategory?: string;
+}) {
+  const [brand, setBrand] = useState(initialBrand ?? ALL);
+  const [category, setCategory] = useState(initialCategory ?? ALL);
   const [format, setFormat] = useState(ALL);
   const [terp, setTerp] = useState(ALL);
 

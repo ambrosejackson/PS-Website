@@ -12,10 +12,15 @@ export const metadata: Metadata = {
     "The full Private Stock catalog — Outfitters, TerpKings, Higher Self, and Savage Squad Strains. Filter by brand, category, type, and terpene profile.",
 };
 
-export default async function ProductsPage() {
-  const [heroes, products] = await Promise.all([
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ brand?: string; category?: string }>;
+}) {
+  const [heroes, products, params] = await Promise.all([
     getHeroesForPage("/products"),
     getCatalogProducts(),
+    searchParams,
   ]);
 
   return (
@@ -30,7 +35,11 @@ export default async function ProductsPage() {
           each product page.
         </p>
         <div className="mt-10">
-          <ProductCatalog products={products} />
+          <ProductCatalog
+            products={products}
+            initialBrand={params.brand}
+            initialCategory={params.category}
+          />
         </div>
       </section>
       <Footer />
