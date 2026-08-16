@@ -1,4 +1,5 @@
 import { CatalogTrigger } from "@/components/site/CatalogTrigger";
+import { IntroMedia } from "@/components/site/IntroMedia";
 
 /** Company intro — copy is exact from the build spec docx; do not edit without Ambrose. */
 export function IntroSection() {
@@ -25,13 +26,7 @@ export function IntroSection() {
           className="mt-8 inline-flex items-center border border-ink px-6 py-3 font-condensed text-xs font-semibold uppercase tracking-[0.16em] text-ink transition-colors hover:bg-ink hover:text-white"
         />
       </div>
-      {/* Placeholder for cannabis image/video — admin-managed asset later */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/placeholders/intro-media.png"
-        alt="Private Stock cultivation"
-        className="aspect-[3/2] w-full object-cover"
-      />
+      <IntroMedia />
     </section>
   );
 }

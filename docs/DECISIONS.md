@@ -201,3 +201,41 @@ Ambrose's correction, which supersedes those entries:
   map plotted from the filtered set.
 - Section order: hero → banner → intro → PRIVATE STOCK BRANDS → brand grid →
   Merch & Apparel → In the News → Follow Us → Newsletter → Footer.
+
+## 2026-08-16 — Intro section: cultivation video
+
+- D-025: **The intro section's static CULTIVATION placeholder is now a silent
+  4:5 portrait video loop** (`/videos/intro-cultivation.mp4`), autoplay + muted +
+  loop + playsInline + `preload="metadata"`, no controls. Layout is unchanged:
+  copy and VIEW THE BRAND BOOK left, media right; on mobile it stacks below the
+  copy at the same 4:5.
+- D-026: **prefers-reduced-motion: reduce swaps the whole `<video>` for the
+  poster still**, so the file never plays — and never downloads past metadata —
+  for those users.
+
+**Implementation notes:**
+- I-036: The committed source was `intro-cultivation.mp4.mov` — 2160×2700 H.264
+  at 22 Mbps, 33.5 MB, with an unused AAC track. Re-encoded to the filename the
+  spec asked for: 1080×1350 (still exactly 4:5), CRF 26, preset slow, High@4.0,
+  yuv420p, `-movflags +faststart`, audio stripped (`-an`) → **5.4 MB**. The .mov
+  was removed. 1080 wide is ~1.5× the largest CSS width the column ever gets
+  (688px at 1568px viewport).
+- I-037: Poster is frame 1 at the same 1080×1350 (`-q:v 4`, 98 KB). It is real
+  grow-room content, not a black fade-in frame, so nothing flashes empty.
+- I-038: Because the container ratio (4:5) exactly matches the source ratio,
+  `object-cover` crops nothing — letterboxing is impossible at any width.
+- I-039: ffmpeg was not installed on this machine; added via `scoop install
+  ffmpeg` (user-scope, no admin).
+
+**Verified** (dev server, real Chrome; mobile via a 390px same-origin iframe):
+- Desktop 1568px: media box 688×860 = ratio 0.800, `object-fit: cover`, poster
+  painted, layout unchanged.
+- Mobile 390px: box 323×404 = ratio 0.800, copy above the media (stacks below).
+- Element attributes at runtime: autoplay ✓ muted ✓ loop ✓ playsInline ✓
+  controls ✗ preload=metadata ✓ poster ✓.
+- **NOT verified: actual playback.** This Chrome profile never reaches
+  `loadedmetadata` for ANY mp4 — including `sss-hero.mp4`, already live on the
+  site — even from a plain range-serving static server and even from a fully
+  downloaded blob URL. The decoder is stalled in this browser, not in the file:
+  ffprobe confirms H.264 High@4.0 / yuv420p / faststart moov. Needs a playback
+  check on the Vercel preview.
