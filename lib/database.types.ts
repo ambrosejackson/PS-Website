@@ -137,6 +137,7 @@ export type Database = {
       }
       content_banners: {
         Row: {
+          badge_text: string | null
           ends_at: string | null
           id: string
           is_active: boolean
@@ -147,6 +148,7 @@ export type Database = {
           starts_at: string | null
         }
         Insert: {
+          badge_text?: string | null
           ends_at?: string | null
           id?: string
           is_active?: boolean
@@ -157,6 +159,7 @@ export type Database = {
           starts_at?: string | null
         }
         Update: {
+          badge_text?: string | null
           ends_at?: string | null
           id?: string
           is_active?: boolean

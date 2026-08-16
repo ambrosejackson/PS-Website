@@ -17,13 +17,13 @@ on conflict (id) do update set
   sort_order = excluded.sort_order, is_active = excluded.is_active;
 
 -- ===== Banner carousel: 3 slides =====
-insert into public.content_banners (id, media_url, media_type, link_url, sort_order, is_active) values
-  ('20000000-0000-4000-8000-000000000001', '/placeholders/banner-1.svg', 'image', '/products',      1, true),
-  ('20000000-0000-4000-8000-000000000002', '/placeholders/banner-2.svg', 'image', '/apparel',       2, true),
-  ('20000000-0000-4000-8000-000000000003', '/placeholders/banner-3.svg', 'image', '/store-locator', 3, true)
+insert into public.content_banners (id, media_url, media_type, link_url, badge_text, sort_order, is_active) values
+  ('20000000-0000-4000-8000-000000000001', '/placeholders/banner-1.svg', 'image', '/products',      'SEASONAL LIMITED DROP', 1, true),
+  ('20000000-0000-4000-8000-000000000002', '/placeholders/banner-2.svg', 'image', '/apparel',       null,                    2, true),
+  ('20000000-0000-4000-8000-000000000003', '/placeholders/banner-3.svg', 'image', '/store-locator', null,                    3, true)
 on conflict (id) do update set
   media_url = excluded.media_url, media_type = excluded.media_type, link_url = excluded.link_url,
-  sort_order = excluded.sort_order, is_active = excluded.is_active;
+  badge_text = excluded.badge_text, sort_order = excluded.sort_order, is_active = excluded.is_active;
 
 -- ===== Blog: 3 placeholder posts =====
 insert into public.blog_posts (id, title, slug, excerpt, hero_image, body_md, published_at, is_published, seo) values
