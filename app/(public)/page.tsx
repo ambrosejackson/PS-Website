@@ -3,7 +3,7 @@ import path from "node:path";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { RotatingBanner } from "@/components/site/RotatingBanner";
 import { IntroSection } from "@/components/site/IntroSection";
-import { FlipBook } from "@/components/site/FlipBook";
+import { BrandBookSection } from "@/components/site/BrandBookSection";
 import { BrandGrid } from "@/components/site/BrandGrid";
 import { MerchGrid } from "@/components/site/MerchGrid";
 import { InTheNews } from "@/components/site/InTheNews";
@@ -59,7 +59,7 @@ export default async function LandingPage() {
               Flip through the Private Stock product catalog.
             </p>
             <div className="mt-10">
-              <FlipBook
+              <BrandBookSection
                 pageCount={brandBook.pageCount}
                 aspectRatio={brandBook.aspectRatio}
               />

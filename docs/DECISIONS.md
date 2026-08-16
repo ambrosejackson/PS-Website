@@ -37,3 +37,4 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - A-02 (hero): fixed stay-while-hovered bug — a swap now persists while the cursor is anywhere over the hero (mousemove cancels the pending revert); leaving the hero section is the single ~600ms revert trigger.
 - A-03 (banner): rebuilt as inset rounded card with optional corner badge ribbon per the docx Jeeter "Summer Essentials" reference; migration 0002 adds `content_banners.badge_text`. Confirmed no banner renders above any hero sitewide.
 - A-04 (intro): verified verbatim copy + media placeholder — no change.
+- A-05 (flip-book): converted to a pop-out — inline cover preview + OPEN THE BRAND BOOK button opens a full-screen overlay with the 44-page flip book (per-page arrows, drag/touch, keyboard, single-page mobile).
