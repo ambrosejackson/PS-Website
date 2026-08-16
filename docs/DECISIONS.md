@@ -30,3 +30,10 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 **Implementation choices (flag if wrong):**
 - I-011: Condensed face = Oswald (next/font, weights 500–700); Cormorant serif removed. Caption color sampled as dark navy `#24334a` (token `--color-caption`, easy to adjust).
 - I-012: Seed catalog renamed to screenshot-style product names (6 per brand; Savage Squad names invented in the same style — not visible in screenshots). Merch seed renamed to SKU-style codes (TS-03, JC-08, …) since the screenshots caption merch with codes.
+
+## 2026-08-15 — Full audit pass (lovable refs + docx images)
+
+- A-01 (header/logo): `public/brand-assets/` did NOT exist despite being referenced as the real logo location. Created placeholder badge files at the canonical paths (`private-stock-white.svg`, `private-stock-black.png` via scripts/render-logo-png.mjs) — dropping the real Drive exports in with the same filenames swaps them site-wide with no code change. Header logo enlarged; black variant wired to light-themed heroes. Fullscreen menu restructured to the docx Jeeter reference (X top-left + logo, left-aligned link column, IG/FB icons below).
+- A-02 (hero): fixed stay-while-hovered bug — a swap now persists while the cursor is anywhere over the hero (mousemove cancels the pending revert); leaving the hero section is the single ~600ms revert trigger.
+- A-03 (banner): rebuilt as inset rounded card with optional corner badge ribbon per the docx Jeeter "Summer Essentials" reference; migration 0002 adds `content_banners.badge_text`. Confirmed no banner renders above any hero sitewide.
+- A-04 (intro): verified verbatim copy + media placeholder — no change.
