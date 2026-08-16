@@ -46,7 +46,7 @@ export function AgeGate() {
             {brand.name.toUpperCase()}
           </p>
         ) : (
-          <Logo className="mx-auto h-20 w-auto" />
+          <Logo variant="white" className="mx-auto h-20 w-auto" />
         )}
         {refused ? (
           <p className="mt-10 text-sm leading-relaxed text-white/70">

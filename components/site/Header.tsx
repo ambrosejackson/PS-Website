@@ -49,7 +49,10 @@ export function Header() {
             <Menu className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.25} />
           </button>
           <Link href="/" aria-label="Private Stock home">
-            <Logo className="h-14 w-auto md:h-20" />
+            <Logo
+              variant={theme === "light" ? "black" : "white"}
+              className="h-16 w-auto md:h-24"
+            />
           </Link>
         </div>
 

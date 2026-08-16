@@ -1,0 +1,17 @@
+<!-- PLACEHOLDER approximating the PS badge mark. Replace with the real Drive
+     export using this exact filename; the site picks it up with no code change. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="#ffffff">
+  <defs>
+    <path id="a-top" d="M 18 60 A 42 42 0 0 1 102 60"/>
+    <path id="a-bot" d="M 14 60 A 46 46 0 0 0 106 60"/>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#ffffff" stroke-width="1" stroke-dasharray="2 3"/>
+  <text font-family="'Arial Narrow', Arial, sans-serif" font-size="13.5" font-weight="700" letter-spacing="2">
+    <textPath href="#a-top" startOffset="50%" text-anchor="middle">PRIVATE STOCK</textPath>
+  </text>
+  <text x="60" y="66" text-anchor="middle" font-family="'Arial Narrow', Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="4">EST.</text>
+  <text font-family="'Arial Narrow', Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="2">
+    <textPath href="#a-bot" startOffset="50%" text-anchor="middle">CANNABIS CO.</textPath>
+  </text>
+</svg>

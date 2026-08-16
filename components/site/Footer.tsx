@@ -51,7 +51,7 @@ export function Footer() {
     <footer className="border-t border-hairline bg-white text-ink">
       <div className="mx-auto grid max-w-screen-2xl gap-10 px-6 py-14 md:grid-cols-[2fr_1fr_1fr_1fr] md:px-12">
         <div>
-          <Logo className="h-24 w-auto" />
+          <Logo variant="black" className="h-24 w-auto" />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-500">
             A dedication to the exceptional — from cultivation to retail to
             community.
