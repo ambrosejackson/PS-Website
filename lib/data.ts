@@ -15,7 +15,7 @@ export const FALLBACK_HERO: HeroAsset = {
   id: "fallback",
   page: "/",
   nav_target: null,
-  media_url: "/placeholders/hero-default.svg",
+  media_url: "/placeholders/hero-default.webp",
   media_type: "image",
   theme: "dark",
   is_default: true,

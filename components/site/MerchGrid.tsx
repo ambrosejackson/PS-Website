@@ -26,7 +26,7 @@ export function MerchGrid({
               <ProductCard
                 key={p.id}
                 href="/apparel"
-                imageUrl={images[0] ?? "/placeholders/merch-1.svg"}
+                imageUrl={images[0] ?? "/placeholders/merch-1.png"}
                 caption={p.name}
                 track={`merch-card:${p.slug}`}
               />

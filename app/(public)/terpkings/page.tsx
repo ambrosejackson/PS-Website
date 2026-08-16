@@ -110,7 +110,7 @@ export default async function TerpKingsPage() {
               <ProductCard
                 key={p.id}
                 href={`/products/terpkings/${p.slug}`}
-                imageUrl={p.image_url ?? "/placeholders/product.svg"}
+                imageUrl={p.image_url ?? "/placeholders/product.png"}
                 caption={p.name}
                 hoverHint="Click for more info"
               />

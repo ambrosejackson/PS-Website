@@ -261,7 +261,7 @@ export default async function OutfittersPage() {
                     </span>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={p.image_url ?? "/placeholders/product.svg"}
+                      src={p.image_url ?? "/placeholders/product.png"}
                       alt={p.name}
                       className="max-h-full max-w-full object-contain"
                     />

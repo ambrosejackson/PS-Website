@@ -2,10 +2,10 @@ import { FacebookIcon, InstagramIcon } from "@/components/site/social-icons";
 
 /** FOLLOW US — Instagram + Facebook buttons only, with a scrolling image strip. */
 const STRIP_IMAGES = [
-  "/placeholders/follow-1.svg",
-  "/placeholders/follow-2.svg",
-  "/placeholders/follow-3.svg",
-  "/placeholders/follow-4.svg",
+  "/placeholders/follow-1.png",
+  "/placeholders/follow-2.png",
+  "/placeholders/follow-3.png",
+  "/placeholders/follow-4.png",
 ];
 
 // TODO(Ambrose): confirm final Instagram/Facebook profile URLs.

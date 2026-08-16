@@ -20,7 +20,7 @@ export function IntroSection() {
       {/* Placeholder for cannabis image/video — admin-managed asset later */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/placeholders/intro-media.svg"
+        src="/placeholders/intro-media.png"
         alt="Private Stock cultivation"
         className="aspect-[3/2] w-full object-cover"
       />

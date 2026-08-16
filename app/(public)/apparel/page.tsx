@@ -33,7 +33,7 @@ export default async function ApparelPage() {
             return (
               <ProductCard
                 key={p.id}
-                imageUrl={images[0] ?? "/placeholders/merch-1.svg"}
+                imageUrl={images[0] ?? "/placeholders/merch-1.png"}
                 caption={p.name}
               />
             );

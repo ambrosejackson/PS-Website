@@ -101,7 +101,7 @@ export function ProductCatalog({
               </p>
               <ProductCard
                 href={`/products/${b.slug}/${p.slug}`}
-                imageUrl={p.image_url ?? "/placeholders/product.svg"}
+                imageUrl={p.image_url ?? "/placeholders/product.png"}
                 caption={p.name}
                 track={`product-card:${p.slug}`}
                 hoverHint="Click for more info"

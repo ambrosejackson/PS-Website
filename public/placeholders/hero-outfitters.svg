@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#16241b"/><stop offset="1" stop-color="#3e6b4f"/>
-  </linearGradient></defs>
-  <rect width="1920" height="1080" fill="url(#g)"/>
-  <text x="50%" y="50%" fill="rgba(255,255,255,0.5)" font-family="Georgia, serif" font-size="86" text-anchor="middle" dominant-baseline="middle" letter-spacing="14">OUTFITTERS</text>
-</svg>

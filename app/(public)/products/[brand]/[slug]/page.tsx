@@ -111,7 +111,7 @@ export default async function ProductPage({
         <div className="group flex items-center justify-center overflow-hidden bg-white md:order-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.image_url ?? "/placeholders/product.svg"}
+            src={product.image_url ?? "/placeholders/product.png"}
             alt={product.name}
             className="aspect-square w-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
@@ -270,7 +270,7 @@ export default async function ProductPage({
                 <ProductCard
                   key={p.id}
                   href={`/products/${brand.slug}/${p.slug}`}
-                  imageUrl={p.image_url ?? "/placeholders/product.svg"}
+                  imageUrl={p.image_url ?? "/placeholders/product.png"}
                   caption={p.name}
                 />
               ))}

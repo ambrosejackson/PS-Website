@@ -32,7 +32,7 @@ export default async function NewsIndexPage() {
                 <div className="aspect-[8/5] overflow-hidden rounded-sm bg-neutral-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={post.hero_image ?? "/placeholders/blog-1.svg"}
+                    src={post.hero_image ?? "/placeholders/blog-1.png"}
                     alt=""
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />

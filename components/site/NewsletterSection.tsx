@@ -11,7 +11,7 @@ export function NewsletterSection() {
     <section className="grid md:grid-cols-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/placeholders/newsletter-photo.svg"
+        src="/placeholders/newsletter-photo.png"
         alt="Private Stock apparel"
         className="h-64 w-full object-cover md:h-full md:min-h-[480px]"
       />
