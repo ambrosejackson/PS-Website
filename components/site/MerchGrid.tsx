@@ -9,7 +9,7 @@ import type { MerchProduct } from "@/lib/data";
  */
 export function MerchGrid({
   products,
-  limit = 6,
+  limit = 12,
 }: {
   products: MerchProduct[];
   limit?: number;
