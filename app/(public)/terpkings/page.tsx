@@ -76,7 +76,8 @@ export default async function TerpKingsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <HeroSwitcher heroes={heroes}>
+      {/* Brand landing page — keeps the transparent overlay header (D-012). */}
+      <HeroSwitcher heroes={heroes} overlayHeader>
         <div className="flex w-full flex-col items-center justify-center pb-24 text-center text-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoSrc} alt="TerpKings" className="h-16 w-auto md:h-24" />

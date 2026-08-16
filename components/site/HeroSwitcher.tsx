@@ -13,12 +13,16 @@ import { HeroContext } from "@/components/site/hero-context";
 import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
 
 /**
- * Full-bleed hero flush to the viewport top with the Header overlaid
- * (guardrail #5) and nav-hover media swapping (build plan decision 8):
- * hovering a right-nav item swaps to its mapped asset and it stays while the
- * cursor remains over the nav item or the hero; ~600ms after the cursor
- * leaves, the default returns. Mobile (no hover capability) always shows the
- * default. Supports image and video assets.
+ * Full-bleed hero with the site Header and nav-hover media swapping (build plan
+ * decision 8): hovering a right-nav item swaps to its mapped asset and it stays
+ * while the cursor remains over the nav item or the hero; ~600ms after the
+ * cursor leaves, the default returns. Mobile (no hover capability) always shows
+ * the default. Supports image and video assets.
+ *
+ * Two chrome treatments (guardrail #5): by default the solid white bar sits
+ * ABOVE the hero and the pair together fill `heightClassName`; brand landing
+ * pages pass `overlayHeader` to keep the original transparent bar overlaid on a
+ * hero flush to the viewport top.
  */
 
 const REVERT_GRACE_MS = 600;
@@ -34,11 +38,14 @@ export function HeroSwitcher({
   heroes,
   children,
   heightClassName = "h-svh",
+  overlayHeader = false,
 }: {
   heroes: HeroAsset[];
   /** Optional content overlaid on the hero (e.g. brand titles). */
   children?: React.ReactNode;
   heightClassName?: string;
+  /** Brand landing pages only — transparent header over a top-flush hero. */
+  overlayHeader?: boolean;
 }) {
   const assets = heroes.length > 0 ? heroes : [FALLBACK_HERO];
   const defaultHero = useMemo(
@@ -107,10 +114,10 @@ export function HeroSwitcher({
     assets.find((h) => h.id === activeId) ?? defaultHero;
 
   // A swapped hero STAYS while the cursor is anywhere over the nav item or the
-  // hero itself (build plan decision 8 + docx). The nav lives inside this
-  // section, so mouseenter never re-fires when moving nav → hero; instead any
-  // movement inside the section cancels a pending revert, and leaving the
-  // section schedules it.
+  // hero itself (build plan decision 8 + docx). The nav lives inside the hovered
+  // region (the header bar plus the hero), so mouseenter never re-fires when
+  // moving nav → hero; instead any movement inside that region cancels a pending
+  // revert, and leaving it schedules the revert.
   const heroMove = useCallback(() => {
     if (!canHover) return;
     if (activeId !== defaultHero.id) cancelRevert();
@@ -121,53 +128,76 @@ export function HeroSwitcher({
     if (activeId !== defaultHero.id) scheduleRevert();
   }, [canHover, activeId, defaultHero.id, scheduleRevert]);
 
-  return (
-    <HeroContext.Provider value={{ theme: (active.theme as "light" | "dark") ?? "dark", navEnter, navLeave }}>
-      <section
-        className={`relative w-full overflow-hidden ${heightClassName}`}
-        onMouseMove={heroMove}
-        onMouseLeave={heroLeave}
-      >
-        {assets.map((hero) => {
-          const isActive = hero.id === active.id;
-          const media =
-            hero.media_type === "video" ? (
-              <video
-                src={hero.media_url}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              // Media URLs are admin-managed with unknown dimensions — plain img.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={hero.media_url}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            );
-          return (
-            <div
-              key={hero.id}
-              aria-hidden={!isActive}
-              className={`absolute inset-0 transition-opacity duration-500 ${
-                isActive ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {media}
-            </div>
+  const media = (
+    <>
+      {assets.map((hero) => {
+        const isActive = hero.id === active.id;
+        const mediaEl =
+          hero.media_type === "video" ? (
+            <video
+              src={hero.media_url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            // Media URLs are admin-managed with unknown dimensions — plain img.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={hero.media_url}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           );
-        })}
-        {children && (
-          <div className="absolute inset-0 z-10 flex items-end">
-            {children}
+        return (
+          <div
+            key={hero.id}
+            aria-hidden={!isActive}
+            className={`absolute inset-0 transition-opacity duration-500 ${
+              isActive ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {mediaEl}
           </div>
-        )}
-        <Header />
-      </section>
+        );
+      })}
+      {children && (
+        <div className="absolute inset-0 z-10 flex items-end">{children}</div>
+      )}
+    </>
+  );
+
+  return (
+    <HeroContext.Provider
+      value={{
+        theme: (active.theme as "light" | "dark") ?? "dark",
+        navEnter,
+        navLeave,
+      }}
+    >
+      {overlayHeader ? (
+        <section
+          className={`relative w-full overflow-hidden ${heightClassName}`}
+          onMouseMove={heroMove}
+          onMouseLeave={heroLeave}
+        >
+          {media}
+          <Header variant="overlay" />
+        </section>
+      ) : (
+        <div
+          className={`flex w-full flex-col ${heightClassName}`}
+          onMouseMove={heroMove}
+          onMouseLeave={heroLeave}
+        >
+          <Header />
+          <section className="relative w-full flex-1 overflow-hidden">
+            {media}
+          </section>
+        </div>
+      )}
     </HeroContext.Provider>
   );
 }

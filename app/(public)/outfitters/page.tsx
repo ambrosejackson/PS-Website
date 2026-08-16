@@ -106,7 +106,8 @@ export default async function OutfittersPage() {
       />
 
       {/* Hero — global PS header overlays (D-006) */}
-      <HeroSwitcher heroes={heroes}>
+      {/* Brand landing page — keeps the transparent overlay header (D-012). */}
+      <HeroSwitcher heroes={heroes} overlayHeader>
         <div className="flex w-full flex-col items-center justify-center pb-16 text-center text-white">
           <h1>
             {/* eslint-disable-next-line @next/next/no-img-element */}

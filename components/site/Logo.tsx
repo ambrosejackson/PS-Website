@@ -1,6 +1,7 @@
 /**
  * Private Stock badge mark — the REAL brand files from public/brand-assets/:
- * white PNG on dark heroes, black PNG when the header themes light (decision 9).
+ * black PNG in the solid white header bar and wherever the ground is light;
+ * white PNG on dark grounds and on brand pages' dark-themed overlay heroes.
  */
 export function Logo({
   variant = "white",

@@ -74,7 +74,8 @@ export function SSSHero() {
         {muted ? "🔇 Sound Off" : "🔊 Sound On"}
       </button>
 
-      <Header />
+      {/* Brand landing page — keeps the transparent overlay header (D-012). */}
+      <Header variant="overlay" />
     </section>
   );
 }

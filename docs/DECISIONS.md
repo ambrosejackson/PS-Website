@@ -60,3 +60,17 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - I-013: Assets recovered — SSS: all 11 (incl. hero video + poster + merch shots + 4 YouTube IDs from the live embed). Higher Self: 7 (lifestyle-hero, logo, category shots, merch banner, both lifestyle photos). Outfitters: hero + speakeasy photos (base64-embedded in the live HTML, decoded). MISSING: TerpKings white logo (text placeholder used), Outfitters collection product photos (live site itself uses placeholder cards).
 - I-014: Brand fonts (approximations): Higher Self = Poppins + Caveat script; SSS = Archivo Black display + mono labels; Outfitters = Oswald ultra-letterspaced. Swap when brand font files land.
 - I-015: contact_messages table (migration 0004, service-role only RLS) + POST /api/contact + /admin/messages list; Outfitters contact strip uses placeholder sales@privatestock.co + Chicago, IL until Ambrose confirms (fake info@outfitters.com / +1 312 555-0100 dropped).
+
+## 2026-08-15 — Header redesign (solid white bar)
+
+**Decisions made by Ambrose:**
+- D-012: The header becomes a SOLID WHITE bar that SITS ABOVE the hero (not overlaying it), all content black — hamburger, `private-stock-black.png` badge, condensed uppercase nav — per `docs/reference/lovable/01-header-hero.png`. This **reverses decision 9 and the original guardrail #5** ("overlaid on a full-bleed hero … white text with per-asset light/dark theme switching") for every non-brand page. Nav labels and order are unchanged (BRANDS / STORE LOCATOR / YOUR REWARDS / login / cart) — the reference's own labels are still not adopted (D-004 stands).
+- D-013 (clarification, mid-session): **Brand landing pages are EXCLUDED from D-012.** `/outfitters`, `/higherself`, `/terpkings`, `/savagesquadstrains` keep the transparent overlay header on a top-flush hero, including the per-asset light/dark theme switching. Because of this, decision 9's contrast logic is NOT dead and `lib/luminance.ts` + `content_heroes.theme` remain live — the solid bar simply never reads the flag.
+- D-014: Product detail pages (`/products/[brand]/[slug]`) count as product pages, not brand pages — they get the white bar. (Assumed from Ambrose's own enumeration, which listed "brand pages" and "product pages" separately; flag if wrong.)
+
+**Implementation choices (flag if wrong):**
+- I-016: One `Header` component with `variant="solid" | "overlay"` (solid is the default) rather than two components, so the structure/labels/hover behavior physically cannot drift between the two treatments.
+- I-017: Solid-bar metrics read off the reference proportionally: bar `h-16` mobile / `h-24` desktop, logo `h-10`/`h-14`, nav `text-[12px]` at `tracking-[0.16em]`, inner rail `mx-auto max-w-screen-2xl px-6 md:px-12` so the logo lines up with the section content below it (same rail as BrandGrid/Footer).
+- I-018: In solid mode the header + hero are wrapped in a `flex flex-col` div that carries the page's `heightClassName`, so the bar and hero TOGETHER fill the intended height (e.g. `h-svh` on the landing page) instead of the hero pushing a full viewport below the bar. Overlay mode is byte-for-byte the old layout.
+- I-019: Hero hover-swap preserved in both modes — the mousemove/mouseleave revert handlers moved from the `<section>` to that wrapper, so the hovered region is still "nav item + hero" and the ~600ms revert fires only when the cursor leaves both. Mobile still shows the default asset only.
+- I-020: 404 gained the header (it previously had none) and is now `flex min-h-svh flex-col` with the dark panel as `flex-1`.

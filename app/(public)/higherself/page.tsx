@@ -113,7 +113,8 @@ export default async function HigherSelfPage() {
       />
 
       {/* Hero — global PS header overlays (D-006); giant sky-blue script over lifestyle photo */}
-      <HeroSwitcher heroes={heroes}>
+      {/* Brand landing page — keeps the transparent overlay header (D-012). */}
+      <HeroSwitcher heroes={heroes} overlayHeader>
         <div className="flex w-full flex-col items-center justify-center pb-24 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
