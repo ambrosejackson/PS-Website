@@ -96,3 +96,49 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - Menu items render at 36px, single line each (40px tall), widest right edge 176.8px inside a 298.8–356.9px drawer.
 - Brand/overlay header (/outfitters at 375px) also matches between states, with its own geometry unchanged (104px row, 64px logo, 28px glyph).
 - Desktop (1920px) header unchanged: 112px bar, 64px logo, 28px glyph, nav 12px.
+
+## 2026-08-16 (later) — Header sizing correction
+
+The first pass of D-015/D-016 got the anchor backwards and scaled the wrong text.
+Ambrose's correction, which supersedes those entries:
+
+- D-018: **The expanded menu's old row is the ANCHOR, not the header.** The closed
+  header's hamburger + logo move to where the X + logo used to sit — 20px gutter
+  on mobile / 40px desktop, `py-5`, no `max-w-screen-2xl` rail, bar height derived
+  from the logo. (The first pass did the reverse: it dragged the menu onto the
+  header's reference-matched rail.)
+- D-019: **+20% applies to the HEADER's nav text and login/cart icons** (12→14.4px,
+  20→24px mobile / 22→26.4px desktop), which the first pass missed. The fullscreen
+  menu's item text and IG/FB icons keep the +20% already applied — Ambrose chose
+  "keep both" when asked.
+- D-020: **Logo = the size it rendered at next to the X, +20%**, at BOTH breakpoints:
+  mobile 64→76.8px, desktop 96→115.2px. Ambrose chose "desktop follows too" when
+  asked, accepting that the desktop bar grows 112→155.2px and therefore **no longer
+  matches the lovable reference's header proportions**. CLAUDE.md guardrail #5 now
+  records this so a future session doesn't "restore" the shorter bar.
+
+**Implementation notes:**
+- I-027: Because both variants now use the same bar wrapper, `barClass`, `iconClass`
+  and `iconStroke` collapsed to constants; `clusterClass`, `logoClass`, `navTextClass`
+  and `navIconClass` stay variant-keyed. Solid hamburger adopted the old X's glyph
+  (`h-7 md:h-8`, stroke 1.25) so it lands on the X's exact pixel.
+- I-028: Brand/overlay pages were left entirely alone (bar 104px, logo 64px, glyph
+  28px, nav 13px/20px icons) — they were excluded from the white-bar work and stay
+  excluded from these bumps.
+- I-029: Dropping `max-w-screen-2xl` means the right-hand nav now sits on the 40px
+  viewport gutter on desktop rather than a centered 1536px rail. That follows from
+  D-018 (the cluster must sit on the viewport gutter) — flag if the right side
+  should keep the old rail.
+- I-030: The hamburger's Y moves 38→44.4px on mobile relative to the old X. That is
+  unavoidable: a 20%-taller logo grows the row it is vertically centred in. X and
+  hamburger remain identical to each other, which is the invariant that matters.
+
+**Verified** (both states rendered simultaneously, real viewports via same-origin iframes):
+- 375 / 390 / 430px: hamburger and X identical `[24, 44.4, 28, 28]`; header and menu
+  logos identical `[76, 20, 76.8, 76.8]` — x/y match the old menu row exactly; bar
+  116.8px; nav icons 24px; drawer 83%; menu items 36px on the 20px gutter, single
+  line, no overflow.
+- 1440px: bar 155.2px; logo `[100, 20, 115.2, 115.2]`; glyph `[44, 61.6, 32, 32]`;
+  nav text 14.4px visible; nav icons 26.4px; gutters 40px both sides.
+- /outfitters at 375px: unchanged (bar 104px, glyph `[24,38,28,28]`, logo `[72,20,64,64]`),
+  and still matched between closed and open states.

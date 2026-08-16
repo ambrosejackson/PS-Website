@@ -12,6 +12,8 @@ import {
   iconClass,
   iconStroke,
   logoClass,
+  navIconClass,
+  navTextClass,
   type HeaderVariant,
 } from "@/components/site/header-chrome";
 import {
@@ -30,8 +32,9 @@ import { Button } from "@/components/ui/button";
  * in one of two chrome treatments:
  *
  * - "solid" (default, every non-brand page): a SOLID WHITE bar that sits ABOVE
- *   the hero, black content, no per-asset theming. Matches
- *   docs/reference/lovable/01-header-hero.png.
+ *   the hero, black content, no per-asset theming. Bar geometry follows the
+ *   expanded menu's old row rather than the lovable reference's proportions
+ *   (D-018) — the reference still governs the white ground and black content.
  * - "overlay" (brand landing pages only): the original transparent bar overlaid
  *   on the hero, text/logo themed off the active asset (decision 9).
  *
@@ -65,17 +68,14 @@ export function Header({
   return (
     <>
       <header className={`z-40 ${chrome}`}>
-        <div className={barClass(variant)}>
-          <div className={clusterClass}>
+        <div className={barClass}>
+          <div className={clusterClass(variant)}>
             <button
               aria-label="Open menu"
               onClick={() => setMenuOpen(true)}
               className="p-1 transition-opacity hover:opacity-60"
             >
-              <Menu
-                className={iconClass(variant)}
-                strokeWidth={iconStroke(variant)}
-              />
+              <Menu className={iconClass} strokeWidth={iconStroke} />
             </button>
             <Link href="/" aria-label="Private Stock home">
               <Logo
@@ -92,11 +92,7 @@ export function Header({
                 href={item.href}
                 onMouseEnter={() => navEnter(item.label)}
                 onMouseLeave={navLeave}
-                className={`nav-underline hidden font-condensed font-semibold uppercase md:inline-block ${
-                  overlay
-                    ? "text-[13px] tracking-[0.22em]"
-                    : "text-[12px] tracking-[0.16em]"
-                }`}
+                className={`nav-underline hidden font-condensed font-semibold uppercase md:inline-block ${navTextClass(variant)}`}
               >
                 {item.label}
               </Link>
@@ -106,17 +102,14 @@ export function Header({
               aria-label="Log in"
               className="p-1 transition-opacity hover:opacity-60"
             >
-              <User className="h-5 w-5 md:h-[22px] md:w-[22px]" strokeWidth={1.5} />
+              <User className={navIconClass(variant)} strokeWidth={1.5} />
             </Link>
             <Sheet>
               <SheetTrigger
                 aria-label="Cart"
                 className="p-1 transition-opacity hover:opacity-60"
               >
-                <ShoppingBag
-                  className="h-5 w-5 md:h-[22px] md:w-[22px]"
-                  strokeWidth={1.5}
-                />
+                <ShoppingBag className={navIconClass(variant)} strokeWidth={1.5} />
               </SheetTrigger>
               <SheetContent side="right">
                 <SheetHeader>

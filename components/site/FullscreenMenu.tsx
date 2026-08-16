@@ -54,17 +54,14 @@ export function FullscreenMenu({
         className="absolute inset-0 bg-black/60 md:hidden"
       />
       <div className="absolute inset-y-0 left-0 w-[83%] max-w-[26rem] overflow-y-auto bg-neutral-950/97 text-white md:w-full md:max-w-none">
-        <div className={barClass(variant)}>
-          <div className={clusterClass}>
+        <div className={barClass}>
+          <div className={clusterClass(variant)}>
             <button
               onClick={onClose}
               aria-label="Close menu"
               className="p-1 transition-opacity hover:opacity-60"
             >
-              <X
-                className={iconClass(variant)}
-                strokeWidth={iconStroke(variant)}
-              />
+              <X className={iconClass} strokeWidth={iconStroke} />
             </button>
             <Link href="/" onClick={onClose} aria-label="Private Stock home">
               <Logo variant="white" className={logoClass(variant)} />
@@ -72,7 +69,7 @@ export function FullscreenMenu({
           </div>
         </div>
         {/* Same left gutter as the hamburger/logo above. */}
-        <nav className="flex flex-col items-start gap-5 px-6 py-10 md:px-12">
+        <nav className="flex flex-col items-start gap-5 px-5 py-10 md:px-10">
           {MENU_ITEMS.map((item, i) => (
             <Link
               key={item.href}
