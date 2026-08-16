@@ -98,26 +98,35 @@ export function HeroSwitcher({
     [canHover, byNavTarget, cancelRevert],
   );
 
-  const navLeave = useCallback(() => {
-    if (!canHover) return;
-    scheduleRevert();
-  }, [canHover, scheduleRevert]);
+  // Leaving the nav item alone does NOT revert — the swapped hero stays while
+  // the cursor remains anywhere over the hero; the section's mouseleave below
+  // is the single revert trigger.
+  const navLeave = useCallback(() => {}, []);
 
   const active =
     assets.find((h) => h.id === activeId) ?? defaultHero;
 
-  // While a swapped hero is showing, hovering the hero itself keeps it alive.
-  const heroEnter = useCallback(() => {
+  // A swapped hero STAYS while the cursor is anywhere over the nav item or the
+  // hero itself (build plan decision 8 + docx). The nav lives inside this
+  // section, so mouseenter never re-fires when moving nav → hero; instead any
+  // movement inside the section cancels a pending revert, and leaving the
+  // section schedules it.
+  const heroMove = useCallback(() => {
     if (!canHover) return;
     if (activeId !== defaultHero.id) cancelRevert();
   }, [canHover, activeId, defaultHero.id, cancelRevert]);
+
+  const heroLeave = useCallback(() => {
+    if (!canHover) return;
+    if (activeId !== defaultHero.id) scheduleRevert();
+  }, [canHover, activeId, defaultHero.id, scheduleRevert]);
 
   return (
     <HeroContext.Provider value={{ theme: (active.theme as "light" | "dark") ?? "dark", navEnter, navLeave }}>
       <section
         className={`relative w-full overflow-hidden ${heightClassName}`}
-        onMouseEnter={heroEnter}
-        onMouseLeave={navLeave}
+        onMouseMove={heroMove}
+        onMouseLeave={heroLeave}
       >
         {assets.map((hero) => {
           const isActive = hero.id === active.id;
