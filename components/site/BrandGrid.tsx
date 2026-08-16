@@ -21,6 +21,7 @@ export function BrandGrid({ products }: { products: CatalogProduct[] }) {
             <div className="mx-auto max-w-screen-2xl px-6 py-12 md:px-12 md:py-14">
               <SectionHeader
                 title={brand.name}
+                titleHref={`/${brand.slug}`}
                 seeMoreHref={`/${brand.slug}`}
               />
               {brandProducts.length > 0 ? (

@@ -7,11 +7,14 @@ import Link from "next/link";
  */
 export function SectionHeader({
   title,
+  titleHref,
   seeMoreHref,
   seeMoreLabel = "SEE MORE",
   as: Heading = "h2",
 }: {
   title: string;
+  /** Makes the title itself a link (e.g. brand name → brand page). */
+  titleHref?: string;
   seeMoreHref?: string;
   seeMoreLabel?: string;
   as?: "h1" | "h2";
@@ -19,7 +22,13 @@ export function SectionHeader({
   return (
     <div className="flex items-baseline justify-between">
       <Heading className="font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
-        {title}
+        {titleHref ? (
+          <Link href={titleHref} className="hover:opacity-70">
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
       </Heading>
       {seeMoreHref && (
         <Link

@@ -38,3 +38,4 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - A-03 (banner): rebuilt as inset rounded card with optional corner badge ribbon per the docx Jeeter "Summer Essentials" reference; migration 0002 adds `content_banners.badge_text`. Confirmed no banner renders above any hero sitewide.
 - A-04 (intro): verified verbatim copy + media placeholder — no change.
 - A-05 (flip-book): converted to a pop-out — inline cover preview + OPEN THE BRAND BOOK button opens a full-screen overlay with the 44-page flip book (per-page arrows, drag/touch, keyboard, single-page mobile).
+- A-06 (brand grid): screenshot-compare passed (titles/SEE MORE/hairlines/6-col cards/navy captions, four allowlisted brands); correction — brand name in the section title now links to the brand page.
