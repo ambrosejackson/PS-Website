@@ -248,3 +248,8 @@ Ambrose's correction, which supersedes those entries:
   Mobile (323px column, 404px tall) is already under the cap and unchanged.
   Corners rounded `rounded-xl` (14px); the wrapper's existing `overflow-hidden`
   clips the video to it.
+- D-028: **CATALOG added to the hamburger menu**, between PRODUCTS and APPAREL.
+  The header's CATALOG item is `hidden md:inline-block`, so without this entry
+  the catalog was unreachable on mobile anywhere except the landing page's intro
+  link. Clicking it closes the drawer and opens the same modal; it degrades to
+  the `/#brands` link when the brand book isn't rendered, same as the header.

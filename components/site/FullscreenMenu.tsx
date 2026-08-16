@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { FacebookIcon, InstagramIcon } from "@/components/site/social-icons";
+import { useCatalog } from "@/components/site/catalog-context";
 import {
   barClass,
   clusterClass,
@@ -24,14 +25,21 @@ import {
  * page; from md up it stays full-bleed as before.
  */
 
+/**
+ * CATALOG opens the Brand Book modal rather than navigating (D-021). It lives
+ * here because the header's CATALOG item is `hidden md:inline-block` — without
+ * this entry the catalog is unreachable on mobile outside the landing page's
+ * intro link (D-028). `href` is the fallback when the brand book isn't rendered.
+ */
 const MENU_ITEMS = [
   { href: "/", label: "HOME" },
   { href: "/about", label: "ABOUT" },
   { href: "/products", label: "PRODUCTS" },
+  { href: "/#brands", label: "CATALOG", opensCatalog: true },
   { href: "/apparel", label: "APPAREL" },
   { href: "/rewards", label: "REWARDS" },
   { href: "/contact", label: "CONTACT" },
-];
+] as const;
 
 export function FullscreenMenu({
   open,
@@ -42,6 +50,9 @@ export function FullscreenMenu({
   onClose: () => void;
   variant?: HeaderVariant;
 }) {
+  // Before the early return — hooks cannot sit behind a conditional.
+  const catalog = useCatalog();
+
   if (!open) return null;
 
   return (
@@ -70,17 +81,38 @@ export function FullscreenMenu({
         </div>
         {/* Same left gutter as the hamburger/logo above. */}
         <nav className="flex flex-col items-start gap-5 px-5 py-10 md:px-10">
-          {MENU_ITEMS.map((item, i) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className="nav-underline font-condensed text-4xl font-bold uppercase tracking-tight md:text-[2.7rem]"
-              style={{ transitionDelay: `${i * 40}ms` }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {MENU_ITEMS.map((item, i) => {
+            const itemClass =
+              "nav-underline font-condensed text-4xl font-bold uppercase tracking-tight md:text-[2.7rem]";
+            const style = { transitionDelay: `${i * 40}ms` };
+            if ("opensCatalog" in item && catalog.available) {
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    catalog.openCatalog();
+                  }}
+                  className={itemClass}
+                  style={style}
+                >
+                  {item.label}
+                </button>
+              );
+            }
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={onClose}
+                className={itemClass}
+                style={style}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
           <div className="mt-6 flex gap-5">
             <a
               href="https://www.instagram.com/privatestockcannabis"
