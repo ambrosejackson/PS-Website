@@ -35,6 +35,7 @@ export function BrandGrid({ products }: { products: CatalogProduct[] }) {
                         imageUrl={p.image_url ?? "/placeholders/product.svg"}
                         caption={p.name}
                         track={`brand-row:${p.slug}`}
+                        hoverHint="Click for more info"
                       />
                     );
                   })}

@@ -89,6 +89,7 @@ export type Database = {
           sheet_row_ref: string | null
           slug: string
           sort_order: number | null
+          strain_type: string | null
           terp_category: string | null
           terpene_profile: Json | null
           thc_range: string | null
@@ -108,6 +109,7 @@ export type Database = {
           sheet_row_ref?: string | null
           slug: string
           sort_order?: number | null
+          strain_type?: string | null
           terp_category?: string | null
           terpene_profile?: Json | null
           thc_range?: string | null
@@ -127,6 +129,7 @@ export type Database = {
           sheet_row_ref?: string | null
           slug?: string
           sort_order?: number | null
+          strain_type?: string | null
           terp_category?: string | null
           terpene_profile?: Json | null
           thc_range?: string | null

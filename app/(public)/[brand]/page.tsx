@@ -93,6 +93,7 @@ export default async function BrandPage({
                 href={`/products/${brand.slug}/${p.slug}`}
                 imageUrl={p.image_url ?? "/placeholders/product.svg"}
                 caption={p.name}
+                hoverHint="Click for more info"
               />
             ))}
           </div>

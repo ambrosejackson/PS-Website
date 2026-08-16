@@ -58,6 +58,12 @@ interface TerpeneEntry {
   note?: string;
 }
 
+const STRAIN_CHIP: Record<string, string> = {
+  indica: "bg-purple-700",
+  sativa: "bg-amber-500",
+  hybrid: "bg-green-700",
+};
+
 export default async function ProductPage({
   params,
 }: {
@@ -101,7 +107,8 @@ export default async function ProductPage({
       />
 
       <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-2 md:gap-16 md:py-24">
-        <div className="group flex items-center justify-center overflow-hidden bg-white">
+        {/* docx Jeeter reference: name/details LEFT, large product image RIGHT */}
+        <div className="group flex items-center justify-center overflow-hidden bg-white md:order-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={product.image_url ?? "/placeholders/product.svg"}
@@ -110,7 +117,7 @@ export default async function ProductPage({
           />
         </div>
 
-        <div>
+        <div className="md:order-1">
           <Link
             href={`/${brand.slug}`}
             className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400 hover:text-ink"
@@ -120,7 +127,16 @@ export default async function ProductPage({
           <h1 className="mt-2 font-condensed text-3xl font-bold uppercase leading-tight tracking-tight text-ink md:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-2 text-sm text-neutral-500">
+          {product.strain_type && (
+            <span
+              className={`mt-3 inline-block px-3 py-1 font-condensed text-xs font-bold uppercase tracking-wide text-white ${
+                STRAIN_CHIP[product.strain_type] ?? "bg-neutral-600"
+              }`}
+            >
+              {product.strain_type}
+            </span>
+          )}
+          <p className="mt-3 text-sm text-neutral-500">
             {[product.category, product.format, product.weight]
               .filter(Boolean)
               .join(" · ")}

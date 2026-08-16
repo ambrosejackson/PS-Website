@@ -181,3 +181,33 @@ insert into public.merch_products (id, name, slug, description, brand, images, i
   ('50000000-0000-4000-8000-000000000010', 'GL-01', 'gl-01',  'Placeholder merch product.', 'Outfitters',           '["/placeholders/merch-2.svg"]', true, 10),
   ('50000000-0000-4000-8000-000000000011', 'ZH-02', 'zh-02',  'Placeholder merch product.', 'Higher Self',          '["/placeholders/merch-3.svg"]', true, 11),
   ('50000000-0000-4000-8000-000000000012', 'CP-04', 'cp-04',  'Placeholder merch product.', 'Higher Self',          '["/placeholders/merch-4.svg"]', true, 12);
+
+-- Strain type chips (indica/sativa/hybrid) for the 24 seed products
+update public.catalog_products set strain_type = v.st
+from (values
+  ('outfitters-3-5g-top-shelf-flower','hybrid'),
+  ('outfitters-1g-top-shelf-flower','hybrid'),
+  ('outfitters-7g-gun-powder-premium-ground-flower','indica'),
+  ('outfitters-7g-gun-powder-infused-ground-flower','sativa'),
+  ('outfitters-5-pack-0-7g-luckies-pre-rolls','hybrid'),
+  ('outfitters-2g-rosin-infused-glasstip-blunt','indica'),
+  ('terpkings-5-pack-rosin-kief-pre-rolls-fruit','sativa'),
+  ('terpkings-5-pack-rosin-kief-pre-rolls-dessert','indica'),
+  ('terpkings-0-5g-live-rosin-astro-vape','hybrid'),
+  ('terpkings-0-5g-liquid-diamond-astro-vape-fruit','sativa'),
+  ('terpkings-0-5g-liquid-diamond-astro-vape-dessert','indica'),
+  ('terpkings-terpburstz-gummies-100mg','hybrid'),
+  ('higherself-10-pack-0-35g-infused-pre-rolls','hybrid'),
+  ('higherself-5-pack-0-35g-infused-pre-rolls','sativa'),
+  ('higherself-2-pack-0-35g-infused-pre-rolls','indica'),
+  ('higherself-premium-flower','hybrid'),
+  ('higherself-vape-stone-all-in-one','sativa'),
+  ('higherself-vape-cartridge','hybrid'),
+  ('savagesquadstrains-3-5g-exotic-small-batch-flower','indica'),
+  ('savagesquadstrains-7g-exotic-small-batch-flower','indica'),
+  ('savagesquadstrains-2-pack-1g-rosin-infused-pre-rolls','hybrid'),
+  ('savagesquadstrains-5-pack-rosin-infused-pre-rolls','sativa'),
+  ('savagesquadstrains-1g-liquid-diamond-all-in-one-vape','hybrid'),
+  ('savagesquadstrains-fast-acting-fruit-gummies-100mg','sativa')
+) as v(slug, st)
+where catalog_products.slug = v.slug;
