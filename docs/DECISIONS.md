@@ -40,3 +40,4 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - A-05 (flip-book): converted to a pop-out — inline cover preview + OPEN THE BRAND BOOK button opens a full-screen overlay with the 44-page flip book (per-page arrows, drag/touch, keyboard, single-page mobile).
 - A-06 (brand grid): screenshot-compare passed (titles/SEE MORE/hairlines/6-col cards/navy captions, four allowlisted brands); correction — brand name in the section title now links to the brand page.
 - A-07 (merch grid): landing section now multi-row (12 SKU-caption cards, matching the docx/lovable multi-row reference); SEE MORE -> /apparel verified.
+- A-08 (news): verified — landing card row (image/excerpt/READ MORE -> per-post SEO page), SEE MORE -> /news index listing all published posts, each with its own SSG page. No change.
