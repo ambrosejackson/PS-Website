@@ -11,6 +11,7 @@ const SECTIONS = [
   { href: "/admin/apparel", label: "Apparel" },
   { href: "/admin/catalog", label: "Catalog" },
   { href: "/admin/subscribers", label: "Subscribers" },
+  { href: "/admin/messages", label: "Messages" },
 ];
 
 export default async function AdminLayout({

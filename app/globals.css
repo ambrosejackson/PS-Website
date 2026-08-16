@@ -181,3 +181,19 @@
   from { transform: rotateY(0deg); }
   to { transform: rotateY(180deg); }
 }
+
+/* Brand-page typography tokens (I-014) */
+@theme inline {
+  --font-poppins: var(--font-poppins), sans-serif;
+  --font-script: var(--font-caveat), cursive;
+  --font-display: var(--font-archivo-black), sans-serif;
+}
+
+/* SSS star ticker marquee (below hero only — rule D-007) */
+@keyframes ps-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ps-ticker {
+  animation: ps-ticker 22s linear infinite;
+}

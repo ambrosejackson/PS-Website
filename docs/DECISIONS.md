@@ -45,3 +45,18 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - A-10 (newsletter): rebuilt as the docx split reference — lifestyle photo left (placeholder slot for the tracksuit shot at /placeholders/newsletter-photo.svg), black panel right with large JOIN OUR NEWSLETTER, one-line copy, inline email + cream Subscribe; same subscribers/persona/discount flow; 15% one-time/non-stackable messaging present in section, popup, and consent line.
 - A-11 (product cards/detail): all catalog cards now have zoom + CLICK FOR MORE INFO hover; detail layout flipped to docx Jeeter reference (name/details left, large image right); added colored INDICA/SATIVA/HYBRID chip via migration 0003 catalog_products.strain_type (seeded on all 24 products); Buy Now list (name + See Menu both link to the store's product menu) with region map on the right verified.
 - A-12 (gates/popups): verified — shared 21+ cookie across brand subpaths with brand-styled gate on direct entry; consent banner gated behind the age gate; popup once-per-session regardless of dismiss/answer, permanent after subscribe, never over an unanswered gate. No change.
+
+## 2026-08-15 — Brand-site recreation session
+
+**Ambrose's override rules (supersede the reference sites):**
+- D-006 (A): Brand pages use the GLOBAL PS header over the brand hero; original site navs are not recreated; sections flow as a one-pager. Internal section-jumps only if proposed and approved.
+- D-007 (B): Nothing renders above any hero. The SSS star-ticker marquee moves directly BELOW the SSS hero.
+- D-008 (C): Newsletter offer is 15% off merch & apparel (one-time, non-stackable) — Higher Self's live "25% OFF ALL MERCH" ticker copy corrected to 15%.
+- D-009 (D): Reference sites' hardcoded store lists replaced by our live availability/locator components (brand-filtered, MOCK_PSM_DATA until the publish pipeline).
+- D-010 (E): Brand pages end with the global site footer; reference footers absorbed. SSS compliance paragraph kept as a brand-page block above the global footer (legally required copy).
+- D-011 (F): Media pulled directly from Ambrose's own live sites into public/brand-pages/{brand}/; unpullable assets get labeled placeholders (list in session summary).
+
+**Implementation notes:**
+- I-013: Assets recovered — SSS: all 11 (incl. hero video + poster + merch shots + 4 YouTube IDs from the live embed). Higher Self: 7 (lifestyle-hero, logo, category shots, merch banner, both lifestyle photos). Outfitters: hero + speakeasy photos (base64-embedded in the live HTML, decoded). MISSING: TerpKings white logo (text placeholder used), Outfitters collection product photos (live site itself uses placeholder cards).
+- I-014: Brand fonts (approximations): Higher Self = Poppins + Caveat script; SSS = Archivo Black display + mono labels; Outfitters = Oswald ultra-letterspaced. Swap when brand font files land.
+- I-015: contact_messages table (migration 0004, service-role only RLS) + POST /api/contact + /admin/messages list; Outfitters contact strip uses placeholder sales@privatestock.co + Chicago, IL until Ambrose confirms (fake info@outfitters.com / +1 312 555-0100 dropped).

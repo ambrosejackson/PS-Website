@@ -138,6 +138,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          brand_context: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          source_path: string | null
+          subject: string | null
+        }
+        Insert: {
+          brand_context?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          source_path?: string | null
+          subject?: string | null
+        }
+        Update: {
+          brand_context?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          source_path?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       content_banners: {
         Row: {
           badge_text: string | null
