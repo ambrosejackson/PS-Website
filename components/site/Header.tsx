@@ -7,6 +7,14 @@ import { Logo } from "@/components/site/Logo";
 import { FullscreenMenu } from "@/components/site/FullscreenMenu";
 import { useHeroChrome } from "@/components/site/hero-context";
 import {
+  barClass,
+  clusterClass,
+  iconClass,
+  iconStroke,
+  logoClass,
+  type HeaderVariant,
+} from "@/components/site/header-chrome";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -39,7 +47,7 @@ const NAV_ITEMS = [
 export function Header({
   variant = "solid",
 }: {
-  variant?: "solid" | "overlay";
+  variant?: HeaderVariant;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, navEnter, navLeave } = useHeroChrome();
@@ -54,29 +62,25 @@ export function Header({
       }`
     : "relative w-full shrink-0 bg-white text-neutral-950";
 
-  const bar = overlay
-    ? "flex items-center justify-between px-5 py-5 md:px-10"
-    : "mx-auto flex h-[72px] max-w-screen-2xl items-center justify-between px-6 md:h-28 md:px-12";
-
   return (
     <>
       <header className={`z-40 ${chrome}`}>
-        <div className={bar}>
-          <div className="flex items-center gap-4 md:gap-6">
+        <div className={barClass(variant)}>
+          <div className={clusterClass}>
             <button
               aria-label="Open menu"
               onClick={() => setMenuOpen(true)}
               className="p-1 transition-opacity hover:opacity-60"
             >
               <Menu
-                className={overlay ? "h-7 w-7 md:h-8 md:w-8" : "h-6 w-6 md:h-7 md:w-7"}
-                strokeWidth={overlay ? 1.25 : 1.5}
+                className={iconClass(variant)}
+                strokeWidth={iconStroke(variant)}
               />
             </button>
             <Link href="/" aria-label="Private Stock home">
               <Logo
                 variant={overlay && !overlayLight ? "white" : "black"}
-                className={overlay ? "h-16 w-auto md:h-24" : "h-11 w-auto md:h-16"}
+                className={logoClass(variant)}
               />
             </Link>
           </div>
@@ -133,7 +137,11 @@ export function Header({
           </nav>
         </div>
       </header>
-      <FullscreenMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <FullscreenMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        variant={variant}
+      />
     </>
   );
 }

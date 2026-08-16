@@ -74,3 +74,25 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - I-018: In solid mode the header + hero are wrapped in a `flex flex-col` div that carries the page's `heightClassName`, so the bar and hero TOGETHER fill the intended height (e.g. `h-svh` on the landing page) instead of the hero pushing a full viewport below the bar. Overlay mode is byte-for-byte the old layout.
 - I-019: Hero hover-swap preserved in both modes — the mousemove/mouseleave revert handlers moved from the `<section>` to that wrapper, so the hovered region is still "nav item + hero" and the ~600ms revert fires only when the cursor leaves both. Mobile still shows the default asset only.
 - I-020: 404 gained the header (it previously had none) and is now `flex min-h-svh flex-col` with the dark panel as `flex-1`.
+
+## 2026-08-16 — Mobile header + fullscreen menu
+
+**Decisions made by Ambrose:**
+- D-015: The closed header and the open menu must be positionally identical — the hamburger and the X occupy the exact same x/y, and the logo neither moves nor resizes when the menu toggles. Left cluster sits on the normal page gutter, not centered.
+- D-016: Mobile sizing bumps — the closed-header logo adopts the size it rendered at inside the open menu, then BOTH grow 20%; fullscreen menu item text and the IG/FB icons also grow 20%. The hamburger/X glyph keeps its current size.
+- D-017: The fullscreen menu becomes a LEFT DRAWER on mobile (~83% of viewport) over a dimmed page, instead of covering the full viewport. Menu items share the hamburger/logo left gutter; social icons stay below CONTACT. From `md` up it stays full-bleed as before.
+
+**Implementation choices (flag if wrong):**
+- I-021: Bar geometry (height, gutter, gap, icon box, logo size) now lives in `components/site/header-chrome.ts` and is imported by BOTH `Header` and `FullscreenMenu`. The two states drifted precisely because each hard-coded its own values; a single source makes re-drift impossible. `FullscreenMenu` takes the header `variant` so brand pages' overlay header stays matched too.
+- I-022: The hamburger (`h-6 md:h-7`) and the X (`h-7 md:h-8`) were DIFFERENT sizes. D-015 (same position) requires one box, so both now use the hamburger's size — the X shrinks 4px. Flag if you wanted the larger glyph instead; the header bar was treated as the anchor since it matches the lovable reference.
+- I-023: D-016 scoped to mobile. Menu logo was `h-16` (64px) → both header and menu are now `h-[4.8rem]` (76.8px = 64 × 1.2). Desktop is untouched: header stays `md:h-16` (64px) in a 112px bar, so the MENU's desktop logo dropped `md:h-24` → `md:h-16` to match the header (that also removes a desktop-side jump that existed before).
+- I-024: The mobile bar grew `h-[72px]` → `h-24` (96px) because a 76.8px logo does not fit a 72px bar. Consequence: mobile heroes lose 24px of height (header + hero still total one viewport). Desktop bar unchanged at 112px.
+- I-025: Menu item text `text-3xl`→`text-4xl` (30→36px) mobile, `md:text-4xl`→`md:text-[2.7rem]` (36→43.2px); social icons `h-6`→`h-[1.8rem]` (24→28.8px). Menu nav gutter `px-8 md:px-24` → `px-6 md:px-12` to sit on the same left gutter as the hamburger/logo.
+- I-026: Drawer is `w-[83%] max-w-[26rem] md:w-full md:max-w-none` with a `bg-black/60` backdrop that closes on tap (mobile only). The max-width cap keeps it drawer-shaped on large phones/small tablets below the `md` breakpoint.
+
+**Verified** (real render at true viewport widths via same-origin iframes, closed + open states measured simultaneously):
+- 375 / 390 / 430px: hamburger and X rects IDENTICAL `[28, 36, 24, 24]`; header logo and menu logo IDENTICAL `[72, 9.6, 76.8, 76.8]` — zero movement on toggle.
+- Logo fits the 96px bar with 9.6px clearance top and bottom; no horizontal overflow at any width.
+- Menu items render at 36px, single line each (40px tall), widest right edge 176.8px inside a 298.8–356.9px drawer.
+- Brand/overlay header (/outfitters at 375px) also matches between states, with its own geometry unchanged (104px row, 64px logo, 28px glyph).
+- Desktop (1920px) header unchanged: 112px bar, 64px logo, 28px glyph, nav 12px.
