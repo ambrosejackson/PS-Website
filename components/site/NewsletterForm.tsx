@@ -11,9 +11,12 @@ import { Input } from "@/components/ui/input";
  */
 export function NewsletterForm({
   compact = false,
+  variant = "light",
   onSuccess,
 }: {
   compact?: boolean;
+  /** "dark" styles the form for a black panel (docx newsletter reference). */
+  variant?: "light" | "dark";
   onSuccess?: (code: string | null) => void;
 }) {
   const pathname = usePathname();
@@ -75,18 +78,26 @@ export function NewsletterForm({
         <Input
           type="email"
           required
-          placeholder="Email address"
+          placeholder="Your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={compact ? "" : "h-11"}
+          className={`${compact ? "" : "h-11"} ${
+            variant === "dark"
+              ? "border-white/40 bg-transparent text-white placeholder:text-white/50"
+              : ""
+          }`}
           aria-label="Email address"
         />
         <Button
           type="submit"
           disabled={state.status === "loading"}
-          className={compact ? "" : "h-11 px-6"}
+          className={`${compact ? "" : "h-11 px-6"} font-condensed text-xs font-semibold uppercase tracking-wide ${
+            variant === "dark"
+              ? "bg-[#f3ecd9] text-neutral-950 hover:bg-[#f3ecd9]/85"
+              : ""
+          }`}
         >
-          {state.status === "loading" ? "…" : "Sign Up"}
+          {state.status === "loading" ? "…" : "Subscribe"}
         </Button>
       </div>
       <label className="mt-3 flex items-start gap-2 text-left text-xs opacity-70">

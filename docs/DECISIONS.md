@@ -42,3 +42,4 @@ Append every decision Ambrose makes in-session. Newest at the bottom.
 - A-07 (merch grid): landing section now multi-row (12 SKU-caption cards, matching the docx/lovable multi-row reference); SEE MORE -> /apparel verified.
 - A-08 (news): verified — landing card row (image/excerpt/READ MORE -> per-post SEO page), SEE MORE -> /news index listing all published posts, each with its own SSG page. No change.
 - A-09 (FOLLOW US): social buttons corrected to pill shape with icon + label per the docx reference STRUCTURE (IG + FB only), kept in the light design system; scrolling strip unchanged.
+- A-10 (newsletter): rebuilt as the docx split reference — lifestyle photo left (placeholder slot for the tracksuit shot at /placeholders/newsletter-photo.svg), black panel right with large JOIN OUR NEWSLETTER, one-line copy, inline email + cream Subscribe; same subscribers/persona/discount flow; 15% one-time/non-stackable messaging present in section, popup, and consent line.
