@@ -36,6 +36,18 @@ export async function getHeroesForPage(page: string): Promise<HeroAsset[]> {
   return data;
 }
 
+/**
+ * The hero VIDEO a page should play: its default video row, else its first
+ * active video row, else null (the TerpKings CRT hero then renders gradient-only).
+ */
+export function pickHeroVideo(heroes: HeroAsset[]): HeroAsset | null {
+  return (
+    heroes.find((h) => h.is_default && h.media_type === "video") ??
+    heroes.find((h) => h.media_type === "video") ??
+    null
+  );
+}
+
 export async function getBanners(): Promise<BannerSlide[]> {
   const supabase = createPublicClient();
   if (!supabase) return [];

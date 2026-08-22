@@ -1,0 +1,122 @@
+/* TerpKings brand page — CRT keyframes and hover states transcribed EXACTLY from
+   the Claude Design export (docs/reference/terpkings). Imported only by the
+   /terpkings page tree; every selector is namespaced `tk-` so nothing here
+   leaks into the shared Header / Footer that render inside the page. */
+
+@keyframes tkFlicker { 0%,100% { opacity:1; } 92% { opacity:1; } 93% { opacity:.72; } 94% { opacity:.95; } 96% { opacity:.8; } 97% { opacity:1; } }
+@keyframes tkStatic { 0% { background-position:0 0; } 100% { background-position:-600px 300px; } }
+@keyframes tkBlink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+@keyframes tkMarquee { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+@keyframes tkHum { 0%,100% { text-shadow:0 0 8px rgba(168,198,78,.6); } 50% { text-shadow:0 0 16px rgba(168,198,78,.95); } }
+@keyframes tkRollbar { 0% { transform:translateY(-120%); } 100% { transform:translateY(1200%); } }
+
+html:has(.tk-page) { scroll-behavior: smooth; }
+
+.tk-page {
+  background: #050604;
+  color: #C8D4A0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+.tk-page ::selection { background: #A8C64E; color: #000; }
+
+/* VT323 is loaded via next/font/google in the page and exposed as --font-vt323. */
+.tk-mono { font-family: var(--font-vt323), "VT323", monospace; }
+
+/* ---- Animations ------------------------------------------------------- */
+.tk-flicker { animation: tkFlicker 7s linear infinite; }
+.tk-static  { animation: tkStatic 14s linear infinite; }
+.tk-blink   { animation: tkBlink 1.1s step-end infinite; }
+.tk-hum     { animation: tkHum 3s ease-in-out infinite; }
+.tk-rollbar { animation: tkRollbar 9s linear infinite; }
+.tk-marquee { animation: tkMarquee 30s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-flicker, .tk-static, .tk-blink, .tk-hum, .tk-rollbar, .tk-marquee {
+    animation: none;
+  }
+  .tk-hum { text-shadow: 0 0 8px rgba(168,198,78,.6); }
+}
+
+/* ---- Textures ---------------------------------------------------------- */
+.tk-grain {
+  background-image: url("/brand-assets/terpkings/texture-grain.webp");
+  background-size: 480px auto;
+}
+.tk-wood {
+  background-image: url("/brand-assets/terpkings/texture-wood.webp"),
+    url("/brand-assets/terpkings/texture-wood.webp");
+  opacity: .9;
+}
+
+/* ---- Links & buttons (export `style-hover` values) ---------------------- */
+.tk-link { color: #A8C64E; text-decoration: none; }
+.tk-link:hover { color: #D8F26E; }
+.tk-link-dim { color: #5B6E35; text-decoration: none; }
+.tk-link-dim:hover { color: #A8C64E; }
+
+.tk-btn-hero-find { background: #141809; color: #C9E06A; box-shadow: 0 4px 0 rgba(0,0,0,.4); }
+.tk-btn-hero-find:hover { background: #000; color: #FFD400; }
+.tk-btn-hero-view { border: 2px solid #141809; color: #141809; }
+.tk-btn-hero-view:hover { background: rgba(20,24,9,.15); }
+
+.tk-btn-solid { background: #A8C64E; color: #0B0F07; border: none; }
+.tk-btn-solid:hover { background: #D8F26E; }
+.tk-btn-ghost { background: transparent; color: #8A9E5C; border: 1px solid #3A4A22; }
+.tk-btn-ghost:hover { color: #D8F26E; border-color: #A8C64E; }
+.tk-btn-outline { border: 2px solid #3E5222; color: #A8C64E; }
+.tk-btn-outline:hover { border-color: #A8C64E; color: #D8F26E; }
+.tk-btn-amber { background: #FFB000; color: #1A1206; }
+.tk-btn-amber:hover { background: #FFD400; }
+.tk-btn-arrow { background: rgba(168,198,78,.1); color: #A8C64E; border: 1px solid #3E5222; }
+.tk-btn-arrow:hover { background: rgba(168,198,78,.25); }
+.tk-btn-edu { background: rgba(255,176,0,.12); color: #FFB000; border: 1px solid #FFB000; box-shadow: 0 0 14px rgba(255,176,0,.2); }
+.tk-btn-edu:hover { background: rgba(255,176,0,.25); }
+
+.tk-hover-bright:hover { filter: brightness(1.35); }
+.tk-hover-bright-sm:hover { filter: brightness(1.3); }
+
+.tk-card { transition: transform .25s, box-shadow .25s; }
+.tk-card:hover { transform: translateY(-6px); box-shadow: 0 0 40px rgba(168,198,78,.2); }
+
+/* ---- Inputs ------------------------------------------------------------ */
+.tk-input {
+  background: rgba(168,198,78,.06);
+  border: 1px solid #3E5222;
+  border-radius: 4px;
+  color: #D8F26E;
+  outline: none;
+}
+.tk-input::placeholder { color: rgba(216,242,110,.45); }
+.tk-input:focus { border-color: #A8C64E; }
+
+/* ---- Layout helpers (mobile: single-column consoles) --------------------- */
+.tk-dossier-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+}
+@media (min-width: 768px) {
+  .tk-dossier-grid { grid-template-columns: minmax(0, 300px) minmax(0, 1fr); }
+}
+.tk-scanner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 34px;
+  align-items: start;
+}
+.tk-edu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 20px;
+}
+.tk-comic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  gap: 52px;
+  align-items: center;
+}
+.tk-gutter { padding-left: 20px; padding-right: 20px; }
+@media (min-width: 768px) {
+  .tk-gutter { padding-left: 32px; padding-right: 32px; }
+}
