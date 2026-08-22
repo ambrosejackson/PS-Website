@@ -2,8 +2,14 @@ import type { Metadata } from "next";
 import { VT323 } from "next/font/google";
 import { Footer } from "@/components/site/Footer";
 import { TKHero } from "@/components/brand/terpkings/TKHero";
+import { TKArsenal } from "@/components/brand/terpkings/TKArsenal";
+import { TKComic } from "@/components/brand/terpkings/TKComic";
+import { TKDossiers } from "@/components/brand/terpkings/TKDossiers";
+import { TKScanner } from "@/components/brand/terpkings/TKScanner";
+import { TKMerch } from "@/components/brand/terpkings/TKMerch";
 import { getHeroesForPage, pickHeroVideo } from "@/lib/data";
-import { TK_HERO } from "@/lib/terpkings-content";
+import { PRODUCTS, TERPS, TK_HERO } from "@/lib/terpkings-content";
+import { assetAvailability } from "@/lib/terpkings-assets";
 import "@/components/brand/terpkings/terpkings.css";
 
 /**
@@ -52,6 +58,11 @@ const jsonLd = {
 export default async function TerpKingsPage() {
   const heroes = await getHeroesForPage("/terpkings");
   const heroVideo = pickHeroVideo(heroes);
+  // Optional renders: real file if present, brand placeholder if not.
+  const available = assetAvailability([
+    ...PRODUCTS.map((p) => p.img),
+    ...TERPS.map((t) => t.img),
+  ]);
 
   return (
     <main className={`tk-page ${vt323.variable}`}>
@@ -61,6 +72,11 @@ export default async function TerpKingsPage() {
       />
 
       <TKHero videoUrl={heroVideo?.media_url ?? null} />
+      <TKArsenal available={available} />
+      <TKComic />
+      <TKDossiers />
+      <TKScanner available={available} />
+      <TKMerch />
 
       <Footer />
     </main>

@@ -9,6 +9,8 @@
 @keyframes tkMarquee { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
 @keyframes tkHum { 0%,100% { text-shadow:0 0 8px rgba(168,198,78,.6); } 50% { text-shadow:0 0 16px rgba(168,198,78,.95); } }
 @keyframes tkRollbar { 0% { transform:translateY(-120%); } 100% { transform:translateY(1200%); } }
+/* Ours: reference-lab bars grow in from 0 on each profile switch (re-keyed). */
+@keyframes tkBarGrow { from { width: 0; } }
 
 html:has(.tk-page) { scroll-behavior: smooth; }
 
@@ -30,9 +32,10 @@ html:has(.tk-page) { scroll-behavior: smooth; }
 .tk-hum     { animation: tkHum 3s ease-in-out infinite; }
 .tk-rollbar { animation: tkRollbar 9s linear infinite; }
 .tk-marquee { animation: tkMarquee 30s linear infinite; }
+.tk-bar     { animation: tkBarGrow .5s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tk-flicker, .tk-static, .tk-blink, .tk-hum, .tk-rollbar, .tk-marquee {
+  .tk-flicker, .tk-static, .tk-blink, .tk-hum, .tk-rollbar, .tk-marquee, .tk-bar {
     animation: none;
   }
   .tk-hum { text-shadow: 0 0 8px rgba(168,198,78,.6); }
