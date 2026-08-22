@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRANDS, type BrandSlug } from "@/lib/brands";
+import { publicAssetExists } from "@/lib/terpkings-assets";
 
 /**
  * PRIVATE STOCK BRANDS (D-022) — the landing section that replaced the inline
@@ -17,6 +18,19 @@ const SHOWCASE_ORDER: readonly BrandSlug[] = [
   "savagesquadstrains",
 ];
 
+/**
+ * Drop-in brand tiles (D-037): if
+ * public/brand-assets/{slug}/{slug}-brand-tile.webp (or .png) exists it is used;
+ * otherwise the row falls back to the image below. Rendered 4:3, object-cover.
+ */
+function brandTile(slug: BrandSlug, fallback: string): string {
+  for (const ext of ["webp", "png"]) {
+    const url = `/brand-assets/${slug}/${slug}-brand-tile.${ext}`;
+    if (publicAssetExists(url)) return url;
+  }
+  return fallback;
+}
+
 /** Verbatim from the Brand Book — do not paraphrase without Ambrose. */
 const COPY: Record<BrandSlug, { image: string; description: string }> = {
   outfitters: {
@@ -30,8 +44,7 @@ const COPY: Record<BrandSlug, { image: string; description: string }> = {
       "An invitation to be more present. Born from the Chicagoland communities where cannabis and mindfulness come together, Higher Self is a curated collection crafted for intentional consumption — with a portion of every purchase funding free mental health and wellness programming.",
   },
   terpkings: {
-    // No TerpKings photography yet — labeled placeholder until art lands.
-    image: "/placeholders/hero-terpkings.png",
+    image: "/brand-assets/terpkings/terpkings-brand-tile.webp",
     description:
       "Choose your terpenes. Discover your experience. Every TerpKings product is categorized by our proprietary terpene color system — Fruit, Haze, Gas, Dessert, and Floral — so you can explore cannabis by flavor and aroma instead of THC percentage alone.",
   },
@@ -70,7 +83,7 @@ export function BrandsShowcase() {
                 <div className={imageRight ? "md:order-2" : undefined}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={copy?.image ?? "/placeholders/hero-default.webp"}
+                    src={brandTile(brand.slug, copy?.image ?? "/placeholders/hero-default.webp")}
                     alt={brand.name}
                     className="aspect-[4/3] w-full object-cover"
                   />

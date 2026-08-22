@@ -311,3 +311,9 @@ Ambrose's correction, which supersedes those entries:
   errors; profile switch, dossier select, edu panel, locator/signup validation,
   VT323 resolution, `<title>` and og:image all checked. Lazy images below the
   fold don't appear in beyond-viewport captures — not a page bug.
+- D-037: **Landing "Private Stock Brands" tiles are drop-in files** —
+  `public/brand-assets/{slug}/{slug}-brand-tile.webp` (or `.png`) is used when
+  present, else the row's legacy image. TerpKings row now uses
+  `terpkings-brand-tile.webp` (converted from the 1080² PNG, 1.16 MB → 59 KB).
+  Same 4:3 `object-cover` crop as the other rows (a square source loses ~12%
+  top and bottom).
