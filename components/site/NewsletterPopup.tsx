@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { useAgeVerified } from "@/components/site/AgeGate";
@@ -16,6 +17,13 @@ import { X } from "lucide-react";
 const SHOW_DELAY_MS = 8000;
 const SESSION_KEY = "ps_nl_popup_shown";
 const SUBSCRIBED_KEY = "ps_subscribed";
+
+// TerpKings terminal popup — dynamic so VT323 + its CSS only load on /terpkings.
+const TKNewsletterPopup = dynamic(() =>
+  import("@/components/brand/terpkings/TKNewsletterPopup").then(
+    (m) => m.TKNewsletterPopup,
+  ),
+);
 
 export function NewsletterPopup() {
   const ageVerified = useAgeVerified();
@@ -35,6 +43,16 @@ export function NewsletterPopup() {
   }, [ageVerified]);
 
   if (!open) return null;
+
+  // Brand-styled variant; same suppression rules as every other brand page.
+  if (brand?.slug === "terpkings") {
+    return (
+      <TKNewsletterPopup
+        onClose={() => setOpen(false)}
+        onSuccess={() => localStorage.setItem(SUBSCRIBED_KEY, "1")}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4">

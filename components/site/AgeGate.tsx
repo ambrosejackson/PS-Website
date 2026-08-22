@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/site/Logo";
 import { brandBySlug, type BrandSlug } from "@/lib/brands";
@@ -22,6 +23,11 @@ import {
 
 const COOKIE_DAYS = 30;
 
+// TerpKings terminal gate — dynamic so VT323 + its CSS only load on /terpkings.
+const TKAgeGate = dynamic(() =>
+  import("@/components/brand/terpkings/TKAgeGate").then((m) => m.TKAgeGate),
+);
+
 export function useAgeVerified(): boolean {
   return useSyncExternalStore(
     subscribeCookies,
@@ -40,6 +46,13 @@ export function AgeGate() {
 
   const accept = () => setCookie(AGE_COOKIE, "1", COOKIE_DAYS);
   const slug = brand?.slug as BrandSlug | undefined;
+
+  if (slug === "terpkings") {
+    // TERPKINGS OS terminal; shares the sitewide cookie (guardrail #6).
+    return (
+      <TKAgeGate accept={accept} refused={refused} onRefuse={() => setRefused(true)} />
+    );
+  }
 
   if (slug === "higherself") {
     return (
@@ -180,7 +193,7 @@ export function AgeGate() {
     );
   }
 
-  // Default Private Stock gate (also used for /terpkings until its design lands).
+  // Default Private Stock gate.
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-950 p-6 text-white">
       <div className="w-full max-w-md text-center">

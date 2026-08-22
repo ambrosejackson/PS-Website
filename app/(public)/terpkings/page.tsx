@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { VT323 } from "next/font/google";
 import { Footer } from "@/components/site/Footer";
 import { TKHero } from "@/components/brand/terpkings/TKHero";
 import { TKArsenal } from "@/components/brand/terpkings/TKArsenal";
@@ -7,6 +6,10 @@ import { TKComic } from "@/components/brand/terpkings/TKComic";
 import { TKDossiers } from "@/components/brand/terpkings/TKDossiers";
 import { TKScanner } from "@/components/brand/terpkings/TKScanner";
 import { TKMerch } from "@/components/brand/terpkings/TKMerch";
+import { TKLocator } from "@/components/brand/terpkings/TKLocator";
+import { TKSignalFeed } from "@/components/brand/terpkings/TKSignalFeed";
+import { TKSignup } from "@/components/brand/terpkings/TKSignup";
+import { vt323 } from "@/components/brand/terpkings/tk-font";
 import { getHeroesForPage, pickHeroVideo } from "@/lib/data";
 import { PRODUCTS, TERPS, TK_HERO } from "@/lib/terpkings-content";
 import { assetAvailability } from "@/lib/terpkings-assets";
@@ -20,14 +23,6 @@ import "@/components/brand/terpkings/terpkings.css";
  */
 
 export const revalidate = 300;
-
-// VT323 is scoped to this page only (exposed as --font-vt323 → .tk-mono).
-const vt323 = VT323({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-vt323",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "TerpKings — Rulers of Flavor",
@@ -77,6 +72,9 @@ export default async function TerpKingsPage() {
       <TKDossiers />
       <TKScanner available={available} />
       <TKMerch />
+      <TKLocator />
+      <TKSignalFeed />
+      <TKSignup />
 
       <Footer />
     </main>

@@ -253,3 +253,61 @@ Ambrose's correction, which supersedes those entries:
   the catalog was unreachable on mobile anywhere except the landing page's intro
   link. Clicking it closes the drawer and opens the same modal; it degrades to
   the `/#brands` link when the brand book isn't rendered, same as the header.
+
+## 2026-08-22 — TerpKings full brand page (replaces the v1 shell)
+
+- D-029: **/terpkings is now the full TerpKings page** recreated from the Claude
+  Design export `docs/reference/terpkings/terpkings-subpage.html` (CRT hero,
+  FILE 01–06 consoles, SIGNAL FEED, JOIN THE COURT) under the shared overlay
+  header and the shared site footer. All copy, hex values, specs, dossiers, lab
+  readings and keyframes (`tkFlicker/tkStatic/tkBlink/tkMarquee/tkHum/tkRollbar`)
+  are verbatim in `lib/terpkings-content.ts` + `components/brand/terpkings/`.
+- D-030: **`content_heroes.page` for TerpKings is `"/terpkings"`** (leading
+  slash), matching the existing convention (`'/'`, `/outfitters`, …) and
+  `getHeroesForPage("/terpkings")`. The hero plays the page's DEFAULT video row
+  (`pickHeroVideo`: default video, else first active video); no video row →
+  gradient-only CRT exactly like the export's fallback. `HERO_TINT_OPACITY = 0.6`
+  (named constant in `TKHero.tsx`) drives both the multiply tint and the screen
+  highlight the video sits behind.
+- D-031: **Hero media pipeline** — migration `0005_hero_media_bucket.sql`
+  creates the public `hero-media` bucket (50 MB, mp4/jpeg/png/webp; applied to
+  the website project). `/admin/heroes` mints a service-role signed upload URL,
+  the browser PUTs straight to Storage (bypasses Vercel's request-body limit),
+  then the row is inserted (one default per page) and the page revalidated.
+  Rows can be made default / toggled active / re-themed / deleted.
+- D-032: **Age gate on /terpkings is the export's "TERPKINGS OS v2.6 — SECURITY
+  CHECKPOINT" terminal**, but it reads/writes the shared `ps_age_verified`
+  cookie (guardrail #6), never the export's `tk_age_ok` localStorage. `[N] ABORT`
+  shows an in-terminal "> ACCESS DENIED" line (site convention) instead of the
+  export's redirect to google.com.
+- D-033: **Headlines use the site's default sans (Geist) at weight 800** rather
+  than loading the export's Poppins; VT323 is the only page-specific font, loaded
+  with next/font/google and scoped (`--font-vt323` on the page `<main>`; the TK
+  gate/popup apply it on their own roots and are mounted via `next/dynamic`).
+- D-034: **JOIN THE COURT posts to `/api/subscribe`** (persona
+  `Website Sign-up – TerpKings`, brand_context `TerpKings`, source_path
+  `/terpkings`). The API requires consent, so a 21+/marketing-consent checkbox
+  was added in terminal style (the export had none). Success renders
+  "♛ TRANSMISSION CONFIRMED. LONG LIVE THE KINGS." and the one-time merch code.
+  The 15% popup on /terpkings is a TK-terminal variant with the same suppression
+  rules as every brand page.
+- D-035: **FILE 06 ► SCAN navigates to `/store-locator?zip={value}`** (empty
+  input keeps "> ERROR: ENTER COORDINATES FIRST."). `/store-locator` does not yet
+  filter by `?zip` — follow-up once the live store feed lands.
+- D-036: **Export footer dropped** — the shared Footer already carries the 21+ /
+  keep-out-of-reach compliance line, so the export's TK footer + its longer
+  compliance sentence (kept in `COMPLIANCE_LINE`) are not rendered.
+
+**Implementation notes:**
+- I-040: Textures converted to webp q80 (grain 1.59 MB → 314 KB, wood 1.73 MB →
+  352 KB). Drip-pack + tube renders were 3000² PNGs on WHITE grounds; the white
+  was removed by an edge-connected flood fill (threshold 232) before the webp
+  encode so the renders float on the card's radial green. `rosin-vapes.png`
+  disappeared from the folder mid-session (no webp made) → placeholder until it
+  is re-dropped. Optional renders are existence-checked at build
+  (`lib/terpkings-assets.ts`) and fall back to `TKPlaceholder`.
+- I-041: Verified in headless Chrome over CDP (the Claude Chrome extension was
+  not connected): desktop 1440 + mobile 390 full-page captures, no console
+  errors; profile switch, dossier select, edu panel, locator/signup validation,
+  VT323 resolution, `<title>` and og:image all checked. Lazy images below the
+  fold don't appear in beyond-viewport captures — not a page bug.
