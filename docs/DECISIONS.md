@@ -317,3 +317,9 @@ Ambrose's correction, which supersedes those entries:
   `terpkings-brand-tile.webp` (converted from the 1080² PNG, 1.16 MB → 59 KB).
   Same 4:3 `object-cover` crop as the other rows (a square source loses ~12%
   top and bottom).
+- I-042: Ambrose replaced the TerpKings brand tile with a 400×300 PNG (194 KB,
+  under the 300 KB webp threshold) and removed the earlier webp; the row now
+  references `terpkings-brand-tile.png` directly (D-037 lookup finds it either
+  way). `rosin-vapes.png` (168 KB, white ground) re-landed → white knocked out
+  and encoded as `rosin-vapes.webp` (20 KB), which `PRODUCTS[2].img` already
+  pointed at, so UNIT TK-03 now shows the render instead of the placeholder.

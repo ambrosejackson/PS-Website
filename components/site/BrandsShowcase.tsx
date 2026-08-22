@@ -44,7 +44,7 @@ const COPY: Record<BrandSlug, { image: string; description: string }> = {
       "An invitation to be more present. Born from the Chicagoland communities where cannabis and mindfulness come together, Higher Self is a curated collection crafted for intentional consumption — with a portion of every purchase funding free mental health and wellness programming.",
   },
   terpkings: {
-    image: "/brand-assets/terpkings/terpkings-brand-tile.webp",
+    image: "/brand-assets/terpkings/terpkings-brand-tile.png",
     description:
       "Choose your terpenes. Discover your experience. Every TerpKings product is categorized by our proprietary terpene color system — Fruit, Haze, Gas, Dessert, and Floral — so you can explore cannabis by flavor and aroma instead of THC percentage alone.",
   },
