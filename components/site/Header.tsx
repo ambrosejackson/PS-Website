@@ -7,6 +7,7 @@ import { Logo } from "@/components/site/Logo";
 import { FullscreenMenu } from "@/components/site/FullscreenMenu";
 import { useHeroChrome } from "@/components/site/hero-context";
 import { useCatalog } from "@/components/site/catalog-context";
+import { useCart } from "@/lib/cart/context";
 import {
   barClass,
   clusterClass,
@@ -17,15 +18,6 @@ import {
   navTextClass,
   type HeaderVariant,
 } from "@/components/site/header-chrome";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 
 /**
  * Same structure everywhere (guardrail #5) — hamburger + PS badge left,
@@ -63,6 +55,7 @@ export function Header({
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, navEnter, navLeave } = useHeroChrome();
   const catalog = useCatalog();
+  const cart = useCart();
 
   const overlay = variant === "overlay";
   // Overlay only: "light" asset (bright top band) → dark text; "dark" → white.
@@ -134,29 +127,20 @@ export function Header({
             >
               <User className={navIconClass(variant)} strokeWidth={1.5} />
             </Link>
-            <Sheet>
-              <SheetTrigger
-                aria-label="Cart"
-                className="p-1 transition-opacity hover:opacity-60"
-              >
-                <ShoppingBag className={navIconClass(variant)} strokeWidth={1.5} />
-              </SheetTrigger>
-              <SheetContent side="right">
-                <SheetHeader>
-                  <SheetTitle className="font-condensed uppercase tracking-wide">Your cart</SheetTitle>
-                  <SheetDescription>
-                    Shop opening soon — merch and apparel checkout is on the way.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="px-4">
-                  <Button
-                    render={<Link href="/apparel">Preview Apparel</Link>}
-                    variant="outline"
-                    className="w-full"
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+            {/* Cart icon → CartDrawer (mounted once in SiteProviders) */}
+            <button
+              type="button"
+              aria-label={cart.count > 0 ? `Cart, ${cart.count} items` : "Cart"}
+              onClick={() => cart.setOpen(true)}
+              className="relative p-1 transition-opacity hover:opacity-60"
+            >
+              <ShoppingBag className={navIconClass(variant)} strokeWidth={1.5} />
+              {cart.count > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-current px-1 font-condensed text-[10px] font-bold leading-none">
+                  <span className={overlay && !overlayLight ? "text-neutral-900" : "text-white"}>{cart.count}</span>
+                </span>
+              )}
+            </button>
           </nav>
         </div>
       </header>

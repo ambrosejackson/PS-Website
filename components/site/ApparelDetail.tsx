@@ -2,15 +2,13 @@
 
 import { useMemo, useState } from "react";
 import type { MerchListing } from "@/lib/data";
+import { useCart } from "@/lib/cart/context";
 
 /**
  * Apparel product detail (client): gallery, size/color variant picker that
- * updates the price, quantity, Add to Cart. The cart drawer + checkout arrive
- * next session — for now the click stores the intent in localStorage
- * ("ps_cart") and shows "Checkout launching shortly".
+ * updates the price, quantity, Add to Cart → cart context (drawer opens).
  */
 
-const CART_KEY = "ps_cart";
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 
 export function ApparelDetail({ product }: { product: MerchListing }) {
@@ -24,6 +22,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
   const [color, setColor] = useState<string | null>(colors.length === 1 ? colors[0] : null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const cart = useCart();
 
   const selected = variants.find(
     (v) => (sizes.length === 0 || v.size === size) && (colors.length === 0 || v.color === color),
@@ -44,16 +43,19 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
 
   function addToCart() {
     if (!selected) return;
-    try {
-      const raw = localStorage.getItem(CART_KEY);
-      const cart: { variantId: string; qty: number; slug: string; sku: string }[] = raw ? JSON.parse(raw) : [];
-      const existing = cart.find((l) => l.variantId === selected.id);
-      if (existing) existing.qty += qty;
-      else cart.push({ variantId: selected.id, qty, slug: product.slug, sku: selected.sku });
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    } catch {
-      /* storage unavailable — intent still acknowledged */
-    }
+    cart.add(
+      {
+        variantId: selected.id,
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        variantLabel: [selected.size, selected.color].filter(Boolean).join(" · "),
+        sku: selected.sku,
+        priceCents: selected.price_cents,
+        image: images[0] ?? null,
+      },
+      qty,
+    );
     setAdded(true);
   }
 
@@ -180,8 +182,10 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
               {selected && <p className="mt-2 text-xs text-neutral-400">SKU {selected.sku}</p>}
               {added && (
                 <p className="mt-3 border border-hairline bg-[#fafafa] p-3 text-sm text-ink" role="status">
-                  Added. <span className="font-semibold">Checkout launching shortly</span> — secure checkout with Apple Pay,
-                  Google Pay, cards and PayPal is on the way; your selection is saved in this browser.
+                  Added to your cart.{" "}
+                  <button type="button" onClick={() => cart.setOpen(true)} className="font-semibold underline">
+                    View cart
+                  </button>
                 </p>
               )}
             </div>
