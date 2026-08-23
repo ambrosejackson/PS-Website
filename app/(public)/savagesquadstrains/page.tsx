@@ -4,7 +4,8 @@ import { Footer } from "@/components/site/Footer";
 import { Reveal } from "@/components/brand/Reveal";
 import { SSSHero } from "@/components/brand/SSSHero";
 import { SSSVideos } from "@/components/brand/SSSVideos";
-import { getStoreLocations } from "@/lib/data";
+import { getCatalogProducts, getStoreLocations } from "@/lib/data";
+import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
 import { InstagramIcon } from "@/components/site/social-icons";
 
 /**
@@ -98,6 +99,7 @@ function GradientWord({ children }: { children: React.ReactNode }) {
 }
 
 export default async function SavageSquadPage() {
+  const catalog = await getCatalogProducts("Savage Squad Strains");
   const allStores = await getStoreLocations();
   const stores = allStores.filter((s) =>
     s.brands.includes("Savage Squad Strains"),
@@ -233,6 +235,9 @@ export default async function SavageSquadPage() {
           ))}
         </div>
       </section>
+
+      {/* Live catalog (admin-curated catalog_products) — D-046 */}
+      <BrandCatalogGrid brandName="Savage Squad Strains" products={catalog} tone="dark" title="S.S.S. Products" />
 
       {/* LONG LIVE FREDO */}
       <section className="mx-auto max-w-6xl px-6 pb-20 md:pb-28">

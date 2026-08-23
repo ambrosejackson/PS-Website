@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
+import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
 import { Reveal } from "@/components/brand/Reveal";
 import { OutfittersContactForm } from "@/components/brand/OutfittersContactForm";
 import { brandByName } from "@/lib/brands";
@@ -391,6 +392,9 @@ export default async function OutfittersPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Live catalog (admin-curated catalog_products) — D-046 */}
+      <BrandCatalogGrid brandName="Outfitters" products={products} title="Outfitters Products" />
 
       <Footer />
     </main>

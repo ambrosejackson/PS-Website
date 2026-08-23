@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
+import { getCatalogProducts } from "@/lib/data";
 import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
@@ -87,6 +89,7 @@ const jsonLd = {
 };
 
 export default async function HigherSelfPage() {
+  const catalog = await getCatalogProducts("Higher Self");
   const [dbHeroes, allStores] = await Promise.all([
     getHeroesForPage("/higherself"),
     getStoreLocations(),
@@ -202,6 +205,9 @@ export default async function HigherSelfPage() {
           </Link>
         </div>
       </section>
+
+      {/* Live catalog (admin-curated catalog_products) — D-046 */}
+      <BrandCatalogGrid brandName="Higher Self" products={catalog} title="Higher Self Products" />
 
       {/* Shop Exclusive Merch banner */}
       <section className="mx-auto max-w-6xl px-5 pb-16 md:pb-24">

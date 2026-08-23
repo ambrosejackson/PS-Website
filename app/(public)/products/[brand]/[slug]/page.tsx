@@ -136,6 +136,11 @@ export default async function ProductPage({
               {product.strain_type}
             </span>
           )}
+          {product.terp_category && (
+            <span className="ml-2 mt-3 inline-block border border-hairline px-3 py-1 font-condensed text-xs font-bold uppercase tracking-wide text-caption">
+              {product.terp_category}
+            </span>
+          )}
           <p className="mt-3 text-sm text-neutral-500">
             {[product.category, product.format, product.weight]
               .filter(Boolean)

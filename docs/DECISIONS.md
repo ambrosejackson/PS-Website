@@ -394,3 +394,10 @@ Ambrose's correction, which supersedes those entries:
   authenticated by `CRON_SECRET` (Vercel injects the bearer header); `?dryRun=1`
   supported. Admin "Sync from sheet" / "Dry run" buttons call the same runner
   through a server action and show added/updated/quarantined/missing.
+- D-046 (implementation, flag if wrong): **every brand page now carries a live
+  catalog grid** fed by `getCatalogProducts(brand)` — Outfitters (below The
+  Collection), Higher Self (below the shop section), SSS (dark tone, below the
+  drop), and TerpKings as a TK-styled "FILE 01-B // ACTIVE UNITS IN CATALOG"
+  console under the marketing Arsenal (the export had no catalog grid; this is
+  the only addition to that design). Empty states are styled; cards link to
+  /products/{brand}/{slug}.
