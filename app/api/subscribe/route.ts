@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { personaForPath } from "@/lib/personas";
+import { createStripePromotionCode, stripeConfigured } from "@/lib/commerce/stripe";
 
 /**
  * Newsletter signup: inserts into subscribers with persona / brand_context /
@@ -94,20 +95,18 @@ export async function POST(request: Request) {
     );
   }
 
-  // Unique single-use 15% code. Stripe promo creation is a stub until
-  // STRIPE_ENABLED — the code row exists now so the email/persona pipeline and
-  // UI can be verified; real promotion codes attach in phase 3.
+  // Unique single-use 15% code. With STRIPE_SECRET_KEY present the real Stripe
+  // promotion code is created now (max_redemptions 1, first_time_transaction);
+  // without it the row keeps a stub id and lib/commerce/pricing.validatePromo
+  // creates the Stripe side lazily the first time the code is used.
   const code = generateCode();
-  const stripePromotionCodeId =
-    process.env.STRIPE_ENABLED === "true"
-      ? null // TODO(phase 3): create Stripe promotion code (first_time_transaction, max_redemptions 1)
-      : "stub_pending_stripe";
-
-  if (stripePromotionCodeId === null) {
-    return NextResponse.json(
-      { error: "Stripe issuance not implemented yet." },
-      { status: 501 },
-    );
+  let stripePromotionCodeId = "stub_pending_stripe";
+  if (stripeConfigured()) {
+    try {
+      stripePromotionCodeId = await createStripePromotionCode(code);
+    } catch (e) {
+      console.error("[subscribe] Stripe promotion code failed:", e instanceof Error ? e.message : e);
+    }
   }
 
   const { data: discount, error: codeError } = await supabase
