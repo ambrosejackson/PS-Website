@@ -477,3 +477,11 @@ Ambrose's correction, which supersedes those entries:
   staff notification subject `[Contact · RETAILER] Name — Company`. The older
   Outfitters "GET IN TOUCH" form still writes `contact_messages` (brand-page
   form, unchanged); /admin/messages shows the new `messages` inbox.
+- I-061: **Resend domain `privatestock.co` verified** — `EMAIL_FROM` /
+  `EMAIL_NOTIFY_TO` overrides removed (none were in Vercel); `lib/email.ts`
+  lazy readers fall back to `Private Stock <notifications@privatestock.co>` →
+  `ambrose@privatestock.co` (test send id `3c87a7fc…` delivered). The
+  Outfitters GET IN TOUCH form now posts to `/api/messages` as
+  `inquiry_type = consumer` (subject folded into the body, source path
+  appended) so every inquiry lands in /admin/messages; `/api/contact` and the
+  `contact_messages` table are RETIRED (kept read-only for existing rows).

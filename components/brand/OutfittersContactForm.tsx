@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-/** GET IN TOUCH form per the Outfitters reference — posts to contact_messages. */
+/** GET IN TOUCH form per the Outfitters reference — posts to /api/messages (shared inbox, inquiry_type consumer). */
 
 const inputClasses =
   "w-full border border-neutral-700 bg-[#191613] px-4 py-3 text-sm text-[#f5f2ea] outline-none placeholder:text-neutral-500 focus:border-[#b8860b]";
@@ -31,10 +31,19 @@ export function OutfittersContactForm() {
     setState("loading");
     setError(null);
     try {
-      const res = await fetch("/api/contact", {
+      // Lands in the shared /admin/messages inbox (D-043) as a consumer inquiry,
+      // with the honeypot / rate limit / staff notification of /api/messages.
+      const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...fields, sourcePath: pathname }),
+        body: JSON.stringify({
+          inquiryType: "consumer",
+          name: fields.name,
+          email: fields.email,
+          company: "",
+          body: `${fields.subject.trim() ? `[${fields.subject.trim()}] ` : ""}${fields.message}\n\n— sent from ${pathname} (Outfitters GET IN TOUCH)`,
+          website: "",
+        }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {

@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { personaForPath } from "@/lib/personas";
 
-/** Contact form sink (Outfitters GET IN TOUCH; reusable) → contact_messages. */
+/**
+ * RETIRED (2026-08-22, I-061): the Outfitters GET IN TOUCH form now posts to
+ * /api/messages so every inquiry lands in the /admin/messages inbox. This
+ * route and the `contact_messages` table are kept only for the rows already
+ * stored; nothing on the site calls it anymore.
+ */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX = { name: 200, email: 320, subject: 300, message: 5000 };
