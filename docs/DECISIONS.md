@@ -401,3 +401,31 @@ Ambrose's correction, which supersedes those entries:
   console under the marketing Arsenal (the export had no catalog grid; this is
   the only addition to that design). Empty states are styled; cards link to
   /products/{brand}/{slug}.
+
+## 2026-08-22 — Commerce session (cart, Stripe, PayPal, orders)
+
+**Implementation choices (flag if wrong):**
+- I-047: **One pending-order flow for both rails.** Checkout start (Stripe
+  session create / PayPal create-order) writes `orders` (status `pending`) +
+  `order_items` snapshots (title, sku, variant, fulfillment_provider, image);
+  the Stripe webhook / PayPal capture flips it to `paid` via the idempotent
+  `finalizeOrderPaid`. Migration 0007 adds `pending`/`failed` statuses,
+  `customer_name`, `paypal_capture_id`, `stripe_tax_calculation_id`,
+  `discount_code_id`, `paid_at`/`shipped_at`, and the item snapshot columns.
+- I-048: Stripe rail = hosted **Checkout Session** (address, tax, wallets, promo
+  entry all on Stripe's page) with prices rebuilt from `merch_variants`; promo
+  entered on our page is pre-applied (`discounts`), otherwise
+  `allow_promotion_codes`. Success/cancel URLs derive from the request origin so
+  previews never bounce to production.
+- I-049: PayPal rail collects email + shipping address on /apparel/checkout
+  first, runs **Stripe Tax `calculations.create`** on the same discounted lines
+  + shipping (same tax codes) and passes item/shipping/tax/discount breakdown to
+  PayPal, so both rails charge identical tax. Promo rules (single use, first
+  order by email) enforced server-side; `redeemed_at` set on capture/webhook.
+- I-050: Newsletter codes become real Stripe promotion codes (shared coupon
+  `PS_NEWSLETTER_15`, max_redemptions 1, first_time_transaction) at signup when
+  STRIPE_SECRET_KEY is present, else lazily on first use.
+- I-051: Refund "marker" = `orders.status = 'refunded'` (admin flag); actual
+  refunds happen in the processor dashboards, as the UI states.
+- I-052: Customer order page access proof = Stripe session_id (owning this
+  order), PayPal token, or matching email — no auth, no enumeration.
