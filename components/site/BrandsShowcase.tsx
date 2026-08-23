@@ -20,11 +20,11 @@ const SHOWCASE_ORDER: readonly BrandSlug[] = [
 
 /**
  * Drop-in brand tiles (D-037): if
- * public/brand-assets/{slug}/{slug}-brand-tile.webp (or .png) exists it is used;
+ * public/brand-assets/{slug}/{slug}-brand-tile.{webp,png,jpg,jpeg} exists it is used;
  * otherwise the row falls back to the image below. Rendered 4:3, object-cover.
  */
 function brandTile(slug: BrandSlug, fallback: string): string {
-  for (const ext of ["webp", "png"]) {
+  for (const ext of ["webp", "png", "jpg", "jpeg"]) {
     const url = `/brand-assets/${slug}/${slug}-brand-tile.${ext}`;
     if (publicAssetExists(url)) return url;
   }
@@ -44,7 +44,7 @@ const COPY: Record<BrandSlug, { image: string; description: string }> = {
       "An invitation to be more present. Born from the Chicagoland communities where cannabis and mindfulness come together, Higher Self is a curated collection crafted for intentional consumption — with a portion of every purchase funding free mental health and wellness programming.",
   },
   terpkings: {
-    image: "/brand-assets/terpkings/terpkings-brand-tile.png",
+    image: "/brand-assets/terpkings/terpkings-brand-tile.webp",
     description:
       "Choose your terpenes. Discover your experience. Every TerpKings product is categorized by our proprietary terpene color system — Fruit, Haze, Gas, Dessert, and Floral — so you can explore cannabis by flavor and aroma instead of THC percentage alone.",
   },
