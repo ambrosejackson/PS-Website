@@ -50,8 +50,8 @@ cutover. Sections A–C gate the cutover; D is the cutover itself.
 - [ ] Vercel → Project → Domains: add `privatestock.co` + `www` (choose the canonical
       host; Vercel redirects the other); GoDaddy: A `@` → `76.76.21.21`, CNAME `www` →
       `cname.vercel-dns.com` (or the records Vercel shows).
-- [ ] `NEXT_PUBLIC_SITE_URL=https://privatestock.co` in Production (metadata, sitemap,
-      emails, JSON-LD).
+- [x] `NEXT_PUBLIC_SITE_URL=https://privatestock.co` in Production (metadata, sitemap,
+      emails, JSON-LD). (2026-08-23)
 - [ ] Stripe: webhook URL + Apple Pay domain on the new host; PayPal return URLs are
       origin-relative (no change).
 - [ ] 301 map from the old WordPress URLs (`lib/redirects.ts` — guardrail #9) populated

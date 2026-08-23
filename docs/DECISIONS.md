@@ -513,3 +513,29 @@ Ambrose's correction, which supersedes those entries:
   Gaps found: `STRIPE_WEBHOOK_SECRET` and `PAYPAL_ENV` exist only in Preview
   (production webhook endpoint not registered yet — LAUNCH-CHECKLIST §B); "In
   the News" on `/` is hidden until a real post is published.
+
+## 2026-08-23 — Pre-cutover (privatestock.co DNS → production within the hour)
+
+- D-048: **Test-era `discount_codes` rows are expired, not deleted.** They point at
+  test-mode Stripe promotion codes and are dead in live mode; `pricing.ts` rejects
+  `expires_at < now()` so they can no longer be applied at checkout. Applied
+  directly to the Website Supabase project: 1 row (`PS15-ZT7EY2`, subscriber
+  `ambrose+pstest1@…`, already redeemed) → `expires_at = 2026-08-23 14:54 UTC`.
+- D-049: **Temporary WordPress catch-all redirects are the graceful floor until the
+  full URL inventory lands.** `lib/redirects.ts` now exports `WORDPRESS_CATCHALL`
+  (`/shop[/*]` → `/products`, `/blog[/*]` → `/news`, `/about-us` → `/about`,
+  `/contact-us` → `/contact`, `/wp-content/*` + `/wp-includes/*` → `/`) and
+  `WORDPRESS_301_MAP` (exact per-URL rules from the inventory — checked first);
+  `next.config.ts` installs `ALL_REDIRECTS`. Anything else unrecognized
+  (`/wp-login.php`, `/xmlrpc.php`, `/category/*`, `/feed`, arbitrary slugs…)
+  falls through to `app/not-found.tsx` — the styled 404 with the full header nav
+  and BACK TO HOME — never a bare error page. Verified on a local `next start`
+  (308 with correct Location for every catch-all; 404 body contains PAGE NOT
+  FOUND + nav for the rest). Next emits 308 for `permanent: true` — SEO-equivalent
+  to 301.
+- I-063: Production env (names only) now carries the live-mode set:
+  `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`,
+  `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENV`, `NEXT_PUBLIC_SITE_URL`,
+  plus `RESEND_API_KEY`, `CRON_SECRET`, Supabase trio, `MOCK_PSM_DATA`,
+  `ADMIN_ALLOWED_EMAILS`, `REVALIDATE_TOKEN`. Values are Sensitive (unreadable via
+  CLI); `NEXT_PUBLIC_SITE_URL` is confirmed from the deployed sitemap/canonical host.
