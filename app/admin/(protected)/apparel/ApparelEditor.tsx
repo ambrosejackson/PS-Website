@@ -143,7 +143,7 @@ export function ApparelEditor({ product, variants }: { product: MerchRow | null;
       fulfillment_provider: provider,
       is_active: isActive,
       sort_order: sortOrder.trim() ? Number(sortOrder) : null,
-      variants: rows.map(({ key: _k, skuTouched: _t, ...v }) => v),
+      variants: rows.map((r) => ({ id: r.id, sku: r.sku, size: r.size, color: r.color, price: r.price, is_active: r.is_active })),
     };
     start(async () => {
       const res = await saveMerch(input);

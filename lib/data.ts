@@ -8,6 +8,9 @@ export type BannerSlide = Tables["content_banners"]["Row"];
 export type BlogPost = Tables["blog_posts"]["Row"];
 export type CatalogProduct = Tables["catalog_products"]["Row"];
 export type MerchProduct = Tables["merch_products"]["Row"];
+export type MerchVariant = Tables["merch_variants"]["Row"];
+/** Storefront shape: product + its variants (active products only; variants filtered client-side by is_active). */
+export type MerchListing = MerchProduct & { merch_variants: MerchVariant[] };
 export type StoreLocation = Tables["store_locations"]["Row"];
 export type ProductAvailability = Tables["product_availability"]["Row"];
 
@@ -133,9 +136,41 @@ export async function getMerchProducts(): Promise<MerchProduct[]> {
     .from("merch_products")
     .select("*")
     .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true, nullsFirst: false });
   if (error || !data) return [];
   return data;
+}
+
+/** Active merch with variants — the storefront source (landing grid, /apparel, detail). */
+export async function getMerchListings(): Promise<MerchListing[]> {
+  const supabase = createPublicClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("merch_products")
+    .select("*, merch_variants(*)")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("name", { ascending: true });
+  if (error || !data) return [];
+  return data as MerchListing[];
+}
+
+export async function getMerchListingBySlug(slug: string): Promise<MerchListing | null> {
+  const supabase = createPublicClient();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("merch_products")
+    .select("*, merch_variants(*)")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  return (data as MerchListing | null) ?? null;
+}
+
+/** Lowest active-variant price in cents, or null when the product has no purchasable variant. */
+export function merchFromCents(p: MerchListing): number | null {
+  const prices = p.merch_variants.filter((v) => v.is_active).map((v) => v.price_cents);
+  return prices.length ? Math.min(...prices) : null;
 }
 
 /** Mock PSM data is gated behind MOCK_PSM_DATA until the publish pipeline lands. */

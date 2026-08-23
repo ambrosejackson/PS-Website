@@ -12,7 +12,7 @@ import {
   getBanners,
   getCatalogProducts,
   getHeroesForPage,
-  getMerchProducts,
+  getMerchListings,
   getPublishedPosts,
 } from "@/lib/data";
 
@@ -23,7 +23,7 @@ export default async function LandingPage() {
     getHeroesForPage("/"),
     getBanners(),
     getCatalogProducts(),
-    getMerchProducts(),
+    getMerchListings(),
     getPublishedPosts(3),
   ]);
 

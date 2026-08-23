@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
 import { BRANDS, brandByName } from "@/lib/brands";
-import { getCatalogProducts, getPublishedPosts } from "@/lib/data";
+import { getCatalogProducts, getMerchListings, getPublishedPosts } from "@/lib/data";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://privatestock.co";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [products, posts] = await Promise.all([
+  const [products, posts, merch] = await Promise.all([
     getCatalogProducts(),
     getPublishedPosts(),
+    getMerchListings(),
   ]);
 
   const staticPaths = [
@@ -51,5 +52,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPaths, ...brandPaths, ...productPaths, ...postPaths];
+  const apparelPaths = merch.map((m) => ({
+    url: `${SITE_URL}/apparel/${m.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPaths, ...brandPaths, ...productPaths, ...apparelPaths, ...postPaths];
 }
