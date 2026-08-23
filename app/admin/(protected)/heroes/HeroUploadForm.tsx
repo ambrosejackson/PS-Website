@@ -7,12 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createHeroUploadUrl, saveHeroRow } from "./actions";
-import {
-  HERO_ALLOWED_MIME,
-  HERO_BUCKET,
-  HERO_MAX_BYTES,
-  HERO_PAGES,
-} from "./hero-config";
+import { HERO_ALLOWED_MIME, HERO_BUCKET, HERO_PAGES } from "./hero-config";
+import { validateForBucket } from "@/lib/admin/buckets";
 
 /**
  * Upload a hero asset: (1) server action mints a signed upload URL, (2) the
@@ -46,8 +42,9 @@ export function HeroUploadForm({ defaultPage = "/terpkings" }: { defaultPage?: s
       setStatus({ kind: "error", message: `Unsupported type ${file.type || "(unknown)"}. Use MP4, JPEG, PNG or WebP.` });
       return;
     }
-    if (file.size > HERO_MAX_BYTES) {
-      setStatus({ kind: "error", message: `File is ${(file.size / 1048576).toFixed(1)} MB — the limit is 50 MB.` });
+    const problem = validateForBucket(HERO_BUCKET, file.type, file.size);
+    if (problem) {
+      setStatus({ kind: "error", message: problem });
       return;
     }
 
@@ -123,7 +120,7 @@ export function HeroUploadForm({ defaultPage = "/terpkings" }: { defaultPage?: s
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="hero-file">File (MP4 / JPEG / PNG / WebP, max 50 MB)</Label>
+        <Label htmlFor="hero-file">File (images ≤ 10 MB · MP4 ≤ 60 MB)</Label>
         <Input
           id="hero-file"
           type="file"

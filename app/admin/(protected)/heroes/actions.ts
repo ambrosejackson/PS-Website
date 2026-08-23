@@ -12,12 +12,8 @@ import { isAdminEmail } from "@/lib/admin/allowlist";
  * allowlist (defense in depth — proxy.ts + the admin layout already gate).
  */
 
-import {
-  HERO_ALLOWED_MIME,
-  HERO_BUCKET,
-  HERO_MAX_BYTES,
-  type ActionResult,
-} from "./hero-config";
+import { HERO_ALLOWED_MIME, HERO_BUCKET, type ActionResult } from "./hero-config";
+import { validateForBucket } from "@/lib/admin/buckets";
 
 async function requireAdmin(): Promise<string> {
   const supabase = await createClient();
@@ -58,9 +54,8 @@ export async function createHeroUploadUrl(input: {
   if (!mediaType) {
     return { ok: false, error: `Unsupported file type ${input.mime || "(unknown)"}. Use MP4, JPEG, PNG or WebP.` };
   }
-  if (!Number.isFinite(input.size) || input.size <= 0 || input.size > HERO_MAX_BYTES) {
-    return { ok: false, error: "File must be between 1 byte and 50 MB." };
-  }
+  const problem = validateForBucket(HERO_BUCKET, input.mime, input.size);
+  if (problem) return { ok: false, error: problem };
   let admin;
   try {
     admin = createAdminClient();

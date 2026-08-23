@@ -1,7 +1,17 @@
-/** Shared constants for the hero-media pipeline (client + server). */
+/**
+ * Shared constants for the hero-media pipeline (client + server). Since
+ * migration 0006 heroes live in the `heroes` bucket (images ≤ 10 MB, mp4 ≤ 60 MB
+ * — rules in lib/admin/buckets.ts). The original `hero-media` bucket (0005)
+ * is left in place so any URL already stored keeps resolving.
+ */
+import { BUCKET_RULES } from "@/lib/admin/buckets";
 
-export const HERO_BUCKET = "hero-media";
-export const HERO_MAX_BYTES = 50 * 1024 * 1024;
+export const HERO_BUCKET = "heroes" as const;
+/** Hard ceiling used for the quick client pre-check; the real per-kind caps come from BUCKET_RULES. */
+export const HERO_MAX_BYTES = Math.max(
+  BUCKET_RULES.heroes.imageMaxBytes,
+  BUCKET_RULES.heroes.videoMaxBytes,
+);
 export const HERO_ALLOWED_MIME: Record<string, "video" | "image"> = {
   "video/mp4": "video",
   "image/jpeg": "image",

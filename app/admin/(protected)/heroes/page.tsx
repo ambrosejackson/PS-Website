@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * /admin/heroes — hero media per page (build plan decision 3 + 9). Upload
- * images/MP4s to the public `hero-media` bucket, set theme, default and nav
+ * images/MP4s to the public `heroes` bucket, set theme, default and nav
  * hover target; toggle/delete existing rows. Reads with the service role so
  * inactive rows are visible too.
  */
