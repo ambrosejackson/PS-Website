@@ -3,18 +3,23 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { deleteHero, updateHeroFlags } from "./actions";
+import { deleteHero, updateHero } from "./actions";
+import { NAV_TARGETS } from "./hero-config";
 
 export function HeroRowActions({
   id,
+  page,
   isDefault,
   isActive,
   theme,
+  navTarget,
 }: {
   id: string;
+  page: string;
   isDefault: boolean;
   isActive: boolean;
   theme: string;
+  navTarget: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -32,44 +37,42 @@ export function HeroRowActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {!isDefault && (
-        <Button
-          size="sm"
-          variant="outline"
+      {page === "/" && (
+        <select
+          value={navTarget ?? ""}
           disabled={pending}
-          onClick={() => run(() => updateHeroFlags({ id, isDefault: true }))}
+          onChange={(e) => run(() => updateHero({ id, navTarget: e.target.value || null, ...(e.target.value ? {} : {}) }))}
+          className="h-8 rounded-md border bg-white px-2 text-xs"
+          title="Landing only: which nav hover shows this asset"
         >
+          <option value="">no hover target</option>
+          {NAV_TARGETS.map((t) => (
+            <option key={t.value} value={t.value}>
+              hover: {t.label}
+            </option>
+          ))}
+        </select>
+      )}
+      {!isDefault && (
+        <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => updateHero({ id, isDefault: true }))}>
           Make default
         </Button>
       )}
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={pending}
-        onClick={() => run(() => updateHeroFlags({ id, isActive: !isActive }))}
-      >
+      <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => updateHero({ id, isActive: !isActive }))}>
         {isActive ? "Deactivate" : "Activate"}
       </Button>
       <Button
         size="sm"
         variant="outline"
         disabled={pending}
-        onClick={() =>
-          run(() =>
-            updateHeroFlags({ id, theme: theme === "dark" ? "light" : "dark" }),
-          )
-        }
+        onClick={() => run(() => updateHero({ id, theme: theme === "dark" ? "light" : "dark" }))}
+        title="Manual theme override"
       >
         Theme → {theme === "dark" ? "light" : "dark"}
       </Button>
       {confirmDelete ? (
         <>
-          <Button
-            size="sm"
-            variant="destructive"
-            disabled={pending}
-            onClick={() => run(() => deleteHero(id))}
-          >
+          <Button size="sm" variant="destructive" disabled={pending} onClick={() => run(() => deleteHero(id))}>
             Confirm delete
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)}>
@@ -77,13 +80,7 @@ export function HeroRowActions({
           </Button>
         </>
       ) : (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-red-600"
-          disabled={pending}
-          onClick={() => setConfirmDelete(true)}
-        >
+        <Button size="sm" variant="ghost" className="text-red-600" disabled={pending} onClick={() => setConfirmDelete(true)}>
           Delete
         </Button>
       )}

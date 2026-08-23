@@ -1,113 +1,70 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
+import { deleteUploadedObject } from "@/lib/admin/upload-actions";
+import { revalidateFor } from "@/lib/revalidate";
+import { HERO_PAGES, NAV_TARGETS, type ActionResult } from "./hero-config";
 
 /**
- * /admin/heroes server actions. Uploads go browser → Supabase Storage directly
- * via a signed upload URL minted here (service role), which keeps 50 MB MP4s
- * out of the Vercel function body limit. Every action re-verifies the staff
- * allowlist (defense in depth — proxy.ts + the admin layout already gate).
+ * /admin/heroes server actions (D-044: heroes admin-managed on every public
+ * page; hover-swap mapping on landing only). Uploads go through the shared
+ * AdminUploader (signed URL → heroes bucket); these actions write/patch rows,
+ * enforce exactly one default per page, and revalidate the page.
  */
 
-import { HERO_ALLOWED_MIME, HERO_BUCKET, type ActionResult } from "./hero-config";
-import { validateForBucket } from "@/lib/admin/buckets";
-
-async function requireAdmin(): Promise<string> {
+async function requireAdmin(): Promise<boolean> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!isAdminEmail(user?.email)) throw new Error("Unauthorized");
-  return user!.email!;
+  return isAdminEmail(user?.email);
 }
 
 function normalizePage(page: string): string {
   const p = page.trim();
-  if (!p.startsWith("/")) return `/${p}`;
-  return p.length > 1 ? p.replace(/\/+$/, "") : p;
+  const withSlash = p.startsWith("/") ? p : `/${p}`;
+  return withSlash.length > 1 ? withSlash.replace(/\/+$/, "") : withSlash;
 }
 
-function safeFileName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(-80);
+function normalizeNavTarget(page: string, raw: string | null | undefined): string | null {
+  if (page !== "/") return null; // landing only (D-044)
+  const v = (raw ?? "").trim().toUpperCase();
+  if (!v) return null;
+  return NAV_TARGETS.some((t) => t.value === v) ? v : null;
 }
 
-/** Step 1 — mint a signed upload URL for the browser to PUT the file to. */
-export async function createHeroUploadUrl(input: {
-  page: string;
-  fileName: string;
-  size: number;
-  mime: string;
-}): Promise<ActionResult<{ path: string; token: string; mediaType: "video" | "image" }>> {
-  try {
-    await requireAdmin();
-  } catch {
-    return { ok: false, error: "Unauthorized." };
-  }
-  const mediaType = HERO_ALLOWED_MIME[input.mime];
-  if (!mediaType) {
-    return { ok: false, error: `Unsupported file type ${input.mime || "(unknown)"}. Use MP4, JPEG, PNG or WebP.` };
-  }
-  const problem = validateForBucket(HERO_BUCKET, input.mime, input.size);
-  if (problem) return { ok: false, error: problem };
-  let admin;
-  try {
-    admin = createAdminClient();
-  } catch {
-    return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
-  }
-  const page = normalizePage(input.page);
-  const folder = page === "/" ? "landing" : page.slice(1).replace(/\//g, "-");
-  const path = `${folder}/${Date.now()}-${safeFileName(input.fileName)}`;
-  const { data, error } = await admin.storage
-    .from(HERO_BUCKET)
-    .createSignedUploadUrl(path);
-  if (error || !data) {
-    return { ok: false, error: error?.message ?? "Could not create upload URL." };
-  }
-  return { ok: true, data: { path: data.path, token: data.token, mediaType } };
-}
-
-/** Step 2 — after the browser upload succeeds, write the content_heroes row. */
 export async function saveHeroRow(input: {
   page: string;
-  path: string;
+  mediaUrl: string;
   mediaType: "video" | "image";
   theme: "light" | "dark";
   isDefault: boolean;
   navTarget: string | null;
-}): Promise<ActionResult<{ id: string; mediaUrl: string }>> {
-  try {
-    await requireAdmin();
-  } catch {
-    return { ok: false, error: "Unauthorized." };
-  }
+}): Promise<ActionResult<{ id: string }>> {
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
+  const page = normalizePage(input.page);
+  if (!HERO_PAGES.some((p) => p.page === page)) return { ok: false, error: `Unknown page ${page}.` };
+  if (!/^https?:\/\//.test(input.mediaUrl)) return { ok: false, error: "Upload the media first." };
   let admin;
   try {
     admin = createAdminClient();
   } catch {
     return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
   }
-  const page = normalizePage(input.page);
-  const { data: pub } = admin.storage.from(HERO_BUCKET).getPublicUrl(input.path);
-  const mediaUrl = pub.publicUrl;
+  const navTarget = normalizeNavTarget(page, input.navTarget);
 
-  if (input.isDefault) {
-    // One default per page.
-    const { error } = await admin
-      .from("content_heroes")
-      .update({ is_default: false })
-      .eq("page", page)
-      .eq("is_default", true);
+  // A hover-target asset can't also be the default; exactly one default per page.
+  const isDefault = navTarget ? false : input.isDefault;
+  if (isDefault) {
+    const { error } = await admin.from("content_heroes").update({ is_default: false }).eq("page", page).eq("is_default", true);
     if (error) return { ok: false, error: error.message };
   }
-
+  // One asset per nav target on the landing page.
+  if (navTarget) {
+    await admin.from("content_heroes").update({ nav_target: null }).eq("page", page).eq("nav_target", navTarget);
+  }
   const { data: maxRow } = await admin
     .from("content_heroes")
     .select("sort_order")
@@ -115,103 +72,79 @@ export async function saveHeroRow(input: {
     .order("sort_order", { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle();
-
   const { data, error } = await admin
     .from("content_heroes")
     .insert({
       page,
-      nav_target: input.navTarget?.trim() ? input.navTarget.trim().toUpperCase() : null,
-      media_url: mediaUrl,
+      nav_target: navTarget,
+      media_url: input.mediaUrl,
       media_type: input.mediaType,
       theme: input.theme,
-      is_default: input.isDefault,
+      is_default: isDefault,
       sort_order: (maxRow?.sort_order ?? 0) + 1,
       is_active: true,
     })
     .select("id")
     .single();
   if (error || !data) return { ok: false, error: error?.message ?? "Insert failed." };
-
-  revalidatePath(page);
-  revalidatePath("/admin/heroes");
-  return { ok: true, data: { id: data.id, mediaUrl } };
+  revalidateFor({ kind: "heroes", page });
+  return { ok: true, data: { id: data.id } };
 }
 
-export async function updateHeroFlags(input: {
+export async function updateHero(input: {
   id: string;
   isDefault?: boolean;
   isActive?: boolean;
   theme?: "light" | "dark";
+  navTarget?: string | null;
 }): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-  } catch {
-    return { ok: false, error: "Unauthorized." };
-  }
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   let admin;
   try {
     admin = createAdminClient();
   } catch {
     return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
   }
-  const { data: row, error: readErr } = await admin
-    .from("content_heroes")
-    .select("id, page")
-    .eq("id", input.id)
-    .maybeSingle();
-  if (readErr || !row) return { ok: false, error: "Hero not found." };
+  const { data: row } = await admin.from("content_heroes").select("id, page, nav_target").eq("id", input.id).maybeSingle();
+  if (!row) return { ok: false, error: "Hero not found." };
 
-  if (input.isDefault === true) {
-    const { error } = await admin
-      .from("content_heroes")
-      .update({ is_default: false })
-      .eq("page", row.page)
-      .eq("is_default", true);
-    if (error) return { ok: false, error: error.message };
+  const patch: { is_default?: boolean; is_active?: boolean; theme?: string; nav_target?: string | null } = {};
+  if (input.navTarget !== undefined) {
+    const nt = normalizeNavTarget(row.page, input.navTarget);
+    patch.nav_target = nt;
+    if (nt) {
+      await admin.from("content_heroes").update({ nav_target: null }).eq("page", row.page).eq("nav_target", nt).neq("id", row.id);
+      patch.is_default = false;
+    }
   }
-  const patch: { is_default?: boolean; is_active?: boolean; theme?: string } = {};
-  if (input.isDefault !== undefined) patch.is_default = input.isDefault;
+  if (input.isDefault === true) {
+    const { error } = await admin.from("content_heroes").update({ is_default: false }).eq("page", row.page).eq("is_default", true);
+    if (error) return { ok: false, error: error.message };
+    patch.is_default = true;
+    patch.nav_target = null; // the default is the resting asset, not a hover target
+  } else if (input.isDefault === false) patch.is_default = false;
   if (input.isActive !== undefined) patch.is_active = input.isActive;
   if (input.theme !== undefined) patch.theme = input.theme;
+
   const { error } = await admin.from("content_heroes").update(patch).eq("id", input.id);
   if (error) return { ok: false, error: error.message };
-
-  revalidatePath(row.page);
-  revalidatePath("/admin/heroes");
+  revalidateFor({ kind: "heroes", page: row.page });
   return { ok: true, data: undefined };
 }
 
 export async function deleteHero(id: string): Promise<ActionResult> {
-  try {
-    await requireAdmin();
-  } catch {
-    return { ok: false, error: "Unauthorized." };
-  }
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   let admin;
   try {
     admin = createAdminClient();
   } catch {
     return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
   }
-  const { data: row } = await admin
-    .from("content_heroes")
-    .select("id, page, media_url")
-    .eq("id", id)
-    .maybeSingle();
+  const { data: row } = await admin.from("content_heroes").select("id, page, media_url").eq("id", id).maybeSingle();
   if (!row) return { ok: false, error: "Hero not found." };
-
   const { error } = await admin.from("content_heroes").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-
-  // Remove the storage object too when it lives in our bucket.
-  const marker = `/object/public/${HERO_BUCKET}/`;
-  const idx = row.media_url.indexOf(marker);
-  if (idx !== -1) {
-    const objectPath = decodeURIComponent(row.media_url.slice(idx + marker.length));
-    await admin.storage.from(HERO_BUCKET).remove([objectPath]);
-  }
-
-  revalidatePath(row.page);
-  revalidatePath("/admin/heroes");
+  await deleteUploadedObject(row.media_url); // no-op for non-bucket URLs
+  revalidateFor({ kind: "heroes", page: row.page });
   return { ok: true, data: undefined };
 }
