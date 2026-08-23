@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
 import { SimplePage } from "@/components/site/SimplePage";
+import { ContactForm } from "@/components/site/ContactForm";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Get in touch with Private Stock Cannabis Co.",
+  description:
+    "Contact Private Stock Cannabis Co. — consumer questions, retailer and dispensary wholesale inquiries, and press.",
 };
 
+/** /contact (D-043): one form, inquiry type → messages table; retailer rows feed PSM W3 later. */
 export default function ContactPage() {
-  // TODO(Ambrose): confirm contact channels + retailer inquiry form spec
-  // (open item #1; retailer form routes into the PSM pipeline in a later phase).
   return (
     <SimplePage page="/contact" title="CONTACT">
       <p>
-        Retail partner or press inquiry? The contact and retailer inquiry forms
-        are being finalized — for now, reach us through your Private Stock
-        sales contact.
+        Questions about our brands, carrying Private Stock products at your dispensary, or a press inquiry — send it
+        here and the right person will reply.
       </p>
-      <p className="text-sm text-neutral-400">
-        Full Contact page content is being finalized.
-      </p>
+      <div className="mt-8 max-w-2xl">
+        <ContactForm />
+      </div>
     </SimplePage>
   );
 }

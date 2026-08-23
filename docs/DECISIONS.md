@@ -451,3 +451,29 @@ Ambrose's correction, which supersedes those entries:
   registration, TEST MODE ONLY; set the real head office / registrations before
   going live. `EMAIL_FROM` / `EMAIL_NOTIFY_TO` env overrides exist for the
   pre-verification period.
+
+## 2026-08-22 — Remaining admin sections (Heroes, Banners, Blog, Subscribers, Contact/Messages)
+
+**Implementation choices (flag if wrong):**
+- I-056: Heroes admin groups by the spec page order; theme auto = top-band
+  luminance (lib/luminance.ts) for images, `dark` for video, manual override
+  per row. Landing nav targets are stored as the Header's hover keys
+  (`BRANDS` for CATALOG, `STORE LOCATOR`, `YOUR REWARDS`); one asset per
+  target; a hover asset can't be the default. Exactly one default per page is
+  enforced in `saveHeroRow`/`updateHero`. The old `hero-media` bucket stays
+  for existing URLs.
+- I-057: Banner carousel: 6 s rotate, pause on hover/focus, 40 px swipe on
+  touch, desktop arrows; `getBanners` already filters active + window + sort.
+- I-058: Blog body is TipTap JSON stored in `blog_posts.body_md` (column name
+  kept; renaming touches the seed and every reader for no gain — documented
+  in lib/blog.ts). Slug locks once `published_at` is set. The three seeded
+  placeholder posts were set to draft so "In the News" shows real posts only
+  (it hides when there are none).
+- I-059: Subscriber delete = removal request: row deleted, linked code
+  `expires_at = now`, Stripe promotion code `active=false` when the id is real
+  and Stripe is configured (stub ids skipped).
+- I-060: /contact posts to `/api/messages` (service role insert, honeypot
+  `website`, ≤5 per IP / 10 min in-instance + ≤5 per email / 10 min via DB);
+  staff notification subject `[Contact · RETAILER] Name — Company`. The older
+  Outfitters "GET IN TOUCH" form still writes `contact_messages` (brand-page
+  form, unchanged); /admin/messages shows the new `messages` inbox.
