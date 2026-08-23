@@ -417,31 +417,49 @@ export type Database = {
       }
       order_items: {
         Row: {
+          fulfillment_provider: string | null
           id: string
+          image_url: string | null
           order_id: string
+          product_id: string | null
           provider_order_id: string | null
           qty: number
+          sku: string | null
+          title: string | null
           tracking: Json | null
           unit_price_cents: number
           variant_id: string | null
+          variant_label: string | null
         }
         Insert: {
+          fulfillment_provider?: string | null
           id?: string
+          image_url?: string | null
           order_id: string
+          product_id?: string | null
           provider_order_id?: string | null
           qty: number
+          sku?: string | null
+          title?: string | null
           tracking?: Json | null
           unit_price_cents: number
           variant_id?: string | null
+          variant_label?: string | null
         }
         Update: {
+          fulfillment_provider?: string | null
           id?: string
+          image_url?: string | null
           order_id?: string
+          product_id?: string | null
           provider_order_id?: string | null
           qty?: number
+          sku?: string | null
+          title?: string | null
           tracking?: Json | null
           unit_price_cents?: number
           variant_id?: string | null
+          variant_label?: string | null
         }
         Relationships: [
           {
@@ -449,6 +467,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "merch_products"
             referencedColumns: ["id"]
           },
           {
@@ -463,19 +488,25 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          customer_name: string | null
           discount_cents: number | null
+          discount_code_id: string | null
           email: string | null
           fulfillment_status: string
           id: string
           internal_note: string | null
+          paid_at: string | null
           payment_provider: string
+          paypal_capture_id: string | null
           paypal_order_id: string | null
           promo_code: string | null
+          shipped_at: string | null
           shipping_address: Json | null
           shipping_cents: number | null
           status: string
           stripe_payment_intent: string | null
           stripe_session_id: string | null
+          stripe_tax_calculation_id: string | null
           subtotal_cents: number | null
           tax_cents: number
           total_cents: number | null
@@ -484,19 +515,25 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_name?: string | null
           discount_cents?: number | null
+          discount_code_id?: string | null
           email?: string | null
           fulfillment_status?: string
           id?: string
           internal_note?: string | null
+          paid_at?: string | null
           payment_provider: string
+          paypal_capture_id?: string | null
           paypal_order_id?: string | null
           promo_code?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          stripe_tax_calculation_id?: string | null
           subtotal_cents?: number | null
           tax_cents?: number
           total_cents?: number | null
@@ -505,26 +542,40 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_name?: string | null
           discount_cents?: number | null
+          discount_code_id?: string | null
           email?: string | null
           fulfillment_status?: string
           id?: string
           internal_note?: string | null
+          paid_at?: string | null
           payment_provider?: string
+          paypal_capture_id?: string | null
           paypal_order_id?: string | null
           promo_code?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
+          stripe_tax_calculation_id?: string | null
           subtotal_cents?: number | null
           tax_cents?: number
           total_cents?: number | null
           tracking?: Json | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_availability: {
         Row: {
