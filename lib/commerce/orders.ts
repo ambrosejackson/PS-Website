@@ -91,6 +91,24 @@ export async function updateOrder(id: string, patch: Database["public"]["Tables"
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Flip a pending order to PAID (idempotent — a second webhook/capture for an
+ * already-paid order is a no-op and returns `alreadyPaid: true`). Redeems the
+ * newsletter code. Email sending is layered on by the caller.
+ */
+export async function finalizeOrderPaid(
+  orderId: string,
+  patch: Database["public"]["Tables"]["orders"]["Update"],
+): Promise<{ order: OrderWithItems; alreadyPaid: boolean } | null> {
+  const existing = await getOrderWithItems(orderId);
+  if (!existing) return null;
+  if (existing.status !== "pending") return { order: existing, alreadyPaid: true };
+  await updateOrder(orderId, { ...patch, status: "paid", paid_at: new Date().toISOString() });
+  await redeemDiscountCode(existing.discount_code_id ?? patch.discount_code_id ?? null);
+  const order = await getOrderWithItems(orderId);
+  return order ? { order, alreadyPaid: false } : null;
+}
+
 /** Mark the newsletter code redeemed (idempotent). */
 export async function redeemDiscountCode(discountCodeId: string | null) {
   if (!discountCodeId) return;
