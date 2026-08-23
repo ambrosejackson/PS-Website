@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FULFILLMENT_LABEL } from "@/components/site/OrderSummary";
-import { saveInternalNote, saveTracking, setFulfillmentStatus, setRefundFlag, type FulfillmentStatus } from "./actions";
+import { resendOrderEmails, saveInternalNote, saveTracking, setFulfillmentStatus, setRefundFlag, type FulfillmentStatus } from "./actions";
 
 const FLOW: FulfillmentStatus[] = ["new", "placed_with_provider", "packed", "shipped", "delivered"];
 
@@ -145,6 +145,14 @@ export function OrderActions({
         <textarea id="o-note" value={internal} onChange={(e) => setInternal(e.target.value)} rows={3} className="w-full rounded-md border px-3 py-2 text-sm" />
         <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => saveInternalNote(id, internal), "Note saved.")}>
           Save note
+        </Button>
+      </div>
+
+      <div className="space-y-2 rounded border bg-white p-4">
+        <Label>Emails</Label>
+        <p className="text-xs text-neutral-600">Re-send the customer confirmation and the staff notification for this order.</p>
+        <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => resendOrderEmails(id), "Emails re-sent.")}>
+          Resend order emails
         </Button>
       </div>
 

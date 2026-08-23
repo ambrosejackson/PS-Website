@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin/allowlist";
-import { sendShippingEmail } from "@/lib/commerce/emails";
+import { sendOrderEmails, sendShippingEmail } from "@/lib/commerce/emails";
 import { getOrderWithItems, updateOrder } from "@/lib/commerce/orders";
 import type { Json } from "@/lib/database.types";
 
@@ -70,6 +70,18 @@ export async function saveTracking(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Update failed." };
   }
+}
+
+/** Re-send the customer confirmation + staff notification (e.g. after fixing email DNS). */
+export async function resendOrderEmails(id: string): Promise<ActionResult<{ results: string[] }>> {
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
+  const order = await getOrderWithItems(id);
+  if (!order) return { ok: false, error: "Order not found." };
+  if (order.status === "pending" || order.status === "failed") return { ok: false, error: "Order isn't paid." };
+  const results = await sendOrderEmails(order);
+  const summary = results.map((r) => (r.ok ? ("skipped" in r && r.skipped ? `skipped (${r.reason})` : "sent") : `failed: ${r.error}`));
+  if (results.some((r) => !r.ok)) return { ok: false, error: summary.join(" · ") };
+  return { ok: true, data: { results: summary } };
 }
 
 export async function saveInternalNote(id: string, note: string): Promise<ActionResult> {

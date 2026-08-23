@@ -9,8 +9,15 @@ import "server-only";
  * Uses Resend's HTTP API directly (no SDK dependency yet).
  */
 
-export const EMAIL_FROM = "Private Stock <notifications@privatestock.co>";
+/** Default sender; override with EMAIL_FROM (e.g. Resend's onboarding@resend.dev before the domain is verified). Read lazily so env changes apply without a module reload. */
+export const DEFAULT_EMAIL_FROM = "Private Stock <notifications@privatestock.co>";
 export const EMAIL_NOTIFY_TO = "ambrose@privatestock.co";
+export function emailFrom(): string {
+  return process.env.EMAIL_FROM?.trim() || DEFAULT_EMAIL_FROM;
+}
+export function notifyTo(): string {
+  return process.env.EMAIL_NOTIFY_TO?.trim() || EMAIL_NOTIFY_TO;
+}
 
 export interface EmailMessage {
   to: string | string[];
@@ -67,7 +74,7 @@ export async function send(message: EmailMessage): Promise<SendResult> {
       method: "POST",
       headers,
       body: JSON.stringify({
-        from: message.from ?? EMAIL_FROM,
+        from: message.from ?? emailFrom(),
         to,
         subject: message.subject,
         html: message.html,
@@ -91,5 +98,5 @@ export async function send(message: EmailMessage): Promise<SendResult> {
 
 /** Convenience: internal notification to Ambrose (new order, new message). */
 export function notifyStaff(subject: string, html: string, opts: { replyTo?: string; idempotencyKey?: string } = {}) {
-  return send({ to: EMAIL_NOTIFY_TO, subject, html, ...opts });
+  return send({ to: notifyTo(), subject, html, ...opts });
 }
