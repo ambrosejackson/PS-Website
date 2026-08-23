@@ -429,3 +429,25 @@ Ambrose's correction, which supersedes those entries:
   refunds happen in the processor dashboards, as the UI states.
 - I-052: Customer order page access proof = Stripe session_id (owning this
   order), PayPal token, or matching email — no auth, no enumeration.
+- I-053: **Test-mode pass (2026-08-22, local dev + Stripe CLI forwarding):**
+  Stripe order `9d08e064` (M, promo PS15-ZT7EY2): $35.00 − $5.25 + $6.99
+  shipping + $3.12 tax = $39.86, paid via webhook, PI stored, promo redeemed.
+  Stripe order `7c7fe195` (L ×2): $70.00 + $6.99 + $7.35 = $84.34. PayPal
+  order `52665ef9` (M): $35.00 + $6.99 + $3.68 = $45.67, capture id stored,
+  Stripe Tax calc `taxcalc_1U7Rmp…`. Tax rule identical on both rails (Stripe
+  Tax: 10.5% on goods for 60602, shipping untaxed in IL). Both emails (customer
+  + staff, with printify tags) delivered via Resend — to the account-owner
+  address only, because `privatestock.co` is not yet DNS-verified (records
+  issued; see session summary). Items: `PS Test Tee` (slug ps-test-tee, 2
+  variants, printify) — deactivate once real apparel is live.
+- I-054: Vercel **preview deployments are behind Vercel Authentication**, so
+  Stripe webhooks / PayPal can't reach them; the preview webhook endpoint
+  (`we_1U7RIP…`) + `STRIPE_WEBHOOK_SECRET` are registered for the dev alias but
+  will 401 until Deployment Protection is relaxed (or a protection-bypass token
+  is appended to the webhook URL). Production needs its own endpoint + secret.
+- I-055: The Stripe test keys belong to a sandbox named **"PS Management
+  sandbox"** (shown on the hosted checkout header) — Stripe Tax head office was
+  set via API to a Chicago placeholder (1 N State St, 60602) + an IL
+  registration, TEST MODE ONLY; set the real head office / registrations before
+  going live. `EMAIL_FROM` / `EMAIL_NOTIFY_TO` env overrides exist for the
+  pre-verification period.
