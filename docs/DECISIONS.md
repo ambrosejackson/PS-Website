@@ -323,3 +323,9 @@ Ambrose's correction, which supersedes those entries:
   way). `rosin-vapes.png` (168 KB, white ground) re-landed → white knocked out
   and encoded as `rosin-vapes.webp` (20 KB), which `PRODUCTS[2].img` already
   pointed at, so UNIT TK-03 now shows the render instead of the placeholder.
+- I-043: `<html data-scroll-behavior="smooth">` (root layout) — Next 16 stopped
+  overriding CSS `scroll-behavior: smooth` during SPA navigations, so the
+  TerpKings page's smooth in-page anchors made every route change INTO
+  /terpkings animate from the previous scroll offset (landing "Learn More"
+  appeared to load mid-page and scroll up). The attribute restores the
+  pre-16 behavior: instant top on navigation, smooth for #anchors.
