@@ -1,5 +1,6 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Database } from "@/lib/database.types";
+import { isAllowlistedBrand } from "@/lib/brands";
 
 type Tables = Database["public"]["Tables"];
 export type HeroAsset = Tables["content_heroes"]["Row"];
@@ -89,6 +90,9 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   return data ?? null;
 }
 
+/** Public visibility: active, not quarantined (D-038), and on the brand allowlist. */
+const PUBLIC_SYNC_FILTER = "sync_status.is.null,sync_status.eq.ok";
+
 export async function getCatalogProducts(brand?: string): Promise<CatalogProduct[]> {
   const supabase = createPublicClient();
   if (!supabase) return [];
@@ -96,12 +100,14 @@ export async function getCatalogProducts(brand?: string): Promise<CatalogProduct
     .from("catalog_products")
     .select("*")
     .eq("is_active", true)
+    .or(PUBLIC_SYNC_FILTER)
     .order("brand", { ascending: true })
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("name", { ascending: true });
   if (brand) query = query.eq("brand", brand);
   const { data, error } = await query;
   if (error || !data) return [];
-  return data;
+  return data.filter((p) => isAllowlistedBrand(p.brand));
 }
 
 export async function getCatalogProductBySlug(
@@ -114,8 +120,10 @@ export async function getCatalogProductBySlug(
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
+    .or(PUBLIC_SYNC_FILTER)
     .maybeSingle();
-  return data ?? null;
+  if (!data || !isAllowlistedBrand(data.brand)) return null;
+  return data;
 }
 
 export async function getMerchProducts(): Promise<MerchProduct[]> {

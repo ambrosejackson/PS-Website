@@ -359,3 +359,38 @@ Ambrose's correction, which supersedes those entries:
   the future feed for PSM W3 ingest.
 - D-044: **Heroes are admin-managed on every public page; hover-swap mapping on
   landing only. Banners on landing only. Blog uses a rich text editor.**
+
+## 2026-08-22 — Products + Apparel end-to-end session
+
+**Decisions made by Ambrose:**
+- D-045: **iHeartJane sheet → catalog_products column mapping approved as
+  proposed** (tabs fetched by name via the gviz CSV endpoint, `headers=1`):
+  brand ← "Brand" (case-insensitive allowlist match; template/unlisted brands
+  skipped silently) · name ← "Product Name (Internal Use)" · category ← the
+  tab (Flower / Pre-Rolls / Vapes / Edibles / Extracts / Tinctures / Topicals /
+  Gear / Merch) · format ← "Brand Category" title-cased (Vape: + "Product
+  Type") · weight ← pack-size columns per tab (Pre-Roll "5pk · 1.75g"; Vape
+  non-standard size or size parsed from the name) · strain_type ← "Lineage" ·
+  image_url ← Drive link → `https://drive.google.com/uc?export=view&id=<ID>`
+  (blank → image_missing; junk → quarantined) · thc_range untouched ·
+  description + terp_category (TerpKings `[Fruit]` tag) seeded ONCE on insert,
+  admin-owned after · "Jane Use" status ignored.
+
+**Implementation choices (flag if wrong):**
+- I-044: `sheet_row_ref = {tab}|{brand-slug}|{slug(name)}|{slug(weight)}` —
+  the sheet's own instruction is to re-enter a product once per pack size, and
+  the dry run showed 16 name-duplicates that were really 3.5g/7g/14g variants,
+  so weight is part of the identity. The 3 remaining true duplicates (same
+  name + size, e.g. Higher Self Chem Brulee) are stored quarantined
+  "Duplicate of …". New slugs are `slug(brand + name)`, uniqueness-suffixed.
+  Dry run at approval: 252 mapped (Outfitters 74, Higher Self 141, SSS 24,
+  TerpKings 13) across Flower 91 / Pre-Rolls 131 / Vapes 30; 60 without an
+  image link; 0 invalid rows.
+- I-045: Public catalog reads now require `is_active AND (sync_status is null
+  OR 'ok')` AND an allowlisted brand (`getCatalogProducts` /
+  `getCatalogProductBySlug`), so quarantined / missing rows never render.
+  Missing-from-sheet rows are also auto-hidden (`is_active=false`) per D-038.
+- I-046: Daily cron = `vercel.json` → `GET /api/cron/sync-sheet` at 09:00 UTC,
+  authenticated by `CRON_SECRET` (Vercel injects the bearer header); `?dryRun=1`
+  supported. Admin "Sync from sheet" / "Dry run" buttons call the same runner
+  through a server action and show added/updated/quarantined/missing.
