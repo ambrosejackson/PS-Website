@@ -4,12 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { Button } from "@/components/ui/button";
 
+// Order locked in the /admin build-out session (D-038..D-044).
 const SECTIONS = [
+  { href: "/admin/products", label: "Products" },
+  { href: "/admin/apparel", label: "Apparel" },
+  { href: "/admin/orders", label: "Orders" },
   { href: "/admin/heroes", label: "Heroes" },
   { href: "/admin/banners", label: "Banners" },
   { href: "/admin/blog", label: "Blog" },
-  { href: "/admin/apparel", label: "Apparel" },
-  { href: "/admin/catalog", label: "Catalog" },
   { href: "/admin/subscribers", label: "Subscribers" },
   { href: "/admin/messages", label: "Messages" },
 ];
