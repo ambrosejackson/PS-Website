@@ -5,6 +5,8 @@ import { AvailabilityMap } from "@/components/site/AvailabilityMap";
 import { Footer } from "@/components/site/Footer";
 import { BRANDS, brandBySlug } from "@/lib/brands";
 import { getHeroesForPage, getStoreLocations } from "@/lib/data";
+import { availabilityComingSoon } from "@/lib/showRealAvailability";
+import { NewsletterSection } from "@/components/site/NewsletterSection";
 
 export const revalidate = 300;
 
@@ -35,6 +37,8 @@ export default async function StoreLocatorPage({
     searchParams,
   ]);
 
+  // Production on mock PSM data → "coming soon" (lib/showRealAvailability.ts).
+  const comingSoon = availabilityComingSoon();
   // Unknown slugs fall back to "all" rather than showing an empty list.
   const brand = params.brand ? brandBySlug(params.brand.toLowerCase()) : undefined;
   const visible = brand
@@ -50,7 +54,30 @@ export default async function StoreLocatorPage({
         <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           STORE LOCATOR
         </h1>
-        {stores.length > 0 ? (
+        {comingSoon ? (
+          <div className="mt-10 border border-hairline bg-[#fafafa] px-6 py-16 text-center md:py-24">
+            <p className="font-condensed text-xs font-semibold uppercase tracking-[0.3em] text-caption">Coming soon</p>
+            <h2 className="mt-4 font-condensed text-3xl font-bold uppercase tracking-tight text-ink md:text-4xl">
+              Find Private Stock at licensed Illinois dispensaries
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-neutral-500">
+              Live store availability for Outfitters, TerpKings, Higher Self and Savage Squad Strains is on its way.
+              Until then, ask for our brands at your local licensed dispensary — and join the list below to hear the
+              moment the locator goes live.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              {BRANDS.map((b) => (
+                <Link
+                  key={b.slug}
+                  href={`/${b.slug}`}
+                  className={`${FILTER_BASE} border-hairline text-neutral-500 hover:border-ink hover:text-ink`}
+                >
+                  {b.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : stores.length > 0 ? (
           <>
             <p className="mt-3 max-w-xl text-sm text-amber-600">
               Preview build — showing mock store data until the live feed
@@ -141,6 +168,7 @@ export default async function StoreLocatorPage({
           </p>
         )}
       </section>
+      {comingSoon && <NewsletterSection />}
       <Footer />
     </main>
   );

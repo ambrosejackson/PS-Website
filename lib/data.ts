@@ -1,6 +1,7 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Database } from "@/lib/database.types";
 import { isAllowlistedBrand } from "@/lib/brands";
+import { showRealAvailability } from "@/lib/showRealAvailability";
 
 type Tables = Database["public"]["Tables"];
 export type HeroAsset = Tables["content_heroes"]["Row"];
@@ -174,9 +175,12 @@ export function merchFromCents(p: MerchListing): number | null {
   return prices.length ? Math.min(...prices) : null;
 }
 
-/** Mock PSM data is gated behind MOCK_PSM_DATA until the publish pipeline lands. */
+/**
+ * Mock PSM data is gated behind MOCK_PSM_DATA until the publish pipeline lands,
+ * and NEVER shown on production (lib/showRealAvailability.ts).
+ */
 function mockPsmEnabled(): boolean {
-  return process.env.MOCK_PSM_DATA === "true";
+  return process.env.MOCK_PSM_DATA === "true" && showRealAvailability();
 }
 
 export async function getStoreLocations(): Promise<StoreLocation[]> {

@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/site/SectionHeader";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
 import { brandByName, brandBySlug } from "@/lib/brands";
+import { showRealAvailability } from "@/lib/showRealAvailability";
 import {
   getAvailabilityForProduct,
   getCatalogProductBySlug,
@@ -187,6 +188,8 @@ export default async function ProductPage({
         </div>
       </section>
 
+      {/* Hidden entirely on production while the site runs on mock PSM data (lib/showRealAvailability.ts). */}
+      {showRealAvailability() && (
       <section className="border-t border-hairline py-14 md:py-20">
         <div className="mx-auto max-w-screen-2xl px-6 md:px-12">
           <h2 className="font-condensed text-[24px] font-bold uppercase tracking-tight text-ink md:text-[30px]">
@@ -262,6 +265,7 @@ export default async function ProductPage({
           )}
         </div>
       </section>
+      )}
 
       {others.length > 0 && (
         <section className="border-t border-hairline">
