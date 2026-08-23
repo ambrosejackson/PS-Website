@@ -496,3 +496,20 @@ Ambrose's correction, which supersedes those entries:
   brand locators render empty). Stripe/PayPal remain in TEST mode on production
   until LAUNCH-CHECKLIST §B. Remaining pre-cutover work lives in
   `docs/LAUNCH-CHECKLIST.md` (created this session — it did not exist before).
+- I-062: **Published 2026-08-22 by fast-forwarding `main` to `dev` (d1258ea → 3f43285)
+  — no PR**: `gh` could not be authenticated for this Windows user during the
+  session (no `%APPDATA%\GitHub CLI\hosts.yml`), Ambrose chose the fast-forward.
+  Production deployment `ps-website-ksdx07kcb` ● Ready (49 s) at
+  https://ps-website-alpha.vercel.app. Post-deploy (production URL): `/` hero +
+  banner + 10 brand-row SEE MOREs + footer; `/terpkings` poster before video,
+  preload=auto, video playing under the CRT layers (headless probe);
+  `/products` 24 product links, product page without "Buy Now at the Below
+  Locations" + Product JSON-LD; `/store-locator` coming-soon + newsletter, no
+  mock leak; `/apparel` 12 links, detail renders, cart drawer opens;
+  `/apparel/checkout` shows both rails configured (TEST keys); `/admin` → login;
+  `/api/cron/sync-sheet` 401 without secret, `CRON_SECRET` present in
+  Production; `/sitemap.xml` 48 URLs (host = privatestock.co — intended for the
+  cutover, `NEXT_PUBLIC_SITE_URL` is unset in Vercel), `/robots.txt` OK.
+  Gaps found: `STRIPE_WEBHOOK_SECRET` and `PAYPAL_ENV` exist only in Preview
+  (production webhook endpoint not registered yet — LAUNCH-CHECKLIST §B); "In
+  the News" on `/` is hidden until a real post is published.
