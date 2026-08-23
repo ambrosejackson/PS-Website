@@ -32,7 +32,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   const [description, setDescription] = useState(product?.description ?? "");
   const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
   const [terps, setTerps] = useState<TerpeneEntry[]>(
-    (Array.isArray(product?.terpene_profile) ? (product!.terpene_profile as TerpeneEntry[]) : []).map((t) => ({
+    (Array.isArray(product?.terpene_profile) ? (product!.terpene_profile as unknown as Partial<TerpeneEntry>[]) : []).map((t) => ({
       name: t.name ?? "",
       note: t.note ?? "",
     })),
