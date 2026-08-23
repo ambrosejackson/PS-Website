@@ -329,3 +329,33 @@ Ambrose's correction, which supersedes those entries:
   /terpkings animate from the previous scroll offset (landing "Learn More"
   appeared to load mid-page and scroll up). The attribute restores the
   pre-16 behavior: instant top on navigation, smooth for #anchors.
+
+## 2026-08-22 — /admin build-out: locked decisions (foundation session)
+
+**Decisions made by Ambrose:**
+- D-038: **`catalog_products` is HYBRID** — a scheduled sync from the iHeartJane
+  master sheet PLUS manual products. Field ownership on synced rows: the **sync
+  owns** `name, brand, category, format, weight, thc_range, image_url`; the
+  **admin owns** `is_active` (the Hide toggle), `description`,
+  `terpene_profile`, `terp_category`, `sort_order` — the sync NEVER writes
+  admin-owned fields. New synced products default to hidden
+  (`is_active = false`) until reviewed in /admin. Kush League and Clusters rows
+  in the sheet are skipped per the brand allowlist (guardrail #3).
+- D-039: **Full merch commerce ships now**: Stripe (cards, Apple Pay, Google Pay,
+  Link, Cash App Pay) AND PayPal as a second processor. Flat shipping $6.99,
+  free at $75+. Stripe Tax everywhere — Stripe Tax API calculation is used for
+  PayPal orders too so both rails charge identical tax.
+- D-040: **Fulfillment is hybrid and manual**: every merch product carries
+  `fulfillment_provider` (`'self' | 'printify' | 'tapstitch'`). Ambrose places
+  printify/tapstitch orders himself via their white-label dashboards. NO
+  provider API integrations.
+- D-041: **Paid orders are worked in a new /admin Orders section** (PSM mirror
+  deferred to W4).
+- D-042: **Resend transactional email**: notify ambrose@privatestock.co on new
+  orders + contact messages; order confirmations to customers. From address
+  `notifications@privatestock.co`.
+- D-043: **Contact page = one form with an inquiry-type dropdown**
+  (consumer / retailer / press) writing to a `messages` table; retailer rows are
+  the future feed for PSM W3 ingest.
+- D-044: **Heroes are admin-managed on every public page; hover-swap mapping on
+  landing only. Banners on landing only. Blog uses a rich text editor.**
