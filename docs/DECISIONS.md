@@ -485,3 +485,14 @@ Ambrose's correction, which supersedes those entries:
   `inquiry_type = consumer` (subject folded into the body, source path
   appended) so every inquiry lands in /admin/messages; `/api/contact` and the
   `contact_messages` table are RETIRED (kept read-only for existing rows).
+
+## 2026-08-22 — Production publish (dev → main)
+
+- D-047: **dev is published to production (Vercel `main`) while privatestock.co DNS
+  stays on the old site.** Production = the vercel.app domain for now.
+  Production never shows mock PSM availability (`lib/showRealAvailability.ts`:
+  `MOCK_PSM_DATA=true` + `VERCEL_ENV=production` → store locator "coming soon"
+  + newsletter capture; product pages hide "Buy Now at the Below Locations";
+  brand locators render empty). Stripe/PayPal remain in TEST mode on production
+  until LAUNCH-CHECKLIST §B. Remaining pre-cutover work lives in
+  `docs/LAUNCH-CHECKLIST.md` (created this session — it did not exist before).

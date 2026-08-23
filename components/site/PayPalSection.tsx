@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useCart } from "@/lib/cart/context";
 import type { ShippingAddress } from "@/components/site/CheckoutClient";
@@ -22,6 +23,7 @@ export function PayPalSection({
   promoCode: string | null;
 }) {
   const cart = useCart();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [totals, setTotals] = useState<{ taxCents: number; totalCents: number } | null>(null);
 
@@ -85,7 +87,7 @@ export function PayPalSection({
                 return;
               }
               cart.clear();
-              window.location.href = `/apparel/order/${body.orderId}?token=${encodeURIComponent(data.orderID)}`;
+              router.push(`/apparel/order/${body.orderId}?token=${encodeURIComponent(data.orderID)}`);
             }}
             onError={(err) => {
               setError(err instanceof Error ? err.message : "PayPal error — please try again.");
