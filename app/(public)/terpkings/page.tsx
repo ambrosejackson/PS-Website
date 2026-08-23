@@ -70,7 +70,7 @@ export default async function TerpKingsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <TKHero videoUrl={heroVideo?.media_url ?? null} />
+      <TKHero videoUrl={heroVideo?.media_url ?? null} posterUrl={heroVideo?.poster_url ?? null} />
       <TKArsenal available={available} />
       <TKCatalog products={catalog} />
       <TKComic />

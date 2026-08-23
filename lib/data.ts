@@ -21,6 +21,7 @@ export const FALLBACK_HERO: HeroAsset = {
   nav_target: null,
   media_url: "/placeholders/hero-default.webp",
   media_type: "image",
+  poster_url: null,
   theme: "dark",
   is_default: true,
   sort_order: 0,

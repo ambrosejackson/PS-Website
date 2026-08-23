@@ -89,6 +89,12 @@ export default async function AdminHeroesPage() {
                               <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">hover: {navTargetLabel(h.nav_target)}</span>
                             )}
                             {!h.is_active && <span className="rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">inactive</span>}
+                            {h.media_type === "video" &&
+                              (h.poster_url ? (
+                                <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800" title={h.poster_url}>poster ✓</span>
+                              ) : (
+                                <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">no poster — gradient flash until generated</span>
+                              ))}
                           </div>
                           <a href={h.media_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-neutral-500 underline">
                             {h.media_url}
@@ -101,6 +107,9 @@ export default async function AdminHeroesPage() {
                           isActive={h.is_active}
                           theme={h.theme}
                           navTarget={h.nav_target}
+                          mediaUrl={h.media_url}
+                          mediaType={h.media_type}
+                          posterUrl={h.poster_url}
                         />
                       </li>
                     ))}

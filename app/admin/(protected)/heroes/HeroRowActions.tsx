@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { deleteHero, updateHero } from "./actions";
 import { NAV_TARGETS } from "./hero-config";
+import { generateAndUploadPoster } from "@/lib/admin/video-poster";
 
 export function HeroRowActions({
   id,
@@ -13,6 +14,9 @@ export function HeroRowActions({
   isActive,
   theme,
   navTarget,
+  mediaUrl,
+  mediaType,
+  posterUrl,
 }: {
   id: string;
   page: string;
@@ -20,11 +24,31 @@ export function HeroRowActions({
   isActive: boolean;
   theme: string;
   navTarget: string | null;
+  mediaUrl: string;
+  mediaType: string;
+  posterUrl: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [posterBusy, setPosterBusy] = useState(false);
+
+  // One-time backfill for video rows saved before posters existed.
+  async function generatePoster() {
+    setError(null);
+    setPosterBusy(true);
+    try {
+      const url = await generateAndUploadPoster(mediaUrl, page === "/" ? "landing" : page.slice(1));
+      const res = await updateHero({ id, posterUrl: url });
+      if (!res.ok) setError(res.error);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Poster capture failed.");
+    } finally {
+      setPosterBusy(false);
+    }
+  }
 
   function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
@@ -52,6 +76,11 @@ export function HeroRowActions({
             </option>
           ))}
         </select>
+      )}
+      {mediaType === "video" && !posterUrl && (
+        <Button size="sm" variant="outline" disabled={pending || posterBusy} onClick={generatePoster} title="Capture the first frame as the poster painted before playback">
+          {posterBusy ? "Capturing…" : "Generate poster"}
+        </Button>
       )}
       {!isDefault && (
         <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => updateHero({ id, isDefault: true }))}>

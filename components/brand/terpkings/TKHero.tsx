@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Header } from "@/components/site/Header";
+import { HeroVideo } from "@/components/site/HeroVideo";
 import { TK_HERO } from "@/lib/terpkings-content";
 
 /**
@@ -24,7 +25,7 @@ export const HERO_TINT_OPACITY = 0.6;
 const label =
   "tk-mono pointer-events-none absolute text-[16px] tracking-[.12em] text-[rgba(20,24,10,.85)]";
 
-export function TKHero({ videoUrl }: { videoUrl: string | null }) {
+export function TKHero({ videoUrl, posterUrl = null }: { videoUrl: string | null; posterUrl?: string | null }) {
   return (
     <section
       id="top"
@@ -37,15 +38,8 @@ export function TKHero({ videoUrl }: { videoUrl: string | null }) {
         {/* (b) video + green distortion */}
         {videoUrl && (
           <>
-            <video
-              src={videoUrl}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            {/* Poster paints immediately; the video fades in over it on first "playing" (no gradient flash). */}
+            <HeroVideo src={videoUrl} poster={posterUrl} />
             <div
               className="pointer-events-none absolute inset-0"
               style={{

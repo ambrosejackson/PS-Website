@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AdminUploader, type UploadedMedia } from "@/lib/admin/upload";
 import { computeHeroTheme, type HeroTheme } from "@/lib/luminance";
+import { generateAndUploadPoster } from "@/lib/admin/video-poster";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { saveHeroRow } from "./actions";
@@ -29,16 +30,32 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
   const landing = page === "/";
   const theme: HeroTheme = themeOverride || autoTheme || "dark";
 
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [posterState, setPosterState] = useState<"idle" | "working" | "ok" | "failed">("idle");
+
   async function onUploaded(m: UploadedMedia) {
     setMedia(m);
     setStatus({ kind: "idle" });
+    setPosterUrl(null);
     if (m.kind === "image") {
+      setPosterState("idle");
       try {
         setAutoTheme(await computeHeroTheme(m.url));
       } catch {
         setAutoTheme("dark");
       }
-    } else setAutoTheme("dark");
+      return;
+    }
+    setAutoTheme("dark");
+    // Video: capture the first frame now so the page can paint it before playback.
+    setPosterState("working");
+    try {
+      const url = await generateAndUploadPoster(m.url, page === "/" ? "landing" : page.slice(1));
+      setPosterUrl(url);
+      setPosterState("ok");
+    } catch {
+      setPosterState("failed");
+    }
   }
 
   function submit(e: React.FormEvent) {
@@ -55,6 +72,7 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
         theme,
         isDefault: landing && navTarget ? false : isDefault,
         navTarget: landing ? navTarget || null : null,
+        posterUrl,
       });
       if (!res.ok) {
         setStatus({ kind: "error", message: res.error });
@@ -95,6 +113,12 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
         <p className="text-xs text-neutral-500">
           Auto = average luminance of the top band (lib/luminance.ts). Videos default to dark. Effective: <strong>{theme}</strong>.
         </p>
+        {media?.kind === "video" && (
+          <p className={`text-xs ${posterState === "failed" ? "text-amber-700" : "text-neutral-500"}`}>
+            Poster (first frame):{" "}
+            {posterState === "working" ? "capturing…" : posterState === "ok" ? "captured ✓ — painted before the video plays" : posterState === "failed" ? "capture failed — save anyway, then use Generate poster on the row" : "—"}
+          </p>
+        )}
       </div>
 
       <div className="md:col-span-2">

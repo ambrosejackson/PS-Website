@@ -228,6 +228,7 @@ export type Database = {
           media_url: string
           nav_target: string | null
           page: string
+          poster_url: string | null
           sort_order: number | null
           theme: string
         }
@@ -239,6 +240,7 @@ export type Database = {
           media_url: string
           nav_target?: string | null
           page: string
+          poster_url?: string | null
           sort_order?: number | null
           theme?: string
         }
@@ -250,6 +252,7 @@ export type Database = {
           media_url?: string
           nav_target?: string | null
           page?: string
+          poster_url?: string | null
           sort_order?: number | null
           theme?: string
         }

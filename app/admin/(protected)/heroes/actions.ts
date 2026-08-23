@@ -42,6 +42,8 @@ export async function saveHeroRow(input: {
   theme: "light" | "dark";
   isDefault: boolean;
   navTarget: string | null;
+  /** First-frame webp for video heroes (captured client-side at upload). */
+  posterUrl?: string | null;
 }): Promise<ActionResult<{ id: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const page = normalizePage(input.page);
@@ -79,6 +81,7 @@ export async function saveHeroRow(input: {
       nav_target: navTarget,
       media_url: input.mediaUrl,
       media_type: input.mediaType,
+      poster_url: input.mediaType === "video" ? (input.posterUrl ?? null) : null,
       theme: input.theme,
       is_default: isDefault,
       sort_order: (maxRow?.sort_order ?? 0) + 1,
@@ -97,6 +100,7 @@ export async function updateHero(input: {
   isActive?: boolean;
   theme?: "light" | "dark";
   navTarget?: string | null;
+  posterUrl?: string | null;
 }): Promise<ActionResult> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   let admin;
@@ -108,7 +112,8 @@ export async function updateHero(input: {
   const { data: row } = await admin.from("content_heroes").select("id, page, nav_target").eq("id", input.id).maybeSingle();
   if (!row) return { ok: false, error: "Hero not found." };
 
-  const patch: { is_default?: boolean; is_active?: boolean; theme?: string; nav_target?: string | null } = {};
+  const patch: { is_default?: boolean; is_active?: boolean; theme?: string; nav_target?: string | null; poster_url?: string | null } = {};
+  if (input.posterUrl !== undefined) patch.poster_url = input.posterUrl;
   if (input.navTarget !== undefined) {
     const nt = normalizeNavTarget(row.page, input.navTarget);
     patch.nav_target = nt;

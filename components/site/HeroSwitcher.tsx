@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Header } from "@/components/site/Header";
+import { HeroVideo } from "@/components/site/HeroVideo";
 import { HeroContext } from "@/components/site/hero-context";
 import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
 
@@ -134,14 +135,8 @@ export function HeroSwitcher({
         const isActive = hero.id === active.id;
         const mediaEl =
           hero.media_type === "video" ? (
-            <video
-              src={hero.media_url}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            // Poster paints first; the video fades in on "playing" (shared HeroVideo).
+            <HeroVideo src={hero.media_url} poster={hero.poster_url} />
           ) : (
             // Media URLs are admin-managed with unknown dimensions — plain img.
             // eslint-disable-next-line @next/next/no-img-element
