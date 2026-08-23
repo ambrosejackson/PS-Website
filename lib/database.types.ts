@@ -86,10 +86,14 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          quarantine_reason: string | null
           sheet_row_ref: string | null
           slug: string
           sort_order: number | null
+          source: string
           strain_type: string | null
+          sync_status: string | null
+          synced_at: string | null
           terp_category: string | null
           terpene_profile: Json | null
           thc_range: string | null
@@ -106,10 +110,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          quarantine_reason?: string | null
           sheet_row_ref?: string | null
           slug: string
           sort_order?: number | null
+          source?: string
           strain_type?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           terp_category?: string | null
           terpene_profile?: Json | null
           thc_range?: string | null
@@ -126,10 +134,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          quarantine_reason?: string | null
           sheet_row_ref?: string | null
           slug?: string
           sort_order?: number | null
+          source?: string
           strain_type?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
           terp_category?: string | null
           terpene_profile?: Json | null
           thc_range?: string | null
@@ -286,7 +298,7 @@ export type Database = {
           brand: string | null
           created_at: string
           description: string | null
-          fulfillment_provider: string | null
+          fulfillment_provider: string
           id: string
           images: Json
           is_active: boolean
@@ -300,7 +312,7 @@ export type Database = {
           brand?: string | null
           created_at?: string
           description?: string | null
-          fulfillment_provider?: string | null
+          fulfillment_provider?: string
           id?: string
           images?: Json
           is_active?: boolean
@@ -314,7 +326,7 @@ export type Database = {
           brand?: string | null
           created_at?: string
           description?: string | null
-          fulfillment_provider?: string | null
+          fulfillment_provider?: string
           id?: string
           images?: Json
           is_active?: boolean
@@ -370,6 +382,39 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          inquiry_type: string
+          name: string
+          status: string
+        }
+        Insert: {
+          body: string
+          company?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          inquiry_type: string
+          name: string
+          status?: string
+        }
+        Update: {
+          body?: string
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          inquiry_type?: string
+          name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -420,7 +465,11 @@ export type Database = {
           created_at: string
           discount_cents: number | null
           email: string | null
+          fulfillment_status: string
           id: string
+          internal_note: string | null
+          payment_provider: string
+          paypal_order_id: string | null
           promo_code: string | null
           shipping_address: Json | null
           shipping_cents: number | null
@@ -428,14 +477,20 @@ export type Database = {
           stripe_payment_intent: string | null
           stripe_session_id: string | null
           subtotal_cents: number | null
+          tax_cents: number
           total_cents: number | null
+          tracking: Json | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           discount_cents?: number | null
           email?: string | null
+          fulfillment_status?: string
           id?: string
+          internal_note?: string | null
+          payment_provider: string
+          paypal_order_id?: string | null
           promo_code?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
@@ -443,14 +498,20 @@ export type Database = {
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
           subtotal_cents?: number | null
+          tax_cents?: number
           total_cents?: number | null
+          tracking?: Json | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           discount_cents?: number | null
           email?: string | null
+          fulfillment_status?: string
           id?: string
+          internal_note?: string | null
+          payment_provider?: string
+          paypal_order_id?: string | null
           promo_code?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
@@ -458,7 +519,9 @@ export type Database = {
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
           subtotal_cents?: number | null
+          tax_cents?: number
           total_cents?: number | null
+          tracking?: Json | null
           updated_at?: string
         }
         Relationships: []
