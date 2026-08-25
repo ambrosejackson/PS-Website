@@ -95,6 +95,18 @@ export default async function AdminHeroesPage() {
                               ) : (
                                 <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">no poster — gradient flash until generated</span>
                               ))}
+                            {h.media_type === "video" && h.has_audio && (
+                              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">audio ✓</span>
+                            )}
+                            {h.media_type === "video" && h.audio_autoplay && (
+                              <span className="rounded bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-950">AUTOPLAY AUDIO</span>
+                            )}
+                            {h.media_type === "video" && h.audio_autoplay && !h.is_default && (
+                              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">⚠ audio ignored — only the default hero plays sound</span>
+                            )}
+                            {h.media_type === "video" && h.media_url_mobile && (
+                              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={h.media_url_mobile}>mobile ✓</span>
+                            )}
                           </div>
                           <a href={h.media_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs text-neutral-500 underline">
                             {h.media_url}
@@ -110,6 +122,10 @@ export default async function AdminHeroesPage() {
                           mediaUrl={h.media_url}
                           mediaType={h.media_type}
                           posterUrl={h.poster_url}
+                          hasAudio={h.has_audio}
+                          audioAutoplay={h.audio_autoplay}
+                          audioVolume={h.audio_volume}
+                          mediaUrlMobile={h.media_url_mobile}
                         />
                       </li>
                     ))}

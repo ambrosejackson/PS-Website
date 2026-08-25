@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { deleteHero, updateHero } from "./actions";
 import { NAV_TARGETS } from "./hero-config";
-import { generateAndUploadPoster } from "@/lib/admin/video-poster";
+import { generateAndUploadPoster, uploadBlobToBucket } from "@/lib/admin/video-poster";
 
 export function HeroRowActions({
   id,
@@ -17,6 +17,10 @@ export function HeroRowActions({
   mediaUrl,
   mediaType,
   posterUrl,
+  hasAudio,
+  audioAutoplay,
+  audioVolume,
+  mediaUrlMobile,
 }: {
   id: string;
   page: string;
@@ -27,12 +31,21 @@ export function HeroRowActions({
   mediaUrl: string;
   mediaType: string;
   posterUrl: string | null;
+  hasAudio: boolean;
+  audioAutoplay: boolean;
+  audioVolume: number;
+  mediaUrlMobile: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [posterBusy, setPosterBusy] = useState(false);
+  const [mobileBusy, setMobileBusy] = useState(false);
+  const [volume, setVolume] = useState(audioVolume);
+  const mobileInput = useRef<HTMLInputElement>(null);
+
+  const video = mediaType === "video";
 
   // One-time backfill for video rows saved before posters existed.
   async function generatePoster() {
@@ -50,6 +63,23 @@ export function HeroRowActions({
     }
   }
 
+  // MOBILE MEDIA: smaller encode served to phones via <source media> (D-054).
+  async function uploadMobile(file: File) {
+    setError(null);
+    setMobileBusy(true);
+    try {
+      if (file.type !== "video/mp4") throw new Error("Mobile media must be an MP4.");
+      const url = await uploadBlobToBucket("heroes", page === "/" ? "landing" : page.slice(1), file.name, file);
+      const res = await updateHero({ id, mediaUrlMobile: url });
+      if (!res.ok) setError(res.error);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Mobile upload failed.");
+    } finally {
+      setMobileBusy(false);
+    }
+  }
+
   function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setError(null);
     start(async () => {
@@ -57,6 +87,12 @@ export function HeroRowActions({
       if (!res.ok) setError(res.error ?? "Failed.");
       router.refresh();
     });
+  }
+
+  function commitVolume(v: number) {
+    const clamped = Math.min(100, Math.max(0, Math.round(v)));
+    setVolume(clamped);
+    if (clamped !== audioVolume) run(() => updateHero({ id, audioVolume: clamped }));
   }
 
   return (
@@ -77,7 +113,7 @@ export function HeroRowActions({
           ))}
         </select>
       )}
-      {mediaType === "video" && !posterUrl && (
+      {video && !posterUrl && (
         <Button size="sm" variant="outline" disabled={pending || posterBusy} onClick={generatePoster} title="Capture the first frame as the poster painted before playback">
           {posterBusy ? "Capturing…" : "Generate poster"}
         </Button>
@@ -99,6 +135,85 @@ export function HeroRowActions({
       >
         Theme → {theme === "dark" ? "light" : "dark"}
       </Button>
+
+      {/* ---- Hero audio (D-050): video rows only ---- */}
+      {video && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => run(() => updateHero({ id, hasAudio: !hasAudio }))}
+          title="This video carries a sound track (turning it off also turns autoplay audio off)"
+        >
+          {hasAudio ? "Has audio ✓" : "Has audio?"}
+        </Button>
+      )}
+      {video && hasAudio && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => run(() => updateHero({ id, audioAutoplay: !audioAutoplay }))}
+          title="Play the music bed on the page (default hero only; other heroes on the page are switched off automatically)"
+        >
+          {audioAutoplay ? "Audio → OFF" : "Audio → ON"}
+        </Button>
+      )}
+      {video && audioAutoplay && (
+        <label className="flex items-center gap-1 text-xs text-neutral-600" title="Playback volume 0–100 (never 1.0 — D6)">
+          vol
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={5}
+            value={volume}
+            disabled={pending}
+            onChange={(e) => setVolume(Number(e.target.value))}
+            onBlur={(e) => commitVolume(Number(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitVolume(Number((e.target as HTMLInputElement).value));
+            }}
+            className="h-8 w-16 rounded-md border bg-white px-2 text-xs"
+          />
+        </label>
+      )}
+      {video && (
+        <>
+          <input
+            ref={mobileInput}
+            type="file"
+            accept="video/mp4"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) uploadMobile(f);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending || mobileBusy}
+            onClick={() => mobileInput.current?.click()}
+            title="Smaller encode served to phones via <source media='(max-width: 767px)'>"
+          >
+            {mobileBusy ? "Uploading…" : mediaUrlMobile ? "Mobile media ✓ (replace)" : "Mobile media"}
+          </Button>
+          {mediaUrlMobile && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => run(() => updateHero({ id, mediaUrlMobile: null }))}
+              title="Stop serving the mobile variant (desktop file serves everywhere)"
+            >
+              Clear mobile
+            </Button>
+          )}
+        </>
+      )}
+
       {confirmDelete ? (
         <>
           <Button size="sm" variant="destructive" disabled={pending} onClick={() => run(() => deleteHero(id))}>

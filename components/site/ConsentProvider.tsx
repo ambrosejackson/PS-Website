@@ -62,14 +62,22 @@ export function ConsentProvider({
                 size="sm"
                 variant="outline"
                 className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                onClick={() => setCookie(CONSENT_COOKIE, "declined", 365)}
+                onClick={() => {
+                  setCookie(CONSENT_COOKIE, "declined", 365);
+                  // Gesture bridge (D-050) — a click is a gesture regardless of
+                  // the consent choice; hero audio is not a tracking script.
+                  window.dispatchEvent(new CustomEvent("ps:user-gesture"));
+                }}
               >
                 Essential only
               </Button>
               <Button
                 size="sm"
                 className="bg-white text-neutral-950 hover:bg-white/85"
-                onClick={() => setCookie(CONSENT_COOKIE, "accepted", 365)}
+                onClick={() => {
+                  setCookie(CONSENT_COOKIE, "accepted", 365);
+                  window.dispatchEvent(new CustomEvent("ps:user-gesture"));
+                }}
               >
                 Accept
               </Button>

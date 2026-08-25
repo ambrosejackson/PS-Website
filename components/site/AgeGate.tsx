@@ -44,7 +44,12 @@ export function AgeGate() {
 
   if (verified) return null;
 
-  const accept = () => setCookie(AGE_COOKIE, "1", COOKIE_DAYS);
+  const accept = () => {
+    setCookie(AGE_COOKIE, "1", COOKIE_DAYS);
+    // Gesture bridge (D-050): hero audio retries its unmute synchronously
+    // inside this click's task. Dispatch is the ONLY change to the gate.
+    window.dispatchEvent(new CustomEvent("ps:user-gesture"));
+  };
   const slug = brand?.slug as BrandSlug | undefined;
 
   if (slug === "terpkings") {

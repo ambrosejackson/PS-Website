@@ -221,11 +221,15 @@ export type Database = {
       }
       content_heroes: {
         Row: {
+          audio_autoplay: boolean
+          audio_volume: number
+          has_audio: boolean
           id: string
           is_active: boolean
           is_default: boolean
           media_type: string
           media_url: string
+          media_url_mobile: string | null
           nav_target: string | null
           page: string
           poster_url: string | null
@@ -233,11 +237,15 @@ export type Database = {
           theme: string
         }
         Insert: {
+          audio_autoplay?: boolean
+          audio_volume?: number
+          has_audio?: boolean
           id?: string
           is_active?: boolean
           is_default?: boolean
           media_type: string
           media_url: string
+          media_url_mobile?: string | null
           nav_target?: string | null
           page: string
           poster_url?: string | null
@@ -245,11 +253,15 @@ export type Database = {
           theme?: string
         }
         Update: {
+          audio_autoplay?: boolean
+          audio_volume?: number
+          has_audio?: boolean
           id?: string
           is_active?: boolean
           is_default?: boolean
           media_type?: string
           media_url?: string
+          media_url_mobile?: string | null
           nav_target?: string | null
           page?: string
           poster_url?: string | null

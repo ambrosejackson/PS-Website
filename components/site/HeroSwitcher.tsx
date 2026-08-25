@@ -10,6 +10,11 @@ import {
 } from "react";
 import { Header } from "@/components/site/Header";
 import { HeroVideo } from "@/components/site/HeroVideo";
+import {
+  HeroAudioButton,
+  heroAudioEligible,
+  useHeroAudio,
+} from "@/components/site/hero-audio";
 import { HeroContext } from "@/components/site/hero-context";
 import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
 
@@ -114,6 +119,16 @@ export function HeroSwitcher({
   const active =
     assets.find((h) => h.id === activeId) ?? defaultHero;
 
+  // Hero audio (D-050): only the page's default hero may carry autoplay audio
+  // (D4); a hover-swapped hero is always muted, and the default resumes when it
+  // returns (the gesture is already banked — no re-prompt).
+  const audioEnabled = heroAudioEligible(defaultHero);
+  const audio = useHeroAudio({
+    enabled: audioEnabled,
+    volume: defaultHero.audio_volume ?? 70,
+    visible: active.id === defaultHero.id,
+  });
+
   // A swapped hero STAYS while the cursor is anywhere over the nav item or the
   // hero itself (build plan decision 8 + docx). The nav lives inside the hovered
   // region (the header bar plus the hero), so mouseenter never re-fires when
@@ -136,7 +151,15 @@ export function HeroSwitcher({
         const mediaEl =
           hero.media_type === "video" ? (
             // Poster paints first; the video fades in on "playing" (shared HeroVideo).
-            <HeroVideo src={hero.media_url} poster={hero.poster_url} />
+            // Only the default hero gets the audio ref (D4); mobile variant via <source media>.
+            <HeroVideo
+              src={hero.media_url}
+              mobileSrc={hero.media_url_mobile}
+              poster={hero.poster_url}
+              videoRef={
+                audioEnabled && hero.id === defaultHero.id ? audio.videoRef : undefined
+              }
+            />
           ) : (
             // Media URLs are admin-managed with unknown dimensions — plain img.
             // eslint-disable-next-line @next/next/no-img-element
@@ -161,6 +184,14 @@ export function HeroSwitcher({
       {children && (
         <div className="absolute inset-0 z-10 flex items-end">{children}</div>
       )}
+      {audioEnabled && (
+        <div className="absolute bottom-6 right-6 z-20">
+          <HeroAudioButton
+            audio={audio}
+            theme={(active.theme as "light" | "dark") ?? "dark"}
+          />
+        </div>
+      )}
     </>
   );
 
@@ -177,6 +208,7 @@ export function HeroSwitcher({
           className={`relative w-full overflow-hidden ${heightClassName}`}
           onMouseMove={heroMove}
           onMouseLeave={heroLeave}
+          onClick={audio.onHeroClick}
         >
           {media}
           <Header variant="overlay" />
@@ -188,7 +220,10 @@ export function HeroSwitcher({
           onMouseLeave={heroLeave}
         >
           <Header />
-          <section className="relative w-full flex-1 overflow-hidden">
+          <section
+            className="relative w-full flex-1 overflow-hidden"
+            onClick={audio.onHeroClick}
+          >
             {media}
           </section>
         </div>

@@ -61,6 +61,8 @@ export async function uploadBlobToBucket(bucket: AdminBucket, folder: string, fi
   const { error } = await supabase.storage.from(slot.data.bucket).uploadToSignedUrl(slot.data.path, slot.data.token, blob, {
     contentType: blob.type,
     upsert: false,
+    // Filenames are timestamped + immutable — cache for a year (D-054).
+    cacheControl: "31536000",
   });
   if (error) throw new Error(error.message);
   return slot.data.publicUrl;

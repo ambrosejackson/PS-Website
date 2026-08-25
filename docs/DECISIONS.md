@@ -539,3 +539,45 @@ Ambrose's correction, which supersedes those entries:
   plus `RESEND_API_KEY`, `CRON_SECRET`, Supabase trio, `MOCK_PSM_DATA`,
   `ADMIN_ALLOWED_EMAILS`, `REVALIDATE_TOKEN`. Values are Sensitive (unreadable via
   CLI); `NEXT_PUBLIC_SITE_URL` is confirmed from the deployed sitemap/canonical host.
+
+## 2026-08-24 — Hero audio autoplay + click-to-mute + hero encode fix
+
+Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-055.
+
+- D-050 (D1): **Hero audio is generic and per-asset opt-in**, not hardcoded to
+  TerpKings. `content_heroes` gains `has_audio`, `audio_autoplay`,
+  `audio_volume` (+ `media_url_mobile`, migration 0009) with `/admin/heroes`
+  toggles. Runtime lives in `components/site/hero-audio.tsx`
+  (useHeroAudio + HeroAudioButton), wired into HeroSwitcher and TKHero.
+- D-051 (D2): **Autoplay-blocked fallback = muted playback + "TAP FOR SOUND"
+  pill** (fades in ~600 ms). No interstitial; no latch-first-click-anywhere.
+- D-052 (D3): **Mute choice persists for the browser session** via
+  `sessionStorage` key `ps:hero-audio-muted` (the storage IS the store —
+  useSyncExternalStore — so it survives client navigations).
+- D-053 (D4): **Only the page's default hero plays audio**; hover-swapped
+  heroes are always muted, restore on return without re-prompt. DB enforces at
+  most one autoplay-audio hero per page (partial unique index) and
+  video+has_audio (check constraint).
+- D-054 (D5+D6): **Click on non-interactive hero area toggles mute** (first
+  click mutes); volume clamped to the admin per-asset value, default 70.
+  Uploads now pass `cacheControl: "31536000"` (immutable timestamped names).
+- D-055: Gesture bridge = `ps:user-gesture` CustomEvent dispatched
+  synchronously from the age-gate accept AND both cookie-consent buttons
+  ("Essential only" too — a click is a gesture regardless of consent choice;
+  hero audio is not a tracking script). Copy/design of both untouched.
+- Implementation deviations from the brief (facts on the ground):
+  - `content_heroes.page` stores a LEADING slash — backfill uses
+    `'/terpkings'` (the brief's `'terpkings'` matches zero rows).
+  - `/terpkings` has no hover-swap (TKHero renders the overlay header
+    directly; nav targets are landing-only per D-044) — D4 is implemented
+    generically in HeroSwitcher, and on /terpkings the default hero is always
+    the visible one.
+  - Poster generated from frame 0, not `-ss 3`, to keep the site's
+    invisible poster→video crossfade (first-frame poster convention).
+  - The brief's "attached" re-encoded files were not on disk; regenerated
+    locally with the brief's exact ffmpeg recipes (ffprobe-verified).
+- Storage bucket audit (LIST ONLY — no moves/deletes without Ambrose):
+  canonical bucket = `heroes` (what /admin writes). Straggler in `hero-media`:
+  `terpkings/1787441208071-short-video-output-….mp4` (49 MB, the OLD TerpKings
+  video, referenced by inactive row 277ed540). Superseded 42 MB
+  `heroes/terpkings/1787615023750-….mp4` also remains after the re-encode swap.

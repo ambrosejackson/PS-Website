@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AdminUploader, type UploadedMedia } from "@/lib/admin/upload";
 import { computeHeroTheme, type HeroTheme } from "@/lib/luminance";
 import { generateAndUploadPoster } from "@/lib/admin/video-poster";
+import { detectVideoHasAudio } from "@/lib/admin/video-audio";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { saveHeroRow } from "./actions";
@@ -32,11 +33,14 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
 
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [posterState, setPosterState] = useState<"idle" | "working" | "ok" | "failed">("idle");
+  // Best-effort pre-fill; the checkbox (and later the row toggle) is the source of truth.
+  const [hasAudio, setHasAudio] = useState(false);
 
   async function onUploaded(m: UploadedMedia) {
     setMedia(m);
     setStatus({ kind: "idle" });
     setPosterUrl(null);
+    setHasAudio(false);
     if (m.kind === "image") {
       setPosterState("idle");
       try {
@@ -47,7 +51,10 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
       return;
     }
     setAutoTheme("dark");
-    // Video: capture the first frame now so the page can paint it before playback.
+    // Video: probe for an audio track (detached <video>, loadedmetadata — a
+    // false result just means "unknown, default off").
+    detectVideoHasAudio(m.url).then(setHasAudio).catch(() => {});
+    // Capture the first frame now so the page can paint it before playback.
     setPosterState("working");
     try {
       const url = await generateAndUploadPoster(m.url, page === "/" ? "landing" : page.slice(1));
@@ -73,6 +80,7 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
         isDefault: landing && navTarget ? false : isDefault,
         navTarget: landing ? navTarget || null : null,
         posterUrl,
+        hasAudio: media.kind === "video" ? hasAudio : false,
       });
       if (!res.ok) {
         setStatus({ kind: "error", message: res.error });
@@ -113,6 +121,12 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
         <p className="text-xs text-neutral-500">
           Auto = average luminance of the top band (lib/luminance.ts). Videos default to dark. Effective: <strong>{theme}</strong>.
         </p>
+        {media?.kind === "video" && (
+          <label className="mt-1 flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={hasAudio} onChange={(e) => setHasAudio(e.target.checked)} disabled={pending} />
+            HAS AUDIO — this video carries a sound track (auto-detected best-effort; autoplay is turned on per-row after saving)
+          </label>
+        )}
         {media?.kind === "video" && (
           <p className={`text-xs ${posterState === "failed" ? "text-amber-700" : "text-neutral-500"}`}>
             Poster (first frame):{" "}

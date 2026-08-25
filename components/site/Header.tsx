@@ -69,7 +69,7 @@ export function Header({
 
   return (
     <>
-      <header className={`z-40 ${chrome}`}>
+      <header data-hero-no-mute className={`z-40 ${chrome}`}>
         <div className={barClass}>
           <div className={clusterClass(variant)}>
             <button

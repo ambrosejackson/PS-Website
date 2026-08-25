@@ -1,6 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { Header } from "@/components/site/Header";
 import { HeroVideo } from "@/components/site/HeroVideo";
+import {
+  HeroAudioButton,
+  heroAudioEligible,
+  useHeroAudio,
+} from "@/components/site/hero-audio";
+import type { HeroAsset } from "@/lib/data";
 import { TK_HERO } from "@/lib/terpkings-content";
 
 /**
@@ -13,6 +21,13 @@ import { TK_HERO } from "@/lib/terpkings-content";
  * The shared brand-page header (transparent overlay, white text — the hero is a
  * dark asset) sits on top (guardrail #5); it lives OUTSIDE the flicker wrapper so
  * the chrome never flickers.
+ *
+ * Hero audio (D-050): when the row opts in (has_audio + audio_autoplay), the
+ * page's default video plays its music bed after the age-gate gesture; clicking
+ * any non-interactive part of the hero toggles mute (all decorative CRT layers
+ * are pointer-events-none, so clicks reach this handler); the speaker pill sits
+ * above the CRT layers bottom-right. /terpkings has no hover-swap, so the
+ * default hero is always the visible one.
  */
 
 /**
@@ -25,13 +40,24 @@ export const HERO_TINT_OPACITY = 0.6;
 const label =
   "tk-mono pointer-events-none absolute text-[16px] tracking-[.12em] text-[rgba(20,24,10,.85)]";
 
-export function TKHero({ videoUrl, posterUrl = null }: { videoUrl: string | null; posterUrl?: string | null }) {
+export function TKHero({ hero }: { hero: HeroAsset | null }) {
+  const audioEnabled = heroAudioEligible(hero);
+  const audio = useHeroAudio({
+    enabled: audioEnabled,
+    volume: hero?.audio_volume ?? 70,
+    visible: true,
+  });
+  const videoUrl = hero?.media_type === "video" ? hero.media_url : null;
+
   return (
     <section
       id="top"
       className="relative flex h-screen min-h-[660px] items-center justify-center overflow-hidden bg-[#020302]"
     >
-      <div className="tk-flicker relative h-full min-h-[520px] w-full overflow-hidden">
+      <div
+        className="tk-flicker relative h-full min-h-[520px] w-full overflow-hidden"
+        onClick={audio.onHeroClick}
+      >
         {/* (a) base */}
         <div className="absolute inset-0" style={{ background: TK_HERO.base }} />
 
@@ -39,7 +65,12 @@ export function TKHero({ videoUrl, posterUrl = null }: { videoUrl: string | null
         {videoUrl && (
           <>
             {/* Poster paints immediately; the video fades in over it on first "playing" (no gradient flash). */}
-            <HeroVideo src={videoUrl} poster={posterUrl} />
+            <HeroVideo
+              src={videoUrl}
+              mobileSrc={hero?.media_url_mobile}
+              poster={hero?.poster_url}
+              videoRef={audio.videoRef}
+            />
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -112,6 +143,13 @@ export function TKHero({ videoUrl, posterUrl = null }: { videoUrl: string | null
             {TK_HERO.scroll} <span className="tk-blink">_</span>
           </div>
         </div>
+
+        {/* Audio control — above the CRT layers, inside the safe area (WCAG 1.4.2). */}
+        {audioEnabled && (
+          <div className="absolute bottom-6 right-6 z-[3]">
+            <HeroAudioButton audio={audio} theme={(hero?.theme as "light" | "dark") ?? "dark"} />
+          </div>
+        )}
       </div>
 
       {/* Brand landing page — transparent overlay header (D-012), white text. */}

@@ -166,6 +166,8 @@ export function AdminUploader({
       .uploadToSignedUrl(slot.data.path, slot.data.token, payload, {
         contentType: mime,
         upsert: false,
+        // Filenames are timestamped + immutable — cache for a year (D-054).
+        cacheControl: "31536000",
       });
     if (error) {
       setStatus({ phase: "error", message: `Upload failed: ${error.message}`, file, url });

@@ -44,6 +44,8 @@ export async function saveHeroRow(input: {
   navTarget: string | null;
   /** First-frame webp for video heroes (captured client-side at upload). */
   posterUrl?: string | null;
+  /** Best-effort client-side detection; the admin toggle is the source of truth. */
+  hasAudio?: boolean;
 }): Promise<ActionResult<{ id: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const page = normalizePage(input.page);
@@ -82,6 +84,7 @@ export async function saveHeroRow(input: {
       media_url: input.mediaUrl,
       media_type: input.mediaType,
       poster_url: input.mediaType === "video" ? (input.posterUrl ?? null) : null,
+      has_audio: input.mediaType === "video" ? (input.hasAudio ?? false) : false,
       theme: input.theme,
       is_default: isDefault,
       sort_order: (maxRow?.sort_order ?? 0) + 1,
@@ -101,6 +104,11 @@ export async function updateHero(input: {
   theme?: "light" | "dark";
   navTarget?: string | null;
   posterUrl?: string | null;
+  /** Video rows only — hero audio (D-050..D-055). */
+  hasAudio?: boolean;
+  audioAutoplay?: boolean;
+  audioVolume?: number;
+  mediaUrlMobile?: string | null;
 }): Promise<ActionResult> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   let admin;
@@ -109,10 +117,61 @@ export async function updateHero(input: {
   } catch {
     return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server." };
   }
-  const { data: row } = await admin.from("content_heroes").select("id, page, nav_target").eq("id", input.id).maybeSingle();
+  const { data: row } = await admin
+    .from("content_heroes")
+    .select("id, page, nav_target, media_type, is_default, has_audio")
+    .eq("id", input.id)
+    .maybeSingle();
   if (!row) return { ok: false, error: "Hero not found." };
 
-  const patch: { is_default?: boolean; is_active?: boolean; theme?: string; nav_target?: string | null; poster_url?: string | null } = {};
+  const patch: {
+    is_default?: boolean;
+    is_active?: boolean;
+    theme?: string;
+    nav_target?: string | null;
+    poster_url?: string | null;
+    has_audio?: boolean;
+    audio_autoplay?: boolean;
+    audio_volume?: number;
+    media_url_mobile?: string | null;
+  } = {};
+
+  // ---- Hero audio (D-050). Guard rails mirror the DB constraints so the admin
+  // gets a toast, not a raw Postgres error.
+  if (input.hasAudio !== undefined || input.audioAutoplay !== undefined || input.audioVolume !== undefined || input.mediaUrlMobile !== undefined) {
+    if (row.media_type !== "video") return { ok: false, error: "Audio settings only apply to video heroes." };
+  }
+  if (input.hasAudio !== undefined) {
+    patch.has_audio = input.hasAudio;
+    if (!input.hasAudio) patch.audio_autoplay = false; // keep the check constraint satisfied
+  }
+  if (input.audioVolume !== undefined) {
+    if (!Number.isInteger(input.audioVolume) || input.audioVolume < 0 || input.audioVolume > 100)
+      return { ok: false, error: "Volume must be a whole number between 0 and 100." };
+    patch.audio_volume = input.audioVolume;
+  }
+  if (input.mediaUrlMobile !== undefined) {
+    if (input.mediaUrlMobile && !/^https?:\/\//.test(input.mediaUrlMobile))
+      return { ok: false, error: "Upload the mobile media first." };
+    patch.media_url_mobile = input.mediaUrlMobile;
+  }
+  if (input.audioAutoplay !== undefined) {
+    if (input.audioAutoplay) {
+      const hasAudio = patch.has_audio ?? row.has_audio;
+      if (!hasAudio) return { ok: false, error: "Mark the asset HAS AUDIO first — autoplay needs an audio track." };
+      // At most one autoplay-audio hero per page (partial unique index): clear
+      // the others BEFORE setting this one, in this order, so the index never
+      // rejects the write mid-flight.
+      const { error: clearErr } = await admin
+        .from("content_heroes")
+        .update({ audio_autoplay: false })
+        .eq("page", row.page)
+        .eq("audio_autoplay", true)
+        .neq("id", row.id);
+      if (clearErr) return { ok: false, error: clearErr.message };
+    }
+    patch.audio_autoplay = input.audioAutoplay;
+  }
   if (input.posterUrl !== undefined) patch.poster_url = input.posterUrl;
   if (input.navTarget !== undefined) {
     const nt = normalizeNavTarget(row.page, input.navTarget);
@@ -132,7 +191,13 @@ export async function updateHero(input: {
   if (input.theme !== undefined) patch.theme = input.theme;
 
   const { error } = await admin.from("content_heroes").update(patch).eq("id", input.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    if (error.code === "23514")
+      return { ok: false, error: "Autoplay audio needs a video asset marked HAS AUDIO." };
+    if (error.code === "23505")
+      return { ok: false, error: "Another hero on this page already has autoplay audio — turn it off there first." };
+    return { ok: false, error: error.message };
+  }
   revalidateFor({ kind: "heroes", page: row.page });
   return { ok: true, data: undefined };
 }
