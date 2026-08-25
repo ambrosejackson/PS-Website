@@ -222,3 +222,14 @@
   opacity: 0;
   animation: hero-pill-in 0.3s ease-out 0.6s forwards;
 }
+
+
+/*
+ * Age gate, pre-paint (I-063). The root layout stamps html[data-age-ok="1"]
+ * while the body is still parsing when the 21+ cookie is already set; this
+ * keeps the SSG'd gate from painting at all for verified visitors. React
+ * still removes it at hydration — this only closes the window before that.
+ */
+html[data-age-ok="1"] [data-age-gate] {
+  display: none !important;
+}

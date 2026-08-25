@@ -63,7 +63,27 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${poppins.variable} ${caveat.variable} ${archivoBlack.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/*
+          Pre-paint age-gate resolution (I-063). The gate markup ships in the
+          static HTML for EVERY visitor — useAgeVerified's SSR snapshot is
+          false — so an already-verified visitor watched it paint and then
+          vanish at hydration. That flash also stepped on the hero video's
+          first frames (most visibly on /terpkings). This script runs while the
+          body is still parsing, BEFORE the gate markup exists, and stamps
+          <html data-age-ok="1">; globals.css hides [data-age-gate] under that
+          attribute, so the gate never paints for a verified visitor. Visitors
+          without the cookie get no attribute and see the gate as before.
+          Keep it inline and synchronous — next/script would run too late.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(/(?:^|;\\s*)ps_age_verified=1(?:\\s*;|$)/.test(document.cookie)){document.documentElement.setAttribute('data-age-ok','1')}}catch(e){}",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

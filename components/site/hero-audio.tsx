@@ -127,6 +127,11 @@ export function useHeroAudio({
     if (!v || !visibleRef.current || readStoredMuted()) return;
     v.volume = volumeRef.current;
     v.muted = false;
+    // A hero with video_loop = false that has already finished must never be
+    // restarted by us (D-057). The unmute above still applies — it just has
+    // nothing left to play. Without this, unmuting or returning to the tab
+    // would silently auto-replay the very thing the admin switched off.
+    if (v.ended) return;
     const p = v.play();
     if (p) {
       p.then(() => {
@@ -204,7 +209,7 @@ export function useHeroAudio({
       } else if (!readStoredMuted() && !blockedRef.current && visibleRef.current) {
         v.volume = volumeRef.current;
         v.muted = false;
-        v.play().catch(() => {});
+        if (!v.ended) v.play().catch(() => {}); // no auto-replay (D-057)
       }
     };
     document.addEventListener("visibilitychange", onVisibility);

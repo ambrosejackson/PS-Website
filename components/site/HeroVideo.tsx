@@ -24,6 +24,7 @@ export function HeroVideo({
   poster,
   className = "",
   fadeMs = 300,
+  loop = true,
   videoRef,
 }: {
   src: string;
@@ -31,6 +32,8 @@ export function HeroVideo({
   poster: string | null | undefined;
   className?: string;
   fadeMs?: number;
+  /** content_heroes.video_loop — false plays once and holds the last frame (D-057). */
+  loop?: boolean;
   /** Optional external handle (hero audio) — kept in sync with the element. */
   videoRef?: React.MutableRefObject<HTMLVideoElement | null>;
 }) {
@@ -70,7 +73,7 @@ export function HeroVideo({
         poster={poster ?? undefined}
         autoPlay
         muted
-        loop
+        loop={loop}
         playsInline
         preload="metadata"
         className={`absolute inset-0 h-full w-full object-cover ${className}`}

@@ -22,6 +22,7 @@ export function TKAgeGate({
 }) {
   return (
     <div
+      data-age-gate
       className={`${vt323.variable} tk-mono fixed inset-0 z-[90] flex items-center justify-center p-6`}
       style={{ background: "rgba(3,4,2,.96)" }}
       role="dialog"

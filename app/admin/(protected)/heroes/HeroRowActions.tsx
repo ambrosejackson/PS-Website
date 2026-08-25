@@ -21,6 +21,7 @@ export function HeroRowActions({
   audioAutoplay,
   audioVolume,
   mediaUrlMobile,
+  videoLoop,
 }: {
   id: string;
   page: string;
@@ -35,6 +36,7 @@ export function HeroRowActions({
   audioAutoplay: boolean;
   audioVolume: number;
   mediaUrlMobile: string | null;
+  videoLoop: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -135,6 +137,23 @@ export function HeroRowActions({
       >
         Theme → {theme === "dark" ? "light" : "dark"}
       </Button>
+
+      {/* ---- Playback (D-057): loop is per-asset; off = play once, hold last frame ---- */}
+      {video && (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => run(() => updateHero({ id, videoLoop: !videoLoop }))}
+          title={
+            videoLoop
+              ? "Currently loops forever. Switch off to play through once and hold the final frame."
+              : "Currently plays once. Switch on to loop forever."
+          }
+        >
+          {videoLoop ? "Loop ✓" : "Loop off"}
+        </Button>
+      )}
 
       {/* ---- Hero audio (D-050): video rows only ---- */}
       {video && (

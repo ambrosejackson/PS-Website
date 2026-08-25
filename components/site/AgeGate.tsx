@@ -18,7 +18,8 @@ import {
  * brand (each styled after its reference site — Higher Self per capture, SSS
  * per its live gate copy, Outfitters in its black/gold language since the
  * original site had none). Server HTML always includes the gate; verified
- * visitors hydrate straight past it.
+ * visitors hydrate straight past it, and the root layout's pre-paint script
+ * hides it before it can flash (I-063) — hence data-age-gate on every root.
  */
 
 const COOKIE_DAYS = 30;
@@ -46,6 +47,9 @@ export function AgeGate() {
 
   const accept = () => {
     setCookie(AGE_COOKIE, "1", COOKIE_DAYS);
+    // Match the pre-paint script (I-063) so a client-side navigation after
+    // accepting can never re-paint the gate before React drops it.
+    document.documentElement.setAttribute("data-age-ok", "1");
     // Gesture bridge (D-050): hero audio retries its unmute synchronously
     // inside this click's task. Dispatch is the ONLY change to the gate.
     window.dispatchEvent(new CustomEvent("ps:user-gesture"));
@@ -61,7 +65,7 @@ export function AgeGate() {
 
   if (slug === "higherself") {
     return (
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-800/60 p-6 font-poppins backdrop-blur-sm">
+      <div data-age-gate className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-800/60 p-6 font-poppins backdrop-blur-sm">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -104,7 +108,7 @@ export function AgeGate() {
 
   if (slug === "savagesquadstrains") {
     return (
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0d0a08] p-6 text-white">
+      <div data-age-gate className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0d0a08] p-6 text-white">
         <div className="w-full max-w-md text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -152,7 +156,7 @@ export function AgeGate() {
 
   if (slug === "outfitters") {
     return (
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0d0c0a] p-6 text-[#f5f2ea]">
+      <div data-age-gate className="fixed inset-0 z-[90] flex items-center justify-center bg-[#0d0c0a] p-6 text-[#f5f2ea]">
         <div className="w-full max-w-md text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -200,7 +204,7 @@ export function AgeGate() {
 
   // Default Private Stock gate.
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-950 p-6 text-white">
+    <div data-age-gate className="fixed inset-0 z-[90] flex items-center justify-center bg-neutral-950 p-6 text-white">
       <div className="w-full max-w-md text-center">
         {brand ? (
           <p className="font-condensed text-3xl font-bold uppercase tracking-tight">

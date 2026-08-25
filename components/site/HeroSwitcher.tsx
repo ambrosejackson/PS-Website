@@ -156,6 +156,7 @@ export function HeroSwitcher({
               src={hero.media_url}
               mobileSrc={hero.media_url_mobile}
               poster={hero.poster_url}
+              loop={hero.video_loop}
               videoRef={
                 audioEnabled && hero.id === defaultHero.id ? audio.videoRef : undefined
               }

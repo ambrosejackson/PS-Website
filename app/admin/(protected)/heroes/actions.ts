@@ -109,6 +109,8 @@ export async function updateHero(input: {
   audioAutoplay?: boolean;
   audioVolume?: number;
   mediaUrlMobile?: string | null;
+  /** content_heroes.video_loop — false plays once, no auto-replay (D-057). */
+  videoLoop?: boolean;
 }): Promise<ActionResult> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   let admin;
@@ -134,13 +136,22 @@ export async function updateHero(input: {
     audio_autoplay?: boolean;
     audio_volume?: number;
     media_url_mobile?: string | null;
+    video_loop?: boolean;
   } = {};
 
   // ---- Hero audio (D-050). Guard rails mirror the DB constraints so the admin
   // gets a toast, not a raw Postgres error.
-  if (input.hasAudio !== undefined || input.audioAutoplay !== undefined || input.audioVolume !== undefined || input.mediaUrlMobile !== undefined) {
-    if (row.media_type !== "video") return { ok: false, error: "Audio settings only apply to video heroes." };
+  if (
+    input.hasAudio !== undefined ||
+    input.audioAutoplay !== undefined ||
+    input.audioVolume !== undefined ||
+    input.mediaUrlMobile !== undefined ||
+    input.videoLoop !== undefined
+  ) {
+    if (row.media_type !== "video")
+      return { ok: false, error: "Audio and playback settings only apply to video heroes." };
   }
+  if (input.videoLoop !== undefined) patch.video_loop = input.videoLoop;
   if (input.hasAudio !== undefined) {
     patch.has_audio = input.hasAudio;
     if (!input.hasAudio) patch.audio_autoplay = false; // keep the check constraint satisfied

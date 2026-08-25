@@ -26,10 +26,12 @@ import {
  */
 
 /**
- * CATALOG opens the Brand Book modal rather than navigating (D-021). It lives
- * here because the header's CATALOG item is `hidden md:inline-block` — without
- * this entry the catalog is unreachable on mobile outside the landing page's
- * intro link (D-028). `href` is the fallback when the brand book isn't rendered.
+ * CATALOG opens the Brand Book modal rather than navigating (D-021 — the modal
+ * behaviour survived D-056's rename; only the header item changed). It was added
+ * because the header's items were `hidden md:inline-block` and the catalog was
+ * otherwise unreachable on mobile (D-028); the header's BRANDS dropdown now also
+ * carries it there, and this entry stays as the menu's own route to it.
+ * `href` is the fallback when the brand book isn't rendered.
  */
 const MENU_ITEMS = [
   { href: "/", label: "HOME" },

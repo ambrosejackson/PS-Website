@@ -40,7 +40,7 @@ export default async function AdminHeroesPage() {
         <p className="mt-2 max-w-prose text-sm text-neutral-600">
           One default hero per page (image or MP4). Theme is auto-computed from the asset&apos;s top band and can be
           overridden; it drives the header text color on brand pages. Landing heroes can additionally be assigned to a
-          nav hover target (CATALOG / STORE LOCATOR / YOUR REWARDS). Pages with no active hero show a styled static
+          nav hover target (BRANDS / STORE LOCATOR / YOUR REWARDS). Pages with no active hero show a styled static
           fallback. TerpKings keeps its CRT layering with the video underneath.
         </p>
       </div>
@@ -104,6 +104,9 @@ export default async function AdminHeroesPage() {
                             {h.media_type === "video" && h.audio_autoplay && !h.is_default && (
                               <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">⚠ audio ignored — only the default hero plays sound</span>
                             )}
+                            {h.media_type === "video" && !h.video_loop && (
+                              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">no loop — plays once</span>
+                            )}
                             {h.media_type === "video" && h.media_url_mobile && (
                               <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700" title={h.media_url_mobile}>mobile ✓</span>
                             )}
@@ -126,6 +129,7 @@ export default async function AdminHeroesPage() {
                           audioAutoplay={h.audio_autoplay}
                           audioVolume={h.audio_volume}
                           mediaUrlMobile={h.media_url_mobile}
+                          videoLoop={h.video_loop}
                         />
                       </li>
                     ))}

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -235,6 +235,7 @@ export type Database = {
           poster_url: string | null
           sort_order: number | null
           theme: string
+          video_loop: boolean
         }
         Insert: {
           audio_autoplay?: boolean
@@ -251,6 +252,7 @@ export type Database = {
           poster_url?: string | null
           sort_order?: number | null
           theme?: string
+          video_loop?: boolean
         }
         Update: {
           audio_autoplay?: boolean
@@ -267,6 +269,7 @@ export type Database = {
           poster_url?: string | null
           sort_order?: number | null
           theme?: string
+          video_loop?: boolean
         }
         Relationships: []
       }

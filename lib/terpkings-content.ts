@@ -52,7 +52,7 @@ export const TK_HERO = {
     "linear-gradient(180deg, transparent, rgba(215,235,150,.08), transparent)",
   vignette:
     "radial-gradient(ellipse 85% 75% at 50% 50%, transparent 45%, rgba(2,3,1,.55) 78%, rgba(2,3,1,.96) 100%)",
-  tagline: "RULERS OF FLAVOR // BROADCASTING FROM THE TERPIVERSE",
+  tagline: "BROADCASTING FROM PROVIDENCE 35974C",
   cornerTop: "P 0001 · TITLE CARD ▮",
   cornerSide: "REC ▮▮ TK-2600",
   scroll: "▼ SCROLL TO DECRYPT",

@@ -69,6 +69,7 @@ export function TKHero({ hero }: { hero: HeroAsset | null }) {
               src={videoUrl}
               mobileSrc={hero?.media_url_mobile}
               poster={hero?.poster_url}
+              loop={hero?.video_loop ?? true}
               videoRef={audio.videoRef}
             />
             <div
@@ -121,7 +122,12 @@ export function TKHero({ hero }: { hero: HeroAsset | null }) {
         </div>
 
         {/* (h) content */}
-        <div className="relative z-[2] flex h-full flex-col items-center justify-end gap-[26px] px-8 pb-[72px] text-center">
+        {/*
+          Content block sits one line lower than the export (pb 72 → 30): the
+          tagline, the CTA row and the scroll cue all move down together, since
+          they share this justify-end column. One line at the h1's size is ~42px.
+        */}
+        <div className="relative z-[2] flex h-full flex-col items-center justify-end gap-[26px] px-8 pb-[30px] text-center">
           <h1 className="tk-mono m-0 text-[clamp(20px,2.4vw,28px)] font-normal tracking-[.18em] text-[#141809]">
             {TK_HERO.tagline}
           </h1>

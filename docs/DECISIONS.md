@@ -581,3 +581,53 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   `terpkings/1787441208071-short-video-output-….mp4` (49 MB, the OLD TerpKings
   video, referenced by inactive row 277ed540). Superseded 42 MB
   `heroes/terpkings/1787615023750-….mp4` also remains after the re-encode swap.
+
+## Session — 2026-08-25 (age-gate flash, BRANDS dropdown, TerpKings hero, loop toggle)
+
+- **I-063 — age-gate flash (root cause + fix).** `useAgeVerified` is a
+  `useSyncExternalStore` whose SERVER snapshot is hard-coded `false`, so the
+  gate ships inside the static HTML of every page for every visitor. An
+  already-verified visitor therefore painted the gate and only lost it at
+  hydration — the flash Ambrose reported, and on `/terpkings` it sat over the
+  hero for exactly the window in which `HeroVideo` reveals itself on `playing`,
+  which is why the video read as "stopped and restarted". The video was never
+  actually interrupted.
+  Rejected: reading the cookie server-side via `next/headers` — correct-looking,
+  but `cookies()` opts the whole route out of static rendering, which breaks the
+  SSG/SEO launch gate (guardrail #9) for every public page. Also rejected:
+  `ssr: false` on the gate (no-JS visitors then get no gate at all).
+  Chosen: the theme-flash pattern. A tiny synchronous inline script, rendered as
+  the FIRST child of `<body>` in `app/layout.tsx`, tests the `ps_age_verified`
+  cookie while the body is still parsing — before the gate markup exists — and
+  stamps `html[data-age-ok="1"]`. `globals.css` hides `[data-age-gate]` under
+  that attribute, so the gate never paints. Every gate root (the four in
+  `AgeGate.tsx` plus `TKAgeGate`) carries `data-age-gate`. Static rendering,
+  no-JS behaviour and the unverified path are all unchanged.
+- **D-056 — BRANDS restored; REVERSES D-021.** Header item renamed CATALOG →
+  BRANDS at Ambrose's direction. It is now a dropdown (`BrandsNav.tsx`):
+  brands from the `lib/brands.ts` allowlist, then a divider, then **Catalog**
+  which opens the Brand Book modal (the old click behaviour, moved one level
+  down). Hover opens on pointer devices and still fires `navEnter("BRANDS")`
+  for the hero swap; tap toggles on touch; Escape / outside-pointer / navigation
+  close it. A `pt-3` bridge on the panel wrapper keeps the gap between bar and
+  panel inside the hover region. Panel is white-on-white-bar for the solid
+  treatment and near-black for the brand-page overlay.
+  The item is visible at ALL widths (mobile included, per the request) — the
+  other two nav links stay `hidden md:`. Mobile nav gap tightened `gap-5` →
+  `gap-3` to fit the extra item; `md:` gaps unchanged.
+  `NAV_TARGETS` label in `hero-config.ts` follows (value was already `BRANDS`).
+  CLAUDE.md guardrail #5 rewritten so a future session does not "restore"
+  CATALOG.
+- **D-057 — hero video loop is per-asset.** New `content_heroes.video_loop`
+  (`0010_hero_loop.sql`, `not null default true`, so every existing row keeps
+  today's behaviour). Admin gets a `Loop ✓ / Loop off` toggle on video rows and
+  a `no loop — plays once` badge. `HeroVideo` takes a `loop` prop; `HeroSwitcher`
+  and `TKHero` pass the column through. `hero-audio.tsx` now refuses to call
+  `play()` on an `ended` element in BOTH the unmute path and the
+  visibilitychange restore — without that, unmuting or returning to the tab
+  would silently auto-replay the very thing the toggle switched off.
+- **TerpKings hero copy + position.** Tagline → `BROADCASTING FROM PROVIDENCE
+  35974C` (kept the export's all-caps terminal treatment; the h1 has no CSS
+  `uppercase`, so the casing lives in the string). The tagline, CTA row and
+  scroll cue share one `justify-end` column, so the whole block moves together:
+  `pb-[72px]` → `pb-[30px]`, about one line at the h1's size.

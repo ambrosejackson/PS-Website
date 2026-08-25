@@ -37,11 +37,11 @@ export function heroPageLabel(page: string): string {
 
 /**
  * Landing-only nav hover targets. The stored value is what Header.navEnter
- * emits: CATALOG's hover still keys off "BRANDS" (D-021), the others are the
- * nav labels themselves.
+ * emits; since D-056 renamed the item back to BRANDS the value and the label
+ * finally agree (it was value "BRANDS" / label "CATALOG" under D-021).
  */
 export const NAV_TARGETS = [
-  { value: "BRANDS", label: "CATALOG" },
+  { value: "BRANDS", label: "BRANDS" },
   { value: "STORE LOCATOR", label: "STORE LOCATOR" },
   { value: "YOUR REWARDS", label: "YOUR REWARDS" },
 ] as const;

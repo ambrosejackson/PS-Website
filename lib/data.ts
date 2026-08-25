@@ -28,6 +28,7 @@ export const FALLBACK_HERO: HeroAsset = {
   audio_autoplay: false,
   audio_volume: 70,
   theme: "dark",
+  video_loop: true,
   is_default: true,
   sort_order: 0,
   is_active: true,
