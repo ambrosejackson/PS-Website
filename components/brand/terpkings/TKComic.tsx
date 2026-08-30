@@ -1,29 +1,19 @@
 import { COMIC } from "@/lib/terpkings-content";
-import { TKPlaceholder } from "./TKBits";
 
 /** FILE 02 // ORIGINAL GRAPHIC NOVEL — tilted cover frame + copy. */
 export function TKComic() {
   return (
     <section id="comic" className="tk-gutter mx-auto max-w-[1140px] py-[100px]">
       <div className="tk-comic-grid">
-        <div className="relative min-w-0">
-          <div
-            className="absolute -inset-3 rounded-[14px] opacity-40"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,176,0,.5), transparent 55%)",
-              filter: "blur(16px)",
-            }}
+        <div className="flex min-w-0 items-center justify-center">
+          {/* Brand render is a static file with known sizing — plain img. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand-pages/terpkings/comic-lumen-war-saga.png"
+            alt={COMIC.coverAlt}
+            className="h-auto w-full max-w-[430px] object-contain"
+            loading="lazy"
           />
-          <div
-            className="relative h-[520px] overflow-hidden rounded-lg border-[3px] border-[#2A1810]"
-            style={{
-              transform: "rotate(-1.5deg)",
-              boxShadow: "0 30px 60px rgba(0,0,0,.7)",
-            }}
-          >
-            <TKPlaceholder label={COMIC.placeholder} />
-            <div className="tk-grain pointer-events-none absolute inset-0 rounded-[inherit] opacity-40" />
-          </div>
         </div>
         <div className="flex min-w-0 flex-col gap-[18px]">
           <div className="tk-mono text-[20px] tracking-[.24em] text-[#FFB000]">{COMIC.eyebrow}</div>

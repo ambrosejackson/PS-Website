@@ -284,7 +284,7 @@ export const COMIC = {
     "> THE TERPIVERSE IS AT WAR. Follow the five Kings across gas giants and dessert moons in an original comic saga — free to read digitally, in print exclusively with select drops at licensed dispensaries.",
   readCta: "► READ PART 1 FREE",
   printCta: "GET THE PRINT ISSUE",
-  placeholder: "Drop the comic cover art",
+  coverAlt: "TerpKings: The Lumen War Saga Part 1 — original graphic novel cover",
 } as const;
 
 /** FILE 04 // TERP-SCANNER — the expandable education panel. */
