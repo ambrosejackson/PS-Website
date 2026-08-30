@@ -6,8 +6,9 @@ import type { Map as LeafletMap, Marker } from "leaflet";
 import type { StoreLocation } from "@/lib/data";
 
 /**
- * Illinois dispensary map (D-061). Leaflet + CARTO Positron tiles — no API key,
- * attribution rendered below the canvas. Leaflet touches `window`, so it is
+ * Illinois dispensary map (D-061). Leaflet + OpenStreetMap tiles — no API key,
+ * attribution rendered below the canvas. (CARTO Positron was the first choice but
+ * now watermarks keyless requests; swap back only with a CARTO key in env.) Leaflet touches `window`, so it is
  * imported dynamically inside an effect rather than at module scope.
  *
  * Stores without coordinates are simply not plotted; the list beside the map is
@@ -54,9 +55,8 @@ export function AvailabilityMap({
           scrollWheelZoom: false,
           attributionControl: false,
         });
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
           maxZoom: 18,
-          subdomains: "abcd",
         }).addTo(map.current);
       }
 
@@ -124,7 +124,7 @@ export function AvailabilityMap({
         role="application"
       />
       <p className="mt-2 text-[10px] tracking-wide text-neutral-400">
-        © OpenStreetMap contributors © CARTO
+        © OpenStreetMap contributors
       </p>
     </div>
   );
