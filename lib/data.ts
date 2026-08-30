@@ -181,15 +181,17 @@ export function merchFromCents(p: MerchListing): number | null {
 }
 
 /**
- * Mock PSM data is gated behind MOCK_PSM_DATA until the publish pipeline lands,
- * and NEVER shown on production (lib/showRealAvailability.ts).
+ * Availability visibility is decided in ONE place (lib/showRealAvailability.ts):
+ * production still running on MOCK_PSM_DATA hides it; everywhere else shows the
+ * rows in store_locations / product_availability, whichever pipeline wrote them.
+ * D-058: those rows arrive from PSM via POST /api/psm/publish.
  */
-function mockPsmEnabled(): boolean {
-  return process.env.MOCK_PSM_DATA === "true" && showRealAvailability();
+function availabilityVisible(): boolean {
+  return showRealAvailability();
 }
 
 export async function getStoreLocations(): Promise<StoreLocation[]> {
-  if (!mockPsmEnabled()) return [];
+  if (!availabilityVisible()) return [];
   const supabase = createPublicClient();
   if (!supabase) return [];
   const { data, error } = await supabase
@@ -198,6 +200,40 @@ export async function getStoreLocations(): Promise<StoreLocation[]> {
     .order("name", { ascending: true });
   if (error || !data) return [];
   return data;
+}
+
+export interface StoreWithProducts extends StoreLocation {
+  /** Menu-verified products at this store — empty for every tier except `live`. */
+  products: ProductAvailability[];
+}
+
+/**
+ * The store locator's single query: every published store with the products the
+ * last successful menu check found there. Presence + menu link + image only —
+ * `product_availability` has no price column by design (guardrail #2).
+ */
+export async function getStoreLocationsWithProducts(): Promise<StoreWithProducts[]> {
+  if (!availabilityVisible()) return [];
+  const supabase = createPublicClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("store_locations")
+    .select("*, product_availability(*)")
+    .order("name", { ascending: true });
+  if (error || !data) return [];
+  return data.map((row) => {
+    const { product_availability: products, ...store } = row as StoreLocation & {
+      product_availability: ProductAvailability[] | null;
+    };
+    return {
+      ...store,
+      products: (products ?? []).sort((a, b) =>
+        a.brand === b.brand
+          ? a.product_name.localeCompare(b.product_name)
+          : a.brand.localeCompare(b.brand),
+      ),
+    };
+  });
 }
 
 export interface AvailabilityAtStore {
@@ -210,7 +246,7 @@ export async function getAvailabilityForProduct(
   brand: string,
   productName: string,
 ): Promise<AvailabilityAtStore[]> {
-  if (!mockPsmEnabled()) return [];
+  if (!availabilityVisible()) return [];
   const supabase = createPublicClient();
   if (!supabase) return [];
   const { data, error } = await supabase

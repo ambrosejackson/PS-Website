@@ -631,3 +631,54 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   `uppercase`, so the casing lives in the string). The tagline, CTA row and
   scroll cue share one `justify-end` column, so the whole block moves together:
   `pb-[72px]` → `pb-[30px]`, about one line at the h1's size.
+
+## Store locator auto-sync (2026-08-30) — D-058 … D-062
+
+- **D-058 — PSM pushes to the website; the website never holds a PSM credential.**
+  Resolves the contradiction between CLAUDE.md guardrail #1 ("no keys, no direct
+  reads") and BUILD-PLAN §2 ("Edge Functions in the *website* project using a
+  dedicated restricted key"). PSM's `publish_store_locator()` (pg_cron + pg_net,
+  secrets in Supabase Vault) POSTs a curated payload to `POST /api/psm/publish`
+  with `Authorization: Bearer <PSM_PUBLISH_SECRET>`; the website only ever
+  *verifies* that secret. Same direction as W3 subscriber ingest. **W2's pull-RPC
+  design is superseded.** The receiver fails closed: unknown or price-shaped keys
+  → 400 with nothing written; zero stores → 400 with nothing deleted.
+
+- **D-059 — Delivery-backed, tiered store inclusion.** The menu-check scraper sees
+  only ~21 of 59 active dispensaries; 27 accounts return `suspect_zero` (Jane 10,
+  Dutchie 9, bot_wall 4, unknown/Weedmaps 4) because they block scraping, not
+  because we are off the shelf. Publishing menu-verified stores only would erase
+  ~32 real stockists. So: a store publishes if it is an active-stage account with
+  a delivery in the last 90 days (53 today). `availability_tier` = `live` when a
+  successful check found allowlisted-brand products within 7 days (21), else
+  `recent` (32). A blocked scrape downgrades the label; it never removes a store.
+  `listed` stays reserved for the 6 accounts at 90–180 days, unpublished for now.
+
+- **D-060 — Geocode via the US Census batch geocoder, not Google Places.** W1's
+  original plan solved name→address matching; `retail_accounts` already has the
+  addresses, so only address→coordinates remained. Census: free, no API key, no
+  restriction on storing results. 49/59 matched exactly; 7 more via Nominatim
+  (4 house-number, 3 street-centroid, tagged `nominatim` / `nominatim_street` in
+  `retail_accounts.geocode_source`); 3 still unresolved and left null. Every point
+  verified inside the Illinois bounding box before writing. A store without
+  coordinates still lists — it just gets no pin.
+
+- **D-061 — Locator shows brand chips AND product names.** Product rows come from
+  `product_availability` and exist only for `live` stores (443 rows, 20 stores
+  today), collapsed behind a `<details>` with a "checked N days ago" stamp. Map is
+  Leaflet + CARTO Positron tiles (no API key, attribution rendered); list and map
+  select each other. Stores are always listed even when unpinnable.
+
+- **D-062 — Brand allowlist enforced on both sides.** `v_publish_stores` /
+  `v_publish_availability` filter to the four allowlisted brands AND
+  `/api/psm/publish` filters again against `lib/brands.ts`. Deliberate deviation
+  from W2's "publish everything, filter on the website" — Kush League must not
+  reach a public table even transiently. Cost: activating a brand is now a
+  two-step switch (the PSM view's array + `lib/brands.ts`).
+
+- **Latent bug fixed in passing.** `lib/data.ts` gated store data behind
+  `mockPsmEnabled()` (`MOCK_PSM_DATA === "true" && showRealAvailability()`), so
+  unsetting `MOCK_PSM_DATA` — the documented way to go live — would have returned
+  an *empty* locator rather than the real one. The gate is now
+  `availabilityVisible() = showRealAvailability()`, and the comment in
+  `showRealAvailability.ts` is accurate again.

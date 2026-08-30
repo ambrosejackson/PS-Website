@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
-import { AvailabilityMap } from "@/components/site/AvailabilityMap";
 import { Footer } from "@/components/site/Footer";
+import { StoreLocatorList } from "@/components/site/StoreLocatorList";
 import { BRANDS, brandBySlug } from "@/lib/brands";
-import { getHeroesForPage, getStoreLocations } from "@/lib/data";
+import { getHeroesForPage, getStoreLocationsWithProducts } from "@/lib/data";
 import { availabilityComingSoon } from "@/lib/showRealAvailability";
 import { NewsletterSection } from "@/components/site/NewsletterSection";
 
@@ -13,13 +13,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Store Locator",
   description:
-    "Find dispensaries carrying Private Stock brands — Outfitters, TerpKings, Higher Self, and Savage Squad Strains.",
-};
-
-const TIER_LABEL: Record<string, string> = {
-  live: "On the menu now",
-  recent: "Carried recently",
-  listed: "Carries our brands",
+    "Find dispensaries carrying Private Stock brands — Outfitters, TerpKings, Higher Self, and Savage Squad Strains — across Illinois.",
 };
 
 const FILTER_BASE =
@@ -33,19 +27,50 @@ export default async function StoreLocatorPage({
 }) {
   const [heroes, stores, params] = await Promise.all([
     getHeroesForPage("/store-locator"),
-    getStoreLocations(),
+    getStoreLocationsWithProducts(),
     searchParams,
   ]);
 
-  // Production on mock PSM data → "coming soon" (lib/showRealAvailability.ts).
+  // Production still on mock PSM data → "coming soon" (lib/showRealAvailability.ts).
   const comingSoon = availabilityComingSoon();
   // Unknown slugs fall back to "all" rather than showing an empty list.
   const brand = params.brand ? brandBySlug(params.brand.toLowerCase()) : undefined;
   const visible = brand
-    ? stores.filter((s) =>
-        s.brands.some((b) => b.toLowerCase() === brand.name.toLowerCase()),
-      )
+    ? stores.filter((s) => s.brands.some((b) => b.toLowerCase() === brand.name.toLowerCase()))
     : stores;
+
+  /**
+   * LocalBusiness structured data for the stores we can place on a map
+   * (SEO launch gate, BUILD-PLAN §6). Presence only — never a price.
+   */
+  const jsonLd =
+    !comingSoon && visible.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: visible
+            .filter((s) => s.latitude !== null && s.longitude !== null)
+            .map((s, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Store",
+                name: s.name,
+                address: {
+                  "@type": "PostalAddress",
+                  streetAddress: s.address_line1 ?? undefined,
+                  addressLocality: s.city ?? undefined,
+                  addressRegion: s.state ?? undefined,
+                  postalCode: s.zip ?? undefined,
+                  addressCountry: "US",
+                },
+                geo: { "@type": "GeoCoordinates", latitude: s.latitude, longitude: s.longitude },
+                telephone: s.phone ?? undefined,
+                url: s.menu_url ?? undefined,
+              },
+            })),
+        }
+      : null;
 
   return (
     <main>
@@ -54,9 +79,12 @@ export default async function StoreLocatorPage({
         <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           STORE LOCATOR
         </h1>
+
         {comingSoon ? (
           <div className="mt-10 border border-hairline bg-[#fafafa] px-6 py-16 text-center md:py-24">
-            <p className="font-condensed text-xs font-semibold uppercase tracking-[0.3em] text-caption">Coming soon</p>
+            <p className="font-condensed text-xs font-semibold uppercase tracking-[0.3em] text-caption">
+              Coming soon
+            </p>
             <h2 className="mt-4 font-condensed text-3xl font-bold uppercase tracking-tight text-ink md:text-4xl">
               Find Private Stock at licensed Illinois dispensaries
             </h2>
@@ -77,12 +105,18 @@ export default async function StoreLocatorPage({
               ))}
             </div>
           </div>
-        ) : stores.length > 0 ? (
+        ) : stores.length === 0 ? (
+          <p className="mt-10 border border-dashed border-hairline p-10 text-center text-sm text-neutral-400">
+            The store locator comes online with the live store data feed — check back soon.
+          </p>
+        ) : (
           <>
-            <p className="mt-3 max-w-xl text-sm text-amber-600">
-              Preview build — showing mock store data until the live feed
-              connects.
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-500">
+              Every dispensary below has received a Private Stock delivery in the last 90 days. Stores marked{" "}
+              <span className="font-medium text-ink">On the menu now</span> were confirmed by our menu check this week —
+              the rest stock us but publish menus we can&apos;t read automatically, so call ahead or check their menu.
             </p>
+
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/store-locator"
@@ -113,61 +147,25 @@ export default async function StoreLocatorPage({
                 );
               })}
             </div>
+
             {visible.length > 0 ? (
-              <div className="mt-10 grid gap-10 md:grid-cols-2">
-                <ul className="divide-y">
-                  {visible.map((s) => (
-                    <li key={s.id} className="py-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          {s.menu_url ? (
-                            <a
-                              href={s.menu_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="nav-underline text-sm font-medium text-neutral-900"
-                            >
-                              {s.name}
-                            </a>
-                          ) : (
-                            <span className="text-sm font-medium text-neutral-900">
-                              {s.name}
-                            </span>
-                          )}
-                          <p className="text-xs text-neutral-500">
-                            {[s.address_line1, s.city, s.state, s.zip]
-                              .filter(Boolean)
-                              .join(", ")}
-                          </p>
-                          {s.brands.length > 0 && (
-                            <p className="mt-1 text-[11px] text-neutral-400">
-                              {s.brands.join(" · ")}
-                            </p>
-                          )}
-                        </div>
-                        <span className="shrink-0 rounded-full border px-3 py-1 text-[10px] tracking-widest text-neutral-500">
-                          {TIER_LABEL[s.availability_tier ?? ""] ?? "Listed"}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <AvailabilityMap stores={visible} />
-              </div>
+              <StoreLocatorList key={brand?.slug ?? "all"} stores={visible} />
             ) : (
-              <p className="mt-10 rounded border border-dashed p-10 text-center text-sm text-neutral-400">
-                No listed stores are carrying {brand?.name} right now — try
-                another brand or view all stores.
+              <p className="mt-10 border border-dashed border-hairline p-10 text-center text-sm text-neutral-400">
+                No listed stores are carrying {brand?.name} right now — try another brand or view all stores.
               </p>
             )}
           </>
-        ) : (
-          <p className="mt-10 rounded border border-dashed p-10 text-center text-sm text-neutral-400">
-            The store locator comes online with the live store data feed —
-            check back soon.
-          </p>
         )}
       </section>
+
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+
       {comingSoon && <NewsletterSection />}
       <Footer />
     </main>

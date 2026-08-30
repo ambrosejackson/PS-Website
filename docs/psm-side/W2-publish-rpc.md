@@ -1,45 +1,89 @@
-# PSM-SIDE — do not run here
+# PSM-SIDE — BUILT 2026-08-30 (design superseded by D-058)
 
-**Workstream W2 — `publish_store_locator()` RPC** (feeds the website's `store_locations`, `product_availability`, `strains` tables)
-Run in the PSM project by Ambrose after W1 completes. Follows the PSM SECURITY DEFINER pattern (PS-MANAGEMENT-CONTEXT §5). Depends on: W1 (lat/lng), a dedicated `website_publisher` role/key decision.
+**Workstream W2 — publishing PSM data to the website.** The original pull-RPC design in this file is **dead**: the website was never going to be allowed a PSM key (guardrail #1), so the direction was inverted. PSM pushes. This is the as-built record and the runbook.
 
-## Contract (what the website expects)
+## What exists in PSM now
 
-Three result sets, called nightly + after Sat/Wed menu-check runs by the website Edge Function `publish-pull` (to be built in the website project, Phase 2):
+| Object | Purpose |
+|---|---|
+| `v_publish_stores` (view) | The 53 publishable dispensaries. Delivery-backed inclusion, menu-check tiering (D-059). |
+| `v_publish_availability` (view) | 443 product-presence rows for the 20 stores with a fresh successful check. `match_confidence in ('high','medium')`. |
+| `publish_store_locator()` | SECURITY DEFINER. Serialises both views and `net.http_post`s them to the website. Revoked from public/anon/authenticated. |
+| `reconcile_website_publish_log()` | pg_net is async — this reads `net._http_response` and closes the loop so a failed publish is visible. |
+| `website_publish_log` (table) | One row per run: counts, HTTP status, response, ok. |
+| Vault `website_publish_url` | `https://privatestock.co/api/psm/publish` |
+| Vault `website_publish_secret` | Must equal Vercel's `PSM_PUBLISH_SECRET`. |
+| cron `reconcile-website-publish-log` | `*/15 * * * *`, **active**. |
+| cron `publish-store-locator` | **NOT YET SCHEDULED** — see below. |
 
-1. **stores** → upserted into website `store_locations`
-   - Source: `retail_accounts` (active, company_id `f730fddb-bcb0-464a-80ab-c2c6bf77ac1d`) with a delivery in the last 90 days (join `deliveries` on `retail_account_id`, ignore null FKs), plus chain name from `retail_account_chains`.
-   - Columns: `id, name, chain_name, address_line1, address_line2, city, state, zip, latitude, longitude, phone, online_menu_url as menu_url, brands (text[] — distinct brands from latest successful menu-check findings, fallback brand_sales_order_items), last_delivery_within_90d, availability_tier, availability_checked_at`.
-   - `availability_tier` derivation: `'live'` if tier-1 menu platform (Sweed/Mosaic) with successful check ≤ 7 days; `'recent'` if delivery ≤ 90 days; else `'listed'`.
-   - **NEVER include:** delivery amounts/costs, tier, W-9 anything, contacts, delivery-scheduling fields.
+### Tiering (D-059)
 
-2. **availability** → upserted into website `product_availability`
-   - Source: `menu_check_findings` from the latest successful run per tier-1 account, `match_confidence in ('high','medium')`.
-   - Columns: `retail_account_id as store_id, brand, menu_product_name as product_name, coalesce(menu_variant,'') as variant, menu_product_url, menu_image_url as image_url, checked_at`.
-   - **NEVER include:** `menu_price`, `menu_msrp`, `discount_pct`, `discount_bucket`, or any price-derived column. The website schema has no price columns by design.
-
-3. **strains** → upserted into website `strains`
-   - Source: `strain_names` where `is_active`.
-   - Columns: `id, our_name, brand, our_type, lineage`. **NEVER `source` / `original_name`** (genetics sourcing).
-   - Note: 8 known-duplicate Eschelon-New rows pending cleanup — exclude or clean before first publish.
-
-## Security skeleton (PSM conventions)
-
-```sql
-create or replace function public.publish_store_locator()
-returns ... -- three result sets: implement as three functions or one returning jsonb
-language sql
-security definer
-set search_path = public
-as $$ ... $$;
-
-revoke execute on function public.publish_store_locator() from public, anon, authenticated;
--- grant execute only to the dedicated publisher role used by the website Edge Function key.
-select pg_notify('pgrst', 'reload schema');
+```
+live    = menu_check_account_state.last_status = 'ok'
+          AND last_checked_at >= now() - 7 days
+          AND ≥1 allowlisted-brand finding at that check          → 21 stores
+recent  = delivery within 90 days, not live                        → 32 stores
+listed  = reserved (active account, delivery 90–180d)              → 6, unpublished
 ```
 
-Recommendation: three functions (`publish_stores()`, `publish_availability()`, `publish_strains()`) returning `setof jsonb` — simpler to consume from the Edge Function than one multi-set RPC. If replacing an existing function with new defaulted params, `DROP FUNCTION` with the old arg list first (ambiguous-overload gotcha).
+`brands` per store: distinct allowlisted brands from findings in the last 180 days, falling back to `brand_sales_order_items` matched on a normalised `customer_name` against `retail_accounts.name` + `retail_account_aliases`.
 
-## Brand filtering
+### Never published
 
-Publish ALL brands (including Kush League/Clusters) — the **website** filters to its allowlist on upsert (`lib/brands.ts` is the single switch). This keeps the PSM side stable when brands activate.
+No `menu_price`, `menu_msrp`, `discount_pct`, `discount_bucket`, `order_amount`, `est_cost`, `actual_cost`, `tier`, `w9_*`, `license_number`, or `delivery_scheduling_*` appears in either view. The receiver rejects the entire POST if a key matching `/price|msrp|discount|cost|amount|w9|licen|scheduling|contact/i` shows up — so a future PSM-side column cannot start leaking quietly.
+
+## Runbook
+
+**Enable the schedule** — run once, after the website PR is merged and `privatestock.co` serves `/api/psm/publish`:
+
+```sql
+select cron.schedule(
+  'publish-store-locator',
+  '20 0,13,17,20 * * *',                      -- UTC, ~20 min after each menu-check window
+  $$select public.publish_store_locator();$$
+);
+```
+
+**Publish on demand:**
+
+```sql
+select public.publish_store_locator();
+```
+
+**Check the last few runs:**
+
+```sql
+select ran_at, store_count, availability_count, http_status, ok, error_message
+from public.website_publish_log order by ran_at desc limit 10;
+```
+
+**Pause it** (does not drop anything):
+
+```sql
+select cron.unschedule('publish-store-locator');
+```
+
+**Point it at a Vercel preview instead of production** (for testing a PR):
+
+```sql
+select vault.update_secret(
+  (select id from vault.secrets where name = 'website_publish_url'),
+  'https://<preview-deployment>.vercel.app/api/psm/publish');
+```
+
+**Rotate the shared secret** — update Vercel's `PSM_PUBLISH_SECRET`, redeploy, then:
+
+```sql
+select vault.update_secret(
+  (select id from vault.secrets where name = 'website_publish_secret'), '<new value>');
+```
+
+## Failure behaviour
+
+- Zero stores in the view → logged as `ok=false`, **nothing is POSTed**. The public locator cannot be emptied by a broken upstream run.
+- Non-2xx from the website → `reconcile_website_publish_log()` records the status and body within 15 minutes.
+- No response at all within an hour → the row is closed out as `ok=false, 'no response from pg_net'`.
+
+## Not in scope
+
+`strains` publishing (feeds product pages, not the locator) is still unbuilt; the 8 duplicate Eschelon-New rows need cleanup first.

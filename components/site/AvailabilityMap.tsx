@@ -1,67 +1,131 @@
 "use client";
 
-import { useState } from "react";
+import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Map as LeafletMap, Marker } from "leaflet";
 import type { StoreLocation } from "@/lib/data";
 
 /**
- * Placeholder region map: stores plotted by lat/lng on a simple SVG panel with
- * hover + click. Replaced by MapLibre/Leaflet with real tiles in Phase 2 when
- * the PSM geo backfill + publish pipeline land.
+ * Illinois dispensary map (D-061). Leaflet + CARTO Positron tiles — no API key,
+ * attribution rendered below the canvas. Leaflet touches `window`, so it is
+ * imported dynamically inside an effect rather than at module scope.
+ *
+ * Stores without coordinates are simply not plotted; the list beside the map is
+ * the authoritative set, so a missing geocode costs a pin, never a listing.
  */
-export function AvailabilityMap({ stores }: { stores: StoreLocation[] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  const located = stores.filter(
-    (s) => s.latitude !== null && s.longitude !== null,
+
+const TIER_COLOR: Record<string, string> = {
+  live: "#1a1a1a",
+  recent: "#8a8a8a",
+  listed: "#c4c4c4",
+};
+
+export function AvailabilityMap({
+  stores,
+  selectedId,
+  onSelect,
+}: {
+  stores: StoreLocation[];
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+}) {
+  const holder = useRef<HTMLDivElement>(null);
+  const map = useRef<LeafletMap | null>(null);
+  const markers = useRef<Record<string, Marker>>({});
+  const [ready, setReady] = useState(false);
+
+  const located = useMemo(
+    () => stores.filter((s) => s.latitude !== null && s.longitude !== null),
+    [stores],
   );
+  // Re-fit only when the actual set of pins changes, not on every render.
+  const key = useMemo(() => located.map((s) => s.id).join("|"), [located]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!holder.current || located.length === 0) return;
+
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !holder.current) return;
+
+      if (!map.current) {
+        map.current = L.map(holder.current, {
+          scrollWheelZoom: false,
+          attributionControl: false,
+        });
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          subdomains: "abcd",
+        }).addTo(map.current);
+      }
+
+      Object.values(markers.current).forEach((m) => m.remove());
+      markers.current = {};
+
+      for (const s of located) {
+        const marker = L.circleMarker([s.latitude!, s.longitude!], {
+          radius: 6,
+          weight: 2,
+          color: "#ffffff",
+          fillColor: TIER_COLOR[s.availability_tier ?? "listed"] ?? TIER_COLOR.listed,
+          fillOpacity: 1,
+        })
+          .addTo(map.current!)
+          .bindTooltip(s.name, { direction: "top", offset: [0, -6] })
+          .on("click", () => onSelect?.(s.id));
+        markers.current[s.id] = marker as unknown as Marker;
+      }
+
+      map.current.fitBounds(
+        L.latLngBounds(located.map((s) => [s.latitude!, s.longitude!] as [number, number])),
+        { padding: [28, 28], maxZoom: 11 },
+      );
+      setReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // onSelect is a stable callback from the page; pins depend on `key` only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  // Tear the map down only when the component itself unmounts.
+  useEffect(
+    () => () => {
+      map.current?.remove();
+      map.current = null;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!ready || !selectedId) return;
+    const store = located.find((s) => s.id === selectedId);
+    if (store) map.current?.panTo([store.latitude!, store.longitude!]);
+    markers.current[selectedId]?.openTooltip?.();
+  }, [selectedId, ready, located]);
 
   if (located.length === 0) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-sm border border-dashed text-sm text-neutral-400">
-        Map available when live store data connects.
+      <div className="flex aspect-[4/3] items-center justify-center border border-dashed border-hairline text-sm text-neutral-400">
+        Map available once store coordinates are published.
       </div>
     );
   }
 
-  const lats = located.map((s) => s.latitude!);
-  const lngs = located.map((s) => s.longitude!);
-  const pad = 0.4;
-  const minLat = Math.min(...lats) - pad;
-  const maxLat = Math.max(...lats) + pad;
-  const minLng = Math.min(...lngs) - pad;
-  const maxLng = Math.max(...lngs) + pad;
-
-  const x = (lng: number) => ((lng - minLng) / (maxLng - minLng)) * 100;
-  const y = (lat: number) => (1 - (lat - minLat) / (maxLat - minLat)) * 75;
-
   return (
-    <div className="relative">
-      <svg
-        viewBox="0 0 100 75"
-        role="img"
-        aria-label="Map of dispensary locations"
-        className="aspect-[4/3] w-full rounded-sm bg-neutral-100"
-      >
-        {located.map((s) => (
-          <g key={s.id}>
-            <circle
-              cx={x(s.longitude!)}
-              cy={y(s.latitude!)}
-              r={hovered === s.id ? 2.6 : 1.8}
-              className="cursor-pointer fill-neutral-900 transition-all"
-              onMouseEnter={() => setHovered(s.id)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => {
-                if (s.menu_url) window.open(s.menu_url, "_blank", "noopener");
-              }}
-            />
-          </g>
-        ))}
-      </svg>
-      <div className="pointer-events-none absolute left-2 top-2 rounded-sm bg-white/85 px-2 py-1 text-[10px] tracking-widest text-neutral-500">
-        {hovered
-          ? located.find((s) => s.id === hovered)?.name
-          : "REGION MAP · INTERACTIVE MAP COMING WITH LIVE DATA"}
-      </div>
+    <div>
+      <div
+        ref={holder}
+        className="aspect-[4/3] w-full border border-hairline bg-neutral-100 md:sticky md:top-24"
+        aria-label="Map of dispensaries carrying Private Stock brands"
+        role="application"
+      />
+      <p className="mt-2 text-[10px] tracking-wide text-neutral-400">
+        © OpenStreetMap contributors © CARTO
+      </p>
     </div>
   );
 }
