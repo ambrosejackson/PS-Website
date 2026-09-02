@@ -767,3 +767,18 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   Link validated to `instagram.com/{p|reel|reels|tv}/…`. Desktop tiles 600 px
   (folds D-067's 480 → 600).
 
+## Auto-fit strip videos in the browser (2026-09-02) — D-069
+
+- **D-069 — Over-limit MP4s are trimmed to 15 s, muted, scaled to ≤ 1080 px and
+  re-encoded in the browser instead of being rejected.** D-068's "no
+  transcoding" bounced the first real Reel (> 20 MB). `lib/admin/video-fit.ts`
+  uses WebCodecs through `mediabunny` (successor of the deprecated mp4-muxer;
+  demux + decode + encode + mux, lazy-imported so the admin bundle stays small):
+  `Conversion` with `trim {0, 15}`, `audio.discard`, `fit: contain`, bitrate =
+  (20 MB × 0.8 × 8) / seconds clamped 0.8–6 Mbps → always under the cap. H.264
+  when the browser can encode it, VP9-in-MP4 otherwise; a browser with neither
+  (old Safari/Firefox) gets a clear "use Chrome or trim first" error. Clips
+  already within limits pass through untouched. ffmpeg.wasm rejected (30 MB
+  download, minutes per clip). Fixed alongside: the uploader's `patch()` matched
+  by object identity and missed every update after the first — now by id.
+

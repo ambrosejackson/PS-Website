@@ -4,30 +4,38 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { shrinkImage } from "@/lib/admin/upload";
+import { canFitVideo, fitVideo } from "@/lib/admin/video-fit";
 import { BUCKET_RULES, mediaKindFor, validateForBucket } from "@/lib/admin/buckets";
 import { createSignedUpload } from "@/lib/admin/upload-actions";
 import { addSocialImages, type NewSocialTile } from "./actions";
 import { SOCIAL_MAX_ACTIVE, SOCIAL_VIDEO_MAX_SECONDS } from "./config";
 
 /**
- * Multi-file uploader for the social strip (D-064, D-068): images and MP4 clips.
- * Images are shrunk under the cap in the browser; videos must be ≤ 15 s and
- * ≤ 20 MB (no transcoding in the browser — keep exports short). For each video
- * a poster frame is captured at ~0.5 s and uploaded alongside so the tile is
- * never blank before playback. Everything is inserted in ONE server action.
+ * Multi-file uploader for the social strip (D-064, D-068, D-069): images and
+ * MP4 clips. Images are shrunk under the cap in the browser. Videos over 15 s
+ * or 20 MB (or oversized) are trimmed to 15 s, muted, scaled and re-encoded to
+ * H.264 in the browser via WebCodecs (lib/admin/video-fit.ts) so they always
+ * land under the cap. A poster frame is captured at ~0.5 s and uploaded
+ * alongside so the tile is never blank before playback. Everything is inserted
+ * in ONE server action.
  */
 
 const IMG_CAP = BUCKET_RULES.social.imageMaxBytes;
 const VID_CAP = BUCKET_RULES.social.videoMaxBytes;
 
 type Item = {
+  id: string;
   file: File;
   url: string;
   kind: "image" | "video";
-  state: "queued" | "checking" | "uploading" | "done" | "error";
+  state: "queued" | "checking" | "encoding" | "uploading" | "done" | "error";
   note?: string;
   seconds?: number;
+  progress?: number;
 };
+
+/** Strip tiles top out at 600 px wide on desktop; 1080 on the long edge is plenty (4:5 → 864×1080). */
+const VIDEO_MAX_EDGE = 1080;
 
 const fmtMB = (n: number) => `${(n / 1048576).toFixed(1)} MB`;
 
@@ -101,7 +109,8 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
   const [dragOver, setDragOver] = useState(false);
   const room = Math.max(0, SOCIAL_MAX_ACTIVE - activeCount);
 
-  const patch = (it: Item, p: Partial<Item>) => setItems((cur) => cur.map((c) => (c === it ? { ...c, ...p } : c)));
+  // Patch by id — items are replaced on every state update, so identity comparison would miss.
+  const patch = (it: Item, p: Partial<Item>) => setItems((cur) => cur.map((c) => (c.id === it.id ? { ...c, ...p } : c)));
 
   async function choose(list: FileList | null) {
     if (!list) return;
@@ -110,21 +119,17 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
     for (const file of Array.from(list)) {
       const kind = mediaKindFor("social", file.type);
       const url = URL.createObjectURL(file);
+      const id = crypto.randomUUID();
       if (!kind) {
-        next.push({ file, url, kind: "image", state: "error", note: `Unsupported type ${file.type || "(unknown)"} — JPG, PNG, WEBP or MP4.` });
+        next.push({ id, file, url, kind: "image", state: "error", note: `Unsupported type ${file.type || "(unknown)"} — JPG, PNG, WEBP or MP4.` });
         continue;
       }
       if (kind === "image") {
-        next.push({ file, url, kind, state: "queued", note: file.size > IMG_CAP ? `${fmtMB(file.size)} — will be resized` : undefined });
+        next.push({ id, file, url, kind, state: "queued", note: file.size > IMG_CAP ? `${fmtMB(file.size)} — will be resized` : undefined });
         continue;
       }
-      // Video: hard limits, no transcoding.
-      if (file.size > VID_CAP) {
-        next.push({ file, url, kind, state: "error", note: `${fmtMB(file.size)} — videos must be ≤ ${Math.round(VID_CAP / 1048576)} MB. Export shorter/smaller.` });
-        continue;
-      }
-      const it: Item = { file, url, kind, state: "checking" };
-      next.push(it);
+      // Video: probed below; anything over the limits gets trimmed / re-encoded at upload (D-069).
+      next.push({ id, file, url, kind, state: "checking" });
     }
     setItems((cur) => [...cur, ...next]);
     // Probe videos after they're in the list so the UI shows "checking".
@@ -132,10 +137,23 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       if (it.kind !== "video" || it.state !== "checking") continue;
       try {
         const meta = await probeVideo(it.url);
-        if (meta.seconds > SOCIAL_VIDEO_MAX_SECONDS + 0.25) {
-          patch(it, { state: "error", seconds: meta.seconds, note: `${meta.seconds.toFixed(1)} s — clips must be ≤ ${SOCIAL_VIDEO_MAX_SECONDS} s. Trim it first.` });
+        const tooLong = meta.seconds > SOCIAL_VIDEO_MAX_SECONDS + 0.25;
+        const tooBig = it.file.size > VID_CAP;
+        const tooLarge = Math.max(meta.width, meta.height) > VIDEO_MAX_EDGE;
+        const needsFit = tooLong || tooBig || tooLarge;
+        if (needsFit && !canFitVideo()) {
+          patch(it, {
+            state: "error",
+            seconds: meta.seconds,
+            note: `${meta.seconds.toFixed(1)} s · ${fmtMB(it.file.size)} — over the limits and this browser can't re-encode video. Use Chrome or Edge, or trim to ≤ ${SOCIAL_VIDEO_MAX_SECONDS} s first.`,
+          });
         } else {
-          patch(it, { state: "queued", seconds: meta.seconds, note: `${meta.seconds.toFixed(1)} s · ${fmtMB(it.file.size)}` });
+          const plan = [tooLong ? `trim to ${SOCIAL_VIDEO_MAX_SECONDS} s` : null, tooBig || tooLarge ? "compress" : null].filter(Boolean).join(" + ");
+          patch(it, {
+            state: "queued",
+            seconds: meta.seconds,
+            note: `${meta.seconds.toFixed(1)} s · ${fmtMB(it.file.size)}${plan ? ` — will ${plan}` : ""}`,
+          });
         }
       } catch (e) {
         patch(it, { state: "error", note: e instanceof Error ? e.message : "Could not read video." });
@@ -179,13 +197,38 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
         }
         tiles.push({ url: up.url, mediaType: "image" });
       } else {
-        const up = await putObject(supabase, "strip", it.file.name, it.file, "video/mp4");
+        let payload: Blob = it.file;
+        let previewUrl = it.url;
+        try {
+          patch(it, { state: "encoding", progress: 0 });
+          const fit = await fitVideo(it.file, {
+            maxSeconds: SOCIAL_VIDEO_MAX_SECONDS,
+            maxBytes: VID_CAP,
+            maxEdge: VIDEO_MAX_EDGE,
+            onProgress: (p) => patch(it, { progress: p }),
+          });
+          payload = fit.blob;
+          if (!fit.passthrough) {
+            previewUrl = URL.createObjectURL(fit.blob);
+            patch(it, { note: `${fit.seconds.toFixed(1)} s · ${fmtMB(fit.blob.size)}${fit.trimmed ? " (trimmed)" : ""} · ${fit.width}×${fit.height}` });
+          }
+        } catch (e) {
+          patch(it, { state: "error", note: e instanceof Error ? e.message : "Re-encode failed." });
+          continue;
+        }
+        const tooBig = validateForBucket("social", "video/mp4", payload.size);
+        if (tooBig) {
+          patch(it, { state: "error", note: tooBig });
+          continue;
+        }
+        patch(it, { state: "uploading" });
+        const up = await putObject(supabase, "strip", it.file.name.replace(/\.[^.]+$/, "") + ".mp4", payload, "video/mp4");
         if (!up.ok) {
           patch(it, { state: "error", note: up.error });
           continue;
         }
         let posterUrl: string | null = null;
-        const poster = await capturePoster(it.url);
+        const poster = await capturePoster(previewUrl);
         if (poster) {
           const pu = await putObject(supabase, "posters", it.file.name.replace(/\.mp4$/i, "") + "-poster.webp", poster, "image/webp");
           if (pu.ok) posterUrl = pu.url;
@@ -229,7 +272,7 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       >
         <span className="font-medium text-neutral-800">Drop images or MP4 clips here, or click to choose (multiple OK)</span>
         <span className="text-xs text-neutral-500">
-          Images resized automatically · MP4 ≤ {SOCIAL_VIDEO_MAX_SECONDS} s and ≤ {Math.round(VID_CAP / 1048576)} MB, plays muted · 4:5 portrait looks best · {room} of {SOCIAL_MAX_ACTIVE} active slots free
+          Images resized automatically · MP4s trimmed to {SOCIAL_VIDEO_MAX_SECONDS} s and compressed under {Math.round(VID_CAP / 1048576)} MB automatically, play muted · 4:5 portrait looks best · {room} of {SOCIAL_MAX_ACTIVE} active slots free
         </span>
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,video/mp4" multiple className="hidden" disabled={busy} onChange={(e) => void choose(e.target.files)} />
       </div>
@@ -237,16 +280,16 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       {items.length > 0 && (
         <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
           {items.map((it, i) => (
-            <li key={i} className="relative">
+            <li key={it.id} className="relative">
               {it.kind === "video" ? (
                 <video src={it.url} muted playsInline preload="metadata" className={`aspect-[4/5] w-full rounded bg-black object-cover ${it.state === "error" ? "opacity-40" : ""}`} />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={it.url} alt="" className={`aspect-[4/5] w-full rounded object-cover ${it.state === "error" ? "opacity-40" : ""}`} />
               )}
-              <span className={`absolute bottom-1 left-1 rounded px-1 text-[10px] font-semibold ${it.state === "error" ? "bg-red-600 text-white" : it.state === "done" ? "bg-green-600 text-white" : it.state === "uploading" || it.state === "checking" ? "bg-amber-500 text-white" : "bg-white/90 text-neutral-700"}`}>
+              <span className={`absolute bottom-1 left-1 rounded px-1 text-[10px] font-semibold ${it.state === "error" ? "bg-red-600 text-white" : it.state === "done" ? "bg-green-600 text-white" : it.state === "uploading" || it.state === "checking" || it.state === "encoding" ? "bg-amber-500 text-white" : "bg-white/90 text-neutral-700"}`}>
                 {it.kind === "video" ? "▶ " : ""}
-                {it.state}
+                {it.state === "encoding" ? `encoding ${Math.round((it.progress ?? 0) * 100)}%` : it.state}
               </span>
               {!busy && it.state !== "done" && (
                 <button type="button" aria-label="Remove" onClick={() => setItems((cur) => cur.filter((_, j) => j !== i))} className="absolute top-1 right-1 rounded bg-white/90 px-1 text-[11px] leading-4 text-neutral-700">
