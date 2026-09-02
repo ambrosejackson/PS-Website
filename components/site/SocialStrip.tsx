@@ -10,7 +10,7 @@ export interface SocialTile {
   alt: string;
 }
 
-/** Seconds per tile at the marquee's constant speed. Tiles are near-full-width on mobile / 360 px on desktop (D-067). */
+/** Seconds per tile at the marquee's constant speed. Tiles are near-full-width on mobile / 480 px on desktop (D-067). */
 const SECONDS_PER_TILE = 7;
 
 /**
@@ -59,7 +59,7 @@ export function SocialStrip({ tiles, lightbox }: { tiles: SocialTile[]; lightbox
                 draggable={false}
                 onContextMenu={block}
                 onDragStart={block}
-                className="ps-nosave aspect-[4/5] w-[calc(100vw-3rem)] rounded-lg object-cover md:w-[360px]"
+                className="ps-nosave aspect-[4/5] w-[calc(100vw-3rem)] rounded-lg object-cover md:w-[480px]"
               />
             );
             return lightbox ? (
