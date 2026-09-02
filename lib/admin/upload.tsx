@@ -16,8 +16,9 @@ import { createSignedUpload } from "@/lib/admin/upload-actions";
 
 /**
  * The one admin uploader. Drag-drop or click → preview → validate against the
- * target bucket's rules (lib/admin/buckets.ts) → PNG/JPG over 300 KB re-encoded
- * to webp q80 in the browser → signed-URL upload straight to Storage → returns
+ * target bucket's rules (lib/admin/buckets.ts) → images downscaled/re-encoded in
+ * the browser until under the bucket cap (shrinkImage, D-066) → signed-URL
+ * upload straight to Storage → returns
  * the public URL via `onUploaded`. Videos (heroes/banners) skip conversion and
  * must be video/mp4 under the bucket's cap.
  */
@@ -44,28 +45,74 @@ function fmtMB(n: number) {
   return `${(n / 1048576).toFixed(1)} MB`;
 }
 
-/** Re-encode a PNG/JPEG File to webp (q80) via canvas. Falls back to the original if the browser can't encode webp. */
-export async function toWebp(file: File): Promise<{ blob: Blob; converted: boolean }> {
+/**
+ * Fit an image under a byte cap (D-066). Decodes, downscales to `maxEdge` px on
+ * the long side, encodes webp q80, then steps quality (→0.5) and dimensions
+ * (×0.8) until the result is ≤ maxBytes. Returns the original untouched only
+ * when it is already small enough and no downscale was needed. Browsers that
+ * can't encode webp (old Safari) fall back to JPEG so oversize files still
+ * shrink.
+ */
+export async function shrinkImage(
+  file: File,
+  opts: { maxBytes: number; maxEdge?: number },
+): Promise<{ blob: Blob; mime: string; converted: boolean; width: number; height: number }> {
+  const maxEdge = opts.maxEdge ?? 4000;
+  let bitmap: ImageBitmap;
   try {
-    const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return { blob: file, converted: false };
-    ctx.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((res) =>
-      canvas.toBlob(res, "image/webp", WEBP_QUALITY),
-    );
-    // Safari < 17 returns a PNG here — keep the original in that case.
-    if (!blob || blob.type !== "image/webp") return { blob: file, converted: false };
-    // Never upload something larger than what we started with.
-    if (blob.size >= file.size) return { blob: file, converted: false };
-    return { blob, converted: true };
+    bitmap = await createImageBitmap(file);
   } catch {
-    return { blob: file, converted: false };
+    return { blob: file, mime: file.type, converted: false, width: 0, height: 0 };
   }
+  const long = Math.max(bitmap.width, bitmap.height);
+  let scale = Math.min(1, maxEdge / long);
+  const needsWork = file.size > opts.maxBytes || scale < 1 || (file.type !== "image/webp" && file.size > WEBP_CONVERT_THRESHOLD_BYTES);
+  if (!needsWork) {
+    bitmap.close();
+    return { blob: file, mime: file.type, converted: false, width: bitmap.width, height: bitmap.height };
+  }
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    return { blob: file, mime: file.type, converted: false, width: bitmap.width, height: bitmap.height };
+  }
+  const encode = (mime: string, q: number) =>
+    new Promise<Blob | null>((res) => {
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(res, mime, q);
+    });
+
+  let mime = "image/webp";
+  let quality = WEBP_QUALITY;
+  let blob = await encode(mime, quality);
+  if (!blob || blob.type !== mime) {
+    mime = "image/jpeg"; // Safari < 17: no webp encoder
+    blob = await encode(mime, quality);
+  }
+  for (let i = 0; blob && blob.size > opts.maxBytes && i < 8; i++) {
+    if (quality > 0.5) quality = Math.round((quality - 0.1) * 10) / 10;
+    else scale *= 0.8;
+    blob = await encode(mime, quality);
+  }
+  const width = canvas.width;
+  const height = canvas.height;
+  bitmap.close();
+  if (!blob) return { blob: file, mime: file.type, converted: false, width, height };
+  // Only keep the re-encode if it actually helped (or the original was over cap / oversized).
+  if (blob.size >= file.size && file.size <= opts.maxBytes && scale === 1) {
+    return { blob: file, mime: file.type, converted: false, width, height };
+  }
+  return { blob, mime, converted: true, width, height };
+}
+
+/** @deprecated use shrinkImage — kept for callers that only want the webp re-encode. */
+export async function toWebp(file: File): Promise<{ blob: Blob; converted: boolean }> {
+  const r = await shrinkImage(file, { maxBytes: Number.MAX_SAFE_INTEGER });
+  return { blob: r.blob, converted: r.converted };
 }
 
 export function AdminUploader({
@@ -93,15 +140,19 @@ export function AdminUploader({
   const choose = useCallback(
     (file: File | undefined | null) => {
       if (!file) return;
-      const problem = validateForBucket(bucket, file.type, file.size);
-      if (problem) {
-        setStatus({ phase: "error", message: problem });
+      const kind = mediaKindFor(bucket, file.type);
+      // Images: MIME check only here — size is enforced AFTER shrinkImage (D-066).
+      const problem = kind === "image" ? validateForBucket(bucket, file.type, 1) : validateForBucket(bucket, file.type, file.size);
+      if (problem || !kind) {
+        setStatus({ phase: "error", message: problem ?? "Unsupported file." });
         return;
       }
-      const kind = mediaKindFor(bucket, file.type)!;
       const url = URL.createObjectURL(file);
+      const cap = BUCKET_RULES[bucket].imageMaxBytes;
+      const willShrink = kind === "image" && file.size > cap;
       const willConvert =
         kind === "image" &&
+        !willShrink &&
         file.type !== "image/webp" &&
         file.size > WEBP_CONVERT_THRESHOLD_BYTES;
       setStatus({
@@ -109,7 +160,11 @@ export function AdminUploader({
         file,
         url,
         kind,
-        note: willConvert ? "Will be converted to webp (q80) before upload." : undefined,
+        note: willShrink
+          ? `${fmtMB(file.size)} is over the ${Math.round(cap / 1048576)} MB cap — will be resized automatically before upload.`
+          : willConvert
+            ? "Will be converted to webp (q80) before upload."
+            : undefined,
       });
     },
     [bucket],
@@ -124,13 +179,14 @@ export function AdminUploader({
     let fileName = file.name;
     let converted = false;
 
-    if (kind === "image" && mime !== "image/webp" && file.size > WEBP_CONVERT_THRESHOLD_BYTES) {
-      setStatus({ phase: "working", step: "Converting to webp…", url });
-      const r = await toWebp(file);
+    if (kind === "image") {
+      const cap = BUCKET_RULES[bucket].imageMaxBytes;
+      setStatus({ phase: "working", step: file.size > cap ? "Resizing to fit under the cap…" : "Optimizing image…", url });
+      const r = await shrinkImage(file, { maxBytes: cap });
       if (r.converted) {
         payload = r.blob;
-        mime = "image/webp";
-        fileName = file.name.replace(/\.(png|jpe?g)$/i, "") + ".webp";
+        mime = r.mime;
+        fileName = file.name.replace(/\.(png|jpe?g|webp)$/i, "") + (r.mime === "image/jpeg" ? ".jpg" : ".webp");
         converted = true;
       }
     }
@@ -281,7 +337,7 @@ export function AdminUploader({
       {status.phase === "done" && (
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="text-green-700">
-            Uploaded{status.media.converted ? " (converted to webp)" : ""} · {fmtMB(status.media.bytes)}
+            Uploaded{status.media.converted ? " (resized/optimized)" : ""} · {fmtMB(status.media.bytes)}
           </span>
           <a
             href={status.media.url}

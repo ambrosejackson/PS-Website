@@ -728,3 +728,16 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   `lib/social.ts`; `SocialButtons`, `Footer` and `FullscreenMenu` import it.
   `FacebookIcon` stays in `social-icons.tsx` (unused) in case it returns.
 
+## Auto-resize oversize images (2026-09-02) — D-066
+
+- **D-066 — Admin image uploads never fail on size; the browser shrinks them.**
+  The 10 MB bucket cap was enforced on the ORIGINAL file before the webp
+  re-encode ever ran, so iPhone photos bounced at `/admin/social-media`. New
+  `shrinkImage(file, {maxBytes, maxEdge})` in `lib/admin/upload.tsx`: decode →
+  downscale to `maxEdge` → webp q80 → step quality to 0.5, then dimensions ×0.8,
+  until ≤ cap (JPEG fallback where webp can't be encoded). Selection checks MIME
+  only; size is validated after shrinking. Wired into `AdminUploader` (all
+  buckets, maxEdge 4000) and `SocialUploader` (maxEdge 2000 — tiles are 208 px,
+  lightbox ≈ 800 px). Verified headless on a 49 MB noise PNG → 6.9 MB.
+  HEIC is still rejected (browsers can't decode it) — export as JPG first.
+

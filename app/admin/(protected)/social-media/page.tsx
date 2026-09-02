@@ -28,8 +28,8 @@ export default async function AdminSocialMediaPage() {
         <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Social Media</h1>
         <p className="mt-2 max-w-prose text-sm text-neutral-600">
           Images for the FOLLOW US strip on the landing page. They scroll continuously in this order; clicking one opens
-          a larger view with the Instagram and Facebook buttons. Images don&apos;t link anywhere — the goal is the
-          buttons. Keep {SOCIAL_SOFT_MIN}–{SOCIAL_MAX_ACTIVE} active.
+          a larger view with the Instagram button. Images don&apos;t link anywhere — the goal is the
+          button. Keep {SOCIAL_SOFT_MIN}–{SOCIAL_MAX_ACTIVE} active.
         </p>
         <p className={`mt-2 text-sm font-semibold ${active < SOCIAL_SOFT_MIN ? "text-amber-700" : "text-neutral-700"}`}>
           {active} of {SOCIAL_MAX_ACTIVE} active

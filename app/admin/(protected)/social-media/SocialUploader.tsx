@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { toWebp } from "@/lib/admin/upload";
-import { validateForBucket, WEBP_CONVERT_THRESHOLD_BYTES } from "@/lib/admin/buckets";
+import { shrinkImage } from "@/lib/admin/upload";
+import { BUCKET_RULES, validateForBucket } from "@/lib/admin/buckets";
 import { createSignedUpload } from "@/lib/admin/upload-actions";
 import { addSocialImages } from "./actions";
 import { SOCIAL_MAX_ACTIVE } from "./config";
@@ -14,6 +14,8 @@ import { SOCIAL_MAX_ACTIVE } from "./config";
  * each converted to webp (same rules as AdminUploader), uploaded to `social`,
  * then inserted as active rows at the end of the order in ONE server action.
  */
+
+const SOCIAL_CAP = BUCKET_RULES.social.imageMaxBytes;
 
 type Item = { file: File; url: string; state: "queued" | "uploading" | "done" | "error"; note?: string };
 
@@ -30,8 +32,10 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
     if (!list) return;
     const next: Item[] = [];
     for (const file of Array.from(list)) {
-      const problem = validateForBucket("social", file.type, file.size);
-      next.push({ file, url: URL.createObjectURL(file), state: problem ? "error" : "queued", note: problem ?? undefined });
+      // MIME only — oversize images are shrunk automatically at upload (D-066).
+      const problem = validateForBucket("social", file.type, 1);
+      const note = problem ?? (file.size > SOCIAL_CAP ? `${(file.size / 1048576).toFixed(1)} MB — will be resized` : undefined);
+      next.push({ file, url: URL.createObjectURL(file), state: problem ? "error" : "queued", note });
     }
     setMsg(null);
     setItems((cur) => [...cur, ...next]);
@@ -53,13 +57,17 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       let payload: Blob = it.file;
       let mime = it.file.type;
       let fileName = it.file.name;
-      if (mime !== "image/webp" && it.file.size > WEBP_CONVERT_THRESHOLD_BYTES) {
-        const r = await toWebp(it.file);
-        if (r.converted) {
-          payload = r.blob;
-          mime = "image/webp";
-          fileName = it.file.name.replace(/\.(png|jpe?g)$/i, "") + ".webp";
-        }
+      // Strip tiles are 208 px wide and the lightbox tops out ~800 px tall — 2000 px long edge is plenty.
+      const r = await shrinkImage(it.file, { maxBytes: SOCIAL_CAP, maxEdge: 2000 });
+      if (r.converted) {
+        payload = r.blob;
+        mime = r.mime;
+        fileName = it.file.name.replace(/\.(png|jpe?g|webp)$/i, "") + (r.mime === "image/jpeg" ? ".jpg" : ".webp");
+      }
+      const tooBig = validateForBucket("social", mime, payload.size);
+      if (tooBig) {
+        setItems((cur) => cur.map((c) => (c === it ? { ...c, state: "error", note: tooBig } : c)));
+        continue;
       }
       const slot = await createSignedUpload({ bucket: "social", folder: "strip", fileName, size: payload.size, mime });
       if (!slot.ok) {
@@ -110,7 +118,7 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       >
         <span className="font-medium text-neutral-800">Drop images here or click to choose (multiple OK)</span>
         <span className="text-xs text-neutral-500">
-          JPG / PNG / WEBP ≤ 10 MB each · 4:5 portrait looks best · {room} of {SOCIAL_MAX_ACTIVE} active slots free
+          JPG / PNG / WEBP · big files are resized automatically · 4:5 portrait looks best · {room} of {SOCIAL_MAX_ACTIVE} active slots free
         </span>
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" disabled={busy} onChange={(e) => choose(e.target.files)} />
       </div>
@@ -129,7 +137,7 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
                   ×
                 </button>
               )}
-              {it.note && <p className="mt-0.5 truncate text-[10px] text-red-600" title={it.note}>{it.note}</p>}
+              {it.note && <p className={`mt-0.5 truncate text-[10px] ${it.state === "error" ? "text-red-600" : "text-amber-700"}`} title={it.note}>{it.note}</p>}
             </li>
           ))}
         </ul>
