@@ -171,6 +171,13 @@
 .ps-marquee:hover {
   animation-play-state: paused;
 }
+/* Save-deterrent for social strip / lightbox images (D-064): no long-press
+   sheet on iOS, no drag ghost, no text-select. Screenshots still work. */
+.ps-nosave {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
 
 /* Flip-book page turn */
 @keyframes ps-flip-next {

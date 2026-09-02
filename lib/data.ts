@@ -6,6 +6,7 @@ import { showRealAvailability } from "@/lib/showRealAvailability";
 type Tables = Database["public"]["Tables"];
 export type HeroAsset = Tables["content_heroes"]["Row"];
 export type BannerSlide = Tables["content_banners"]["Row"];
+export type SocialImage = Tables["content_social_images"]["Row"];
 export type BlogPost = Tables["blog_posts"]["Row"];
 export type CatalogProduct = Tables["catalog_products"]["Row"];
 export type MerchProduct = Tables["merch_products"]["Row"];
@@ -69,6 +70,19 @@ export async function getBanners(): Promise<BannerSlide[]> {
     .eq("is_active", true)
     .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
     .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
+    .order("sort_order", { ascending: true });
+  if (error || !data) return [];
+  return data;
+}
+
+/** Active FOLLOW US strip images in admin order (D-064). Empty → component falls back to placeholders. */
+export async function getSocialImages(): Promise<SocialImage[]> {
+  const supabase = createPublicClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("content_social_images")
+    .select("*")
+    .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error || !data) return [];
   return data;

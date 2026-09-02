@@ -8,6 +8,7 @@ import { brandByName, brandBySlug } from "@/lib/brands";
  *   apparel  → /, /apparel, /apparel/[slug]
  *   heroes   → its page
  *   banners  → /
+ *   social   → /   (FOLLOW US strip, D-064)
  *   blog     → /news, /news/[slug]
  *   messages/contact → none
  * Every admin mutation calls `revalidateFor(...)` directly (same process, no
@@ -20,6 +21,7 @@ export type RevalidateTarget =
   | { kind: "apparel"; slug?: string }
   | { kind: "heroes"; page: string }
   | { kind: "banners" }
+  | { kind: "social" }
   | { kind: "blog"; slug?: string }
   | { kind: "messages" };
 
@@ -51,6 +53,7 @@ export function pathsFor(target: RevalidateTarget): string[] {
       out.add(normalizePage(target.page));
       break;
     case "banners":
+    case "social":
       out.add("/");
       break;
     case "blog":

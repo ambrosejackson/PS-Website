@@ -698,3 +698,24 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   Manual products and `image_missing` rows (50, blank in the sheet) unaffected.
   Caveat: lh3 is also undocumented. Durable fix queued for a PRD: copy each image
   into website Supabase Storage at sync time and store that URL.
+
+## Social Media strip (2026-09-02) — D-064
+
+- **D-064 — FOLLOW US strip images are admin-managed at `/admin/social-media`;
+  tiles open a lightbox, never a post.** New `content_social_images` table +
+  `social` bucket (migration 0011, additive). Admin uploads 6–50 images at once
+  (`SocialUploader`, multi-file, webp conversion as elsewhere), drags to
+  reorder, shows/hides, deletes. Order is always the admin order — no
+  randomization (Ambrose). Hard cap 50 active; soft warning under 6.
+  `FollowUs` now takes `images` from `getSocialImages()` and falls back to the
+  four placeholder PNGs when none are active. `SocialStrip` renders the set
+  exactly twice with the −50% keyframe (the old ×3 jumped at the loop seam) and
+  scales the duration by count (5 s/tile) so speed is constant. Clicking a tile
+  opens a Dialog (≈80 % viewport, white card) with prev/next + arrow keys and
+  the same IG/FB pills underneath — that repeat is the point of the feature.
+  "Not downloadable" is deterrence only (context menu / drag / iOS long-press
+  suppressed, transparent layer over the image, `.ps-nosave`); screenshots
+  still work and Ambrose accepted that. Tracking via existing `data-track`
+  clicks: `social:tile`, `social:cta:{ig|fb}:{strip|lightbox}` — consent-gated
+  like every web_event. Section heading on the public page stays "Follow Us".
+

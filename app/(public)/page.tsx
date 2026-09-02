@@ -14,17 +14,19 @@ import {
   getHeroesForPage,
   getMerchListings,
   getPublishedPosts,
+  getSocialImages,
 } from "@/lib/data";
 
 export const revalidate = 300;
 
 export default async function LandingPage() {
-  const [heroes, banners, products, merch, posts] = await Promise.all([
+  const [heroes, banners, products, merch, posts, social] = await Promise.all([
     getHeroesForPage("/"),
     getBanners(),
     getCatalogProducts(),
     getMerchListings(),
     getPublishedPosts(3),
+    getSocialImages(),
   ]);
 
   return (
@@ -39,7 +41,7 @@ export default async function LandingPage() {
       <BrandGrid products={products} />
       <MerchGrid products={merch} />
       <InTheNews posts={posts} />
-      <FollowUs />
+      <FollowUs images={social} />
       <NewsletterSection />
       <Footer />
     </main>

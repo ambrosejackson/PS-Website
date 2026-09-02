@@ -45,7 +45,7 @@ function fmtMB(n: number) {
 }
 
 /** Re-encode a PNG/JPEG File to webp (q80) via canvas. Falls back to the original if the browser can't encode webp. */
-async function toWebp(file: File): Promise<{ blob: Blob; converted: boolean }> {
+export async function toWebp(file: File): Promise<{ blob: Blob; converted: boolean }> {
   try {
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement("canvas");

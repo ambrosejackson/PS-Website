@@ -1,5 +1,5 @@
 /**
- * Admin media buckets (migration 0006) — ONE source of truth for the per-bucket
+ * Admin media buckets (migrations 0006, 0011) — ONE source of truth for the per-bucket
  * rules, shared by the client uploader (lib/admin/upload.tsx) and the server
  * signing action (lib/admin/upload-actions.ts). Buckets are public-read; writes
  * happen only through service-role signed upload URLs minted after the staff
@@ -10,7 +10,7 @@
  * enforced here on both sides.
  */
 
-export const ADMIN_BUCKETS = ["heroes", "banners", "blog", "products", "apparel"] as const;
+export const ADMIN_BUCKETS = ["heroes", "banners", "blog", "products", "apparel", "social"] as const;
 export type AdminBucket = (typeof ADMIN_BUCKETS)[number];
 
 export type MediaKind = "image" | "video";
@@ -33,6 +33,7 @@ export const BUCKET_RULES: Record<AdminBucket, BucketRules> = {
   blog: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
   products: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
   apparel: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
+  social: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
 };
 
 /** PNG/JPG above this size are re-encoded to webp (q80) before upload. */
