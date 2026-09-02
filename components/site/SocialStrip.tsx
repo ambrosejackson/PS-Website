@@ -20,7 +20,7 @@ const SECONDS_PER_TILE = 5;
  *
  * "Not downloadable" is deterrence only: context menu, drag and long-press are
  * suppressed and a transparent layer sits over the lightbox image. A screenshot
- * still works — the point is to steer casual viewers to the IG/FB buttons.
+ * still works — the point is to steer casual viewers to the Instagram button.
  */
 export function SocialStrip({ tiles, lightbox }: { tiles: SocialTile[]; lightbox: boolean }) {
   const [open, setOpen] = useState<number | null>(null);

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { FacebookIcon, InstagramIcon } from "@/components/site/social-icons";
+import { InstagramIcon } from "@/components/site/social-icons";
+import { INSTAGRAM_URL } from "@/lib/social";
 import { Logo } from "@/components/site/Logo";
 import { BRANDS } from "@/lib/brands";
 
@@ -58,22 +59,13 @@ export function Footer() {
           </p>
           <div className="mt-5 flex gap-3">
             <a
-              href="https://www.instagram.com/privatestockcannabis"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
               className="border border-neutral-300 p-2 transition-colors hover:bg-ink hover:text-white"
             >
               <InstagramIcon className="h-4 w-4" />
-            </a>
-            <a
-              href="https://www.facebook.com/privatestockcannabis"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="border border-neutral-300 p-2 transition-colors hover:bg-ink hover:text-white"
-            >
-              <FacebookIcon className="h-4 w-4" />
             </a>
           </div>
         </div>

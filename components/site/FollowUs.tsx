@@ -3,7 +3,7 @@ import { SocialStrip } from "@/components/site/SocialStrip";
 import type { SocialImage } from "@/lib/data";
 
 /**
- * FOLLOW US — Instagram + Facebook buttons with a scrolling image strip (D-064).
+ * FOLLOW US — Instagram button with a scrolling image strip (D-064).
  * Images come from /admin/social-media; with none active the placeholder
  * gradients render. Tiles open a lightbox that repeats the two buttons — the
  * strip exists to drive those clicks, tiles never link to posts.
@@ -26,8 +26,7 @@ export function FollowUs({ images }: { images: SocialImage[] }) {
         <h2 className="font-condensed text-[26px] font-bold uppercase tracking-tight text-ink md:text-[32px]">
           Follow Us
         </h2>
-        {/* Pill buttons with icon + label per the docx reference structure
-            (Instagram + Facebook ONLY), kept in our light visual style. */}
+        {/* Pill button with icon + label (Instagram only — D-065), light visual style. */}
         <SocialButtons placement="strip" className="mt-6" />
       </div>
       <SocialStrip tiles={tiles} lightbox={images.length > 0} />

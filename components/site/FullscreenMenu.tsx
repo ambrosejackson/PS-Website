@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
-import { FacebookIcon, InstagramIcon } from "@/components/site/social-icons";
+import { InstagramIcon } from "@/components/site/social-icons";
+import { INSTAGRAM_URL } from "@/lib/social";
 import { useCatalog } from "@/components/site/catalog-context";
 import {
   barClass,
@@ -117,22 +118,13 @@ export function FullscreenMenu({
           })}
           <div className="mt-6 flex gap-5">
             <a
-              href="https://www.instagram.com/privatestockcannabis"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
               className="transition-opacity hover:opacity-60"
             >
               <InstagramIcon className="h-[1.8rem] w-[1.8rem]" />
-            </a>
-            <a
-              href="https://www.facebook.com/privatestockcannabis"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="transition-opacity hover:opacity-60"
-            >
-              <FacebookIcon className="h-[1.8rem] w-[1.8rem]" />
             </a>
           </div>
         </nav>

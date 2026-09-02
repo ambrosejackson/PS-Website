@@ -719,3 +719,12 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   clicks: `social:tile`, `social:cta:{ig|fb}:{strip|lightbox}` — consent-gated
   like every web_event. Section heading on the public page stays "Follow Us".
 
+## Instagram only (2026-09-02) — D-065
+
+- **D-065 — Facebook is gone from the site; Instagram is `https://www.instagram.com/privatestock_co/`.
+  REVISES A-09 (IG + FB pills).** Ambrose removed Facebook from FOLLOW US and,
+  when asked, from the Footer and hamburger menu too. The old handle
+  `/privatestockcannabis` was wrong everywhere. URL now lives once in
+  `lib/social.ts`; `SocialButtons`, `Footer` and `FullscreenMenu` import it.
+  `FacebookIcon` stays in `social-icons.tsx` (unused) in case it returns.
+
