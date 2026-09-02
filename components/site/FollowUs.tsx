@@ -1,12 +1,12 @@
 import { SocialButtons } from "@/components/site/SocialButtons";
-import { SocialStrip } from "@/components/site/SocialStrip";
+import { SocialStrip, type SocialTile } from "@/components/site/SocialStrip";
 import type { SocialImage } from "@/lib/data";
 
 /**
- * FOLLOW US — Instagram button with a scrolling image strip (D-064).
- * Images come from /admin/social-media; with none active the placeholder
- * gradients render. Tiles open a lightbox that repeats the two buttons — the
- * strip exists to drive those clicks, tiles never link to posts.
+ * FOLLOW US — Instagram button with a scrolling strip of images / muted clips
+ * (D-064, D-068). Tiles come from /admin/social-media; with none active the
+ * placeholder gradients render. A tile with an Instagram link opens the post;
+ * one without opens a lightbox that repeats the Instagram button.
  */
 const PLACEHOLDERS = [
   "/placeholders/follow-1.png",
@@ -16,10 +16,17 @@ const PLACEHOLDERS = [
 ];
 
 export function FollowUs({ images }: { images: SocialImage[] }) {
-  const tiles =
+  const tiles: SocialTile[] =
     images.length > 0
-      ? images.map((i) => ({ id: i.id, src: i.image_url, alt: i.alt ?? "" }))
-      : PLACEHOLDERS.map((src, i) => ({ id: `ph-${i}`, src, alt: "" }));
+      ? images.map((i) => ({
+          id: i.id,
+          src: i.image_url,
+          alt: i.alt ?? "",
+          kind: i.media_type === "video" ? "video" : "image",
+          poster: i.poster_url,
+          href: i.link_url,
+        }))
+      : PLACEHOLDERS.map((src, i) => ({ id: `ph-${i}`, src, alt: "", kind: "image" as const, poster: null, href: null }));
   return (
     <section className="border-t border-hairline py-12 md:py-14">
       <div className="mx-auto max-w-screen-2xl px-6 text-center md:px-12">

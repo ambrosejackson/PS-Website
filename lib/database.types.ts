@@ -280,6 +280,9 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean
+          link_url: string | null
+          media_type: string
+          poster_url: string | null
           sort_order: number
         }
         Insert: {
@@ -288,6 +291,9 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean
+          link_url?: string | null
+          media_type?: string
+          poster_url?: string | null
           sort_order?: number
         }
         Update: {
@@ -296,6 +302,9 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean
+          link_url?: string | null
+          media_type?: string
+          poster_url?: string | null
           sort_order?: number
         }
         Relationships: []

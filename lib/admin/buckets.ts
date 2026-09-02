@@ -6,7 +6,7 @@
  * allowlist check (D-038..D-044 session).
  *
  * `storage.buckets.file_size_limit` is the hard cap per bucket; the per-kind
- * caps below (images 10 MB everywhere, heroes mp4 60 MB, banners mp4 30 MB) are
+ * caps below (images 10 MB everywhere, heroes mp4 60 MB, banners mp4 30 MB, social mp4 20 MB) are
  * enforced here on both sides.
  */
 
@@ -33,7 +33,7 @@ export const BUCKET_RULES: Record<AdminBucket, BucketRules> = {
   blog: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
   products: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
   apparel: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
-  social: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: [], videoMaxBytes: 0 },
+  social: { imageMime: IMAGES, imageMaxBytes: 10 * MB, videoMime: ["video/mp4"], videoMaxBytes: 20 * MB }, // D-068: ≤ 15 s clips
 };
 
 /** PNG/JPG above this size are re-encoded to webp (q80) before upload. */

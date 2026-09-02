@@ -744,6 +744,26 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
 ## Bigger FOLLOW US tiles (2026-09-02) — D-067
 
 - **D-067 — Strip tiles are `calc(100vw − 3rem)` wide on mobile (one per screen,
-  24 px each side, next tile peeking) and 480 px on desktop, still 4:5.** Was
+  24 px each side, next tile peeking) and 600 px on desktop, still 4:5.** Was
   160 / 208 px. Marquee timing 7 s per tile. Ambrose's call from the phone view.
+
+## Social tiles link to posts, video tiles (2026-09-02) — D-068
+
+- **D-068 — Strip tiles may be images OR ≤ 15 s muted MP4 clips, and each may
+  link to its Instagram post. REVISES D-064 ("tiles never link to posts").**
+  Ambrose wanted to point at real posts, including collabs he doesn't hold the
+  files for. Pulling media from Instagram was rejected on evidence: the official
+  API returns a collab post only through the ORIGINAL publisher's media endpoint
+  (Meta forum thread 1011039596753699; Socialinsider help doc), so it can't
+  supply the collab media anyway; the embed iframe can't be cropped/autoplayed;
+  oEmbed is thumbnail-only. Decision: download the image/MP4 (Instagram's own
+  ⋯ → Download on Reels, or from the collaborator), upload it, paste the post
+  link. Migration 0012 adds `link_url`, `media_type` (image|video, checked),
+  `poster_url`; `social` bucket takes `video/mp4` ≤ 20 MB. Uploader probes MP4
+  duration client-side (cap 15 s, no transcoding) and captures a webp poster at
+  0.5 s. Strip: `<video muted loop playsInline>` plays only while ≥ 25 % in
+  view (IntersectionObserver). A tile with a link opens the post in a new tab
+  (`social:tile:post`); without one it opens the lightbox (`social:tile:lightbox`).
+  Link validated to `instagram.com/{p|reel|reels|tv}/…`. Desktop tiles 600 px
+  (folds D-067's 480 → 600).
 
