@@ -371,7 +371,7 @@ Ambrose's correction, which supersedes those entries:
   Gear / Merch) · format ← "Brand Category" title-cased (Vape: + "Product
   Type") · weight ← pack-size columns per tab (Pre-Roll "5pk · 1.75g"; Vape
   non-standard size or size parsed from the name) · strain_type ← "Lineage" ·
-  image_url ← Drive link → `https://drive.google.com/uc?export=view&id=<ID>`
+  image_url ← Drive link → `https://lh3.googleusercontent.com/d/<ID>=w1200` (was `uc?export=view`; see D-063)
   (blank → image_missing; junk → quarantined) · thc_range untouched ·
   description + terp_category (TerpKings `[Fruit]` tag) seeded ONCE on insert,
   admin-owned after · "Jane Use" status ignored.
@@ -682,3 +682,19 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   an *empty* locator rather than the real one. The gate is now
   `availabilityVisible() = showRealAvailability()`, and the comment in
   `showRealAvailability.ts` is accurate again.
+
+## Sheet-sync image URLs (2026-09-02) — D-063
+
+- **D-063 — Drive images are stored as `lh3.googleusercontent.com/d/<ID>=w1200`,
+  not `drive.google.com/uc?export=view&id=<ID>`.** Every synced image was blank on
+  the site and in admin. The DB was fine (217 rows had a URL); the `uc?export=view`
+  endpoint returns the PNG to a bare GET but **403 text/html** to a browser `<img>`
+  fetch (`Sec-Fetch-Dest: image` + Referer) — Google has blocked hotlinking there
+  since 2024. `lh3.googleusercontent.com/d/<ID>` (what Drive's own thumbnail
+  redirect resolves to) serves inline under the same request; `=w1200` returns a
+  resized copy instead of the ~1 MB originals. `normalizeImage()` now emits
+  `driveImageUrl(id)`; lh3 links pasted into the sheet are normalized too.
+  `image_url` is sheet-owned, so one SYNC FROM SHEET rewrites all rows.
+  Manual products and `image_missing` rows (50, blank in the sheet) unaffected.
+  Caveat: lh3 is also undocumented. Durable fix queued for a PRD: copy each image
+  into website Supabase Storage at sync time and store that URL.
