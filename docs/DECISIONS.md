@@ -741,3 +741,9 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   lightbox ≈ 800 px). Verified headless on a 49 MB noise PNG → 6.9 MB.
   HEIC is still rejected (browsers can't decode it) — export as JPG first.
 
+## Bigger FOLLOW US tiles (2026-09-02) — D-067
+
+- **D-067 — Strip tiles are `calc(100vw − 3rem)` wide on mobile (one per screen,
+  24 px each side, next tile peeking) and 360 px on desktop, still 4:5.** Was
+  160 / 208 px. Marquee timing 7 s per tile. Ambrose's call from the phone view.
+

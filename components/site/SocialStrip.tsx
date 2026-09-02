@@ -10,8 +10,8 @@ export interface SocialTile {
   alt: string;
 }
 
-/** Seconds per tile at the marquee's constant speed (≈ the original 4-image / 30 s feel). */
-const SECONDS_PER_TILE = 5;
+/** Seconds per tile at the marquee's constant speed. Tiles are near-full-width on mobile / 360 px on desktop (D-067). */
+const SECONDS_PER_TILE = 7;
 
 /**
  * Scrolling strip + lightbox (D-064). The set is rendered exactly twice and the
@@ -59,7 +59,7 @@ export function SocialStrip({ tiles, lightbox }: { tiles: SocialTile[]; lightbox
                 draggable={false}
                 onContextMenu={block}
                 onDragStart={block}
-                className="ps-nosave aspect-[4/5] w-40 rounded-lg object-cover md:w-52"
+                className="ps-nosave aspect-[4/5] w-[calc(100vw-3rem)] rounded-lg object-cover md:w-[360px]"
               />
             );
             return lightbox ? (
