@@ -782,3 +782,13 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   download, minutes per clip). Fixed alongside: the uploader's `patch()` matched
   by object identity and missed every update after the first — now by id.
 
+## FOLLOW US pills per brand (2026-09-02) — D-070
+
+- **D-070 — Five Instagram pills, not one: Private Stock (`privatestock_co`),
+  Outfitters (`outfitters_original`), Higher Self (`findhigherself`), TerpKings
+  (`terpkingsofficial`), Savage Squad Strains (`savagesquadstrains`).** Handles
+  live in `lib/social.ts` (`INSTAGRAM_PROFILES`); `SocialButtons` maps over
+  them, wraps on mobile, and the lightbox shows the same row. Tracking key is
+  `social:cta:ig:{profile}:{strip|lightbox}`. Footer / hamburger menu still
+  show the single Private Stock icon (not asked; easy to extend).
+
