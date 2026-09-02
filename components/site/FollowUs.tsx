@@ -51,7 +51,7 @@ export function FollowUs() {
               key={i}
               src={src}
               alt=""
-              className="h-40 w-40 object-cover md:h-52 md:w-52"
+              className="aspect-[4/5] w-40 rounded-lg object-cover md:w-52"
             />
           ))}
         </div>
