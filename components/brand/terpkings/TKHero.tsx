@@ -129,7 +129,12 @@ export function TKHero({ hero }: { hero: HeroAsset | null }) {
         */}
         <div className="relative z-[2] flex h-full flex-col items-center justify-end gap-[26px] px-8 pb-[30px] text-center">
           <h1 className="tk-mono m-0 text-[clamp(20px,2.4vw,28px)] font-normal tracking-[.18em] text-[#141809]">
-            {TK_HERO.tagline}
+            {TK_HERO.taglineLines.map((line, i) => (
+              <span key={line} className="block md:inline">
+                {line}
+                {i < TK_HERO.taglineLines.length - 1 ? " " : ""}
+              </span>
+            ))}
           </h1>
           <div className="flex flex-wrap justify-center gap-[14px]">
             <Link

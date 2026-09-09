@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PRODUCTS } from "@/lib/terpkings-content";
 import { TKProductImage, TKScrews, TKSectionHead } from "./TKBits";
 
@@ -49,6 +50,15 @@ export function TKArsenal({ available }: { available: Record<string, boolean> })
             </div>
           </div>
         ))}
+      </div>
+      {/* Moved from the removed FILE 01-B catalog section — full catalog lives at /products. */}
+      <div className="mt-8 flex justify-end">
+        <Link
+          href="/products?brand=TerpKings"
+          className="tk-mono tk-btn-outline rounded-[4px] px-5 py-[9px] text-[17px] tracking-[.1em]"
+        >
+          VIEW ALL IN CATALOG
+        </Link>
       </div>
     </section>
   );

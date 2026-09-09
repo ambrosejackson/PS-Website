@@ -276,6 +276,7 @@ export type Database = {
       content_social_images: {
         Row: {
           alt: string | null
+          brand: string | null
           created_at: string
           id: string
           image_url: string
@@ -287,6 +288,7 @@ export type Database = {
         }
         Insert: {
           alt?: string | null
+          brand?: string | null
           created_at?: string
           id?: string
           image_url: string
@@ -298,6 +300,7 @@ export type Database = {
         }
         Update: {
           alt?: string | null
+          brand?: string | null
           created_at?: string
           id?: string
           image_url?: string

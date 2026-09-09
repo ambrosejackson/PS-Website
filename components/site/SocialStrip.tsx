@@ -32,7 +32,16 @@ const TILE = "ps-nosave aspect-[4/5] w-[calc(100vw-3rem)] rounded-lg object-cove
  * "Not downloadable" is deterrence only: context menu, drag and long-press are
  * suppressed and a transparent layer sits over the lightbox media.
  */
-export function SocialStrip({ tiles, lightbox }: { tiles: SocialTile[]; lightbox: boolean }) {
+export function SocialStrip({
+  tiles,
+  lightbox,
+  tileClassName = TILE,
+}: {
+  tiles: SocialTile[];
+  lightbox: boolean;
+  /** Override the tile media classes (default: the landing 4:5 light-theme tile). */
+  tileClassName?: string;
+}) {
   const [open, setOpen] = useState<number | null>(null);
   const n = tiles.length;
   const doubled = [...tiles, ...tiles];
@@ -60,7 +69,7 @@ export function SocialStrip({ tiles, lightbox }: { tiles: SocialTile[]; lightbox
       <div className="mt-10 overflow-hidden">
         <div className="ps-marquee flex w-max gap-4" style={{ animationDuration: `${Math.max(1, n) * SECONDS_PER_TILE}s` }}>
           {doubled.map((t, i) => {
-            const media = <TileMedia tile={t} className={TILE} />;
+            const media = <TileMedia tile={t} className={tileClassName} />;
             const cls = "block shrink-0 rounded-lg transition-transform duration-300 hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink";
             if (t.href) {
               return (

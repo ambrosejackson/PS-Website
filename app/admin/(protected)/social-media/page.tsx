@@ -21,15 +21,22 @@ export default async function AdminSocialMediaPage() {
     loadError = e instanceof Error ? e.message : "Could not load images.";
   }
   const active = rows.filter((r) => r.is_active).length;
+  const activeCounts: Record<string, number> = {};
+  for (const r of rows) {
+    if (!r.is_active) continue;
+    const key = r.brand ?? "";
+    activeCounts[key] = (activeCounts[key] ?? 0) + 1;
+  }
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Social Media</h1>
         <p className="mt-2 max-w-prose text-sm text-neutral-600">
-          Tiles for the FOLLOW US strip on the landing page — images or short MP4 clips (≤ 15 s, muted, looped). They
-          scroll continuously in this order. Give each tile its Instagram post link and clicking it opens the post;
-          tiles without a link open a larger view instead. Keep {SOCIAL_SOFT_MIN}–{SOCIAL_MAX_ACTIVE} active.
+          Tiles for the FOLLOW US strip on the landing page and each brand page&apos;s feed — images or short MP4
+          clips (≤ 15 s, muted, looped). They scroll continuously in this order. Give each tile its Instagram post
+          link and clicking it opens the post; landing tiles without a link open a larger view instead. Keep{" "}
+          {SOCIAL_SOFT_MIN}–{SOCIAL_MAX_ACTIVE} active per pool.
         </p>
         <p className={`mt-2 text-sm font-semibold ${active < SOCIAL_SOFT_MIN ? "text-amber-700" : "text-neutral-700"}`}>
           {active} of {SOCIAL_MAX_ACTIVE} active
@@ -38,7 +45,7 @@ export default async function AdminSocialMediaPage() {
       </div>
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Add tiles</h2>
-        <SocialUploader activeCount={active} />
+        <SocialUploader activeCounts={activeCounts} />
       </section>
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Strip tiles</h2>

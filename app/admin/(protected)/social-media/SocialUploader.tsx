@@ -8,6 +8,7 @@ import { canFitVideo, fitVideo } from "@/lib/admin/video-fit";
 import { BUCKET_RULES, mediaKindFor, validateForBucket } from "@/lib/admin/buckets";
 import { createSignedUpload } from "@/lib/admin/upload-actions";
 import { addSocialImages, type NewSocialTile } from "./actions";
+import { BRANDS } from "@/lib/brands";
 import { SOCIAL_MAX_ACTIVE, SOCIAL_VIDEO_MAX_SECONDS } from "./config";
 
 /**
@@ -100,14 +101,16 @@ async function putObject(
   return { ok: true, url: slot.data.publicUrl };
 }
 
-export function SocialUploader({ activeCount }: { activeCount: number }) {
+/** Active-tile counts keyed by pool: "" = landing strip, else the brand slug. */
+export function SocialUploader({ activeCounts }: { activeCounts: Record<string, number> }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const room = Math.max(0, SOCIAL_MAX_ACTIVE - activeCount);
+  const [brand, setBrand] = useState("");
+  const room = Math.max(0, SOCIAL_MAX_ACTIVE - (activeCounts[brand] ?? 0));
 
   // Patch by id — items are replaced on every state update, so identity comparison would miss.
   const patch = (it: Item, p: Partial<Item>) => setItems((cur) => cur.map((c) => (c.id === it.id ? { ...c, ...p } : c)));
@@ -238,7 +241,7 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
       patch(it, { state: "done" });
     }
     if (tiles.length > 0) {
-      const res = await addSocialImages(tiles);
+      const res = await addSocialImages(tiles, brand || null);
       setMsg(res.ok ? { ok: true, text: `Added ${res.data.added} tile${res.data.added === 1 ? "" : "s"}. Add Instagram links below.` } : { ok: false, text: res.error });
       if (res.ok) {
         setItems((cur) => cur.filter((c) => c.state !== "done"));
@@ -253,6 +256,22 @@ export function SocialUploader({ activeCount }: { activeCount: number }) {
 
   return (
     <div className="space-y-3 rounded border bg-white p-5">
+      <label className="flex flex-wrap items-center gap-2 text-sm font-medium text-neutral-800">
+        These tiles appear on
+        <select
+          value={brand}
+          disabled={busy}
+          onChange={(e) => setBrand(e.target.value)}
+          className="rounded border px-2 py-1 text-sm"
+        >
+          <option value="">Landing page strip</option>
+          {BRANDS.map((b) => (
+            <option key={b.slug} value={b.slug}>
+              {b.name} page
+            </option>
+          ))}
+        </select>
+      </label>
       <div
         role="button"
         tabIndex={0}

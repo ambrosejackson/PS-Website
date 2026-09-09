@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { deleteSocialImage, reorderSocialImages, setSocialImageActive, updateSocialImageAlt, updateSocialImageLink, type SocialImageRow } from "./actions";
+import { deleteSocialImage, reorderSocialImages, setSocialImageActive, updateSocialImageAlt, updateSocialImageBrand, updateSocialImageLink, type SocialImageRow } from "./actions";
+import { BRANDS } from "@/lib/brands";
 
 /** Grid of strip tiles: drag to reorder (= marquee order), show/hide, Instagram post link, alt text, delete (D-064, D-068). */
 export function SocialImagesTable({ rows }: { rows: SocialImageRow[] }) {
@@ -106,6 +107,22 @@ export function SocialImagesTable({ rows }: { rows: SocialImageRow[] }) {
                 {r.alt || "add alt text"}
               </button>
             )}
+            <label className="mt-1 flex items-center gap-1 text-[11px] text-neutral-500">
+              on
+              <select
+                value={r.brand ?? ""}
+                disabled={pending}
+                onChange={(e) => run(() => updateSocialImageBrand(r.id, e.target.value || null))}
+                className="min-w-0 flex-1 rounded border px-1 py-0.5 text-[11px]"
+              >
+                <option value="">Landing page strip</option>
+                {BRANDS.map((b) => (
+                  <option key={b.slug} value={b.slug}>
+                    {b.name} page
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="mt-2 flex flex-wrap items-center gap-1">
               <button
                 type="button"

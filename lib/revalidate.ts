@@ -1,6 +1,6 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
-import { brandByName, brandBySlug } from "@/lib/brands";
+import { BRANDS, brandByName, brandBySlug } from "@/lib/brands";
 
 /**
  * Which public paths an admin mutation invalidates (D-038..D-044 session):
@@ -54,7 +54,9 @@ export function pathsFor(target: RevalidateTarget): string[] {
       break;
     case "banners":
     case "social":
+      // Landing strip + every brand page: tiles are pooled per brand (0013).
       out.add("/");
+      for (const b of BRANDS) out.add(`/${b.slug}`);
       break;
     case "blog":
       out.add("/news");

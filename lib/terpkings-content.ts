@@ -52,6 +52,8 @@ export const TK_HERO = {
     "linear-gradient(180deg, transparent, rgba(215,235,150,.08), transparent)",
   vignette:
     "radial-gradient(ellipse 85% 75% at 50% 50%, transparent 45%, rgba(2,3,1,.55) 78%, rgba(2,3,1,.96) 100%)",
+  /** Hero tagline, one entry per line on mobile (joined for desktop + metadata). */
+  taglineLines: ["BROADCASTING FROM", "PROVIDENCE 35974C"],
   tagline: "BROADCASTING FROM PROVIDENCE 35974C",
   cornerTop: "P 0001 · TITLE CARD ▮",
   cornerSide: "REC ▮▮ TK-2600",
@@ -246,7 +248,7 @@ export const PRODUCTS: ArsenalProduct[] = [
     code: "UNIT TK-01",
     tag: "FLAGSHIP // 5-PACK",
     color: "#FF2E2E",
-    img: `${TK_ASSETS}/drip-haze.webp`,
+    img: `${TK_ASSETS}/drip-packs-haze.webp`,
     desc: "> 5 KIEF-COATED, ROSIN-INFUSED PRE-ROLLS PER TIN. Every cone dipped, dusted and dialed to its terp profile.",
   },
   {
@@ -254,7 +256,7 @@ export const PRODUCTS: ArsenalProduct[] = [
     code: "UNIT TK-02",
     tag: "SINGLES // 1G",
     color: "#F7931E",
-    img: `${TK_ASSETS}/tube-haze.webp`,
+    img: `${TK_ASSETS}/tube-gas.webp`,
     desc: "> SINGLE 1G INFUSED PRE-ROLLS in pop-top tubes, color-coded by profile. Grab-and-go royalty.",
   },
   {
@@ -270,7 +272,7 @@ export const PRODUCTS: ArsenalProduct[] = [
     code: "UNIT TK-04",
     tag: "MAX POTENCY // AIO",
     color: "#F473B9",
-    img: `${TK_ASSETS}/ld-dessert.webp`,
+    img: `${TK_ASSETS}/ld-lineup.webp`,
     desc: "> THCA DIAMONDS RE-LIQUIFIED for maximum potency and full-spectrum flavor. All-in-one unit.",
   },
 ];
@@ -336,6 +338,14 @@ export const LOCATOR = {
   placeholder: "ZIP CODE_",
   cta: "► SCAN",
   emptyError: "> ERROR: ENTER COORDINATES FIRST.",
+  invalidZip: "> ERROR: ENTER A 5-DIGIT SECTOR CODE.",
+  comingSoon: "> SUPPLY LINES ENCRYPTED — DECLASSIFYING SOON.",
+  scanning: "> SCANNING SECTOR",
+  nearestHeader: "> NO UNITS IN 10-MI RADIUS — NEAREST SUPPLY LINES:",
+  noneFound: "> NO ACTIVE SUPPLY LINES ON RECORD.",
+  failedError: "> TRANSMISSION ERROR — RETRY SCAN.",
+  menuLink: "► VIEW MENU",
+  mapLink: "► MAP",
 } as const;
 
 /** JOIN THE COURT */

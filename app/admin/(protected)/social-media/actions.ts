@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { deleteUploadedObject } from "@/lib/admin/upload-actions";
 import { revalidateFor } from "@/lib/revalidate";
+import { brandBySlug } from "@/lib/brands";
 import type { Database } from "@/lib/database.types";
 
 /**
@@ -33,6 +34,22 @@ export interface NewSocialTile {
 
 const IG_POST = /^https:\/\/(www\.)?instagram\.com\/(p|reel|reels|tv)\/[A-Za-z0-9_-]+\/?(\?.*)?$/;
 
+/** null/"" → landing strip; otherwise must be a lib/brands.ts slug (guardrail #3). */
+function normalizeBrand(raw: string | null | undefined): { brand: string | null } | { error: string } {
+  const t = (raw ?? "").trim().toLowerCase();
+  if (!t) return { brand: null };
+  if (!brandBySlug(t)) return { error: `Unknown brand "${t}".` };
+  return { brand: t };
+}
+
+/** Active-tile count in one pool (landing = null brand, else the brand slug). */
+async function activeInPool(db: ReturnType<typeof createAdminClient>, brand: string | null): Promise<number> {
+  let q = db.from("content_social_images").select("id", { count: "exact", head: true }).eq("is_active", true);
+  q = brand === null ? q.is("brand", null) : q.eq("brand", brand);
+  const { count } = await q;
+  return count ?? 0;
+}
+
 /** Normalize an Instagram post URL; "" → null; anything else → error string. */
 function normalizeLink(raw: string | null | undefined): { url: string | null } | { error: string } {
   const t = (raw ?? "").trim();
@@ -44,18 +61,19 @@ function normalizeLink(raw: string | null | undefined): { url: string | null } |
   return { url: withScheme.replace(/\?.*$/, "").replace(/\/?$/, "/") };
 }
 
-/** Append freshly uploaded tiles (active, at the end of the order). */
-export async function addSocialImages(tiles: NewSocialTile[]): Promise<ActionResult<{ added: number }>> {
+/** Append freshly uploaded tiles (active, at the end of their pool's order). */
+export async function addSocialImages(
+  tiles: NewSocialTile[],
+  brandRaw?: string | null,
+): Promise<ActionResult<{ added: number }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const clean = tiles.filter((t) => /^https?:\/\//.test(t.url.trim()));
   if (clean.length === 0) return { ok: false, error: "Upload at least one image or video first." };
+  const nb = normalizeBrand(brandRaw);
+  if ("error" in nb) return { ok: false, error: nb.error };
 
   const db = createAdminClient();
-  const { count } = await db
-    .from("content_social_images")
-    .select("id", { count: "exact", head: true })
-    .eq("is_active", true);
-  const active = count ?? 0;
+  const active = await activeInPool(db, nb.brand);
   if (active + clean.length > SOCIAL_MAX_ACTIVE) {
     return {
       ok: false,
@@ -76,6 +94,7 @@ export async function addSocialImages(tiles: NewSocialTile[]): Promise<ActionRes
     poster_url: t.mediaType === "video" ? t.posterUrl?.trim() || null : null,
     sort_order: next++,
     is_active: true,
+    brand: nb.brand,
   }));
   const { error } = await db.from("content_social_images").insert(rows);
   if (error) return { ok: false, error: error.message };
@@ -98,15 +117,31 @@ export async function setSocialImageActive(id: string, active: boolean): Promise
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const db = createAdminClient();
   if (active) {
-    const { count } = await db
-      .from("content_social_images")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
-    if ((count ?? 0) >= SOCIAL_MAX_ACTIVE) {
-      return { ok: false, error: `Already ${SOCIAL_MAX_ACTIVE} active images (the cap). Hide one first.` };
+    const { data: row } = await db.from("content_social_images").select("brand").eq("id", id).maybeSingle();
+    if (!row) return { ok: false, error: "Tile not found." };
+    if ((await activeInPool(db, row.brand)) >= SOCIAL_MAX_ACTIVE) {
+      return { ok: false, error: `Already ${SOCIAL_MAX_ACTIVE} active tiles in this pool (the cap). Hide one first.` };
     }
   }
   const { error } = await db.from("content_social_images").update({ is_active: active }).eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidateFor({ kind: "social" });
+  return { ok: true, data: undefined };
+}
+
+/** Move a tile between pools (landing strip ↔ a brand page's feed). */
+export async function updateSocialImageBrand(id: string, brandRaw: string | null): Promise<ActionResult> {
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
+  const nb = normalizeBrand(brandRaw);
+  if ("error" in nb) return { ok: false, error: nb.error };
+  const db = createAdminClient();
+  const { data: row } = await db.from("content_social_images").select("brand, is_active").eq("id", id).maybeSingle();
+  if (!row) return { ok: false, error: "Tile not found." };
+  if (row.brand === nb.brand) return { ok: true, data: undefined };
+  if (row.is_active && (await activeInPool(db, nb.brand)) >= SOCIAL_MAX_ACTIVE) {
+    return { ok: false, error: `The destination pool already has ${SOCIAL_MAX_ACTIVE} active tiles (the cap).` };
+  }
+  const { error } = await db.from("content_social_images").update({ brand: nb.brand }).eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidateFor({ kind: "social" });
   return { ok: true, data: undefined };

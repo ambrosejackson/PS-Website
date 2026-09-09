@@ -75,15 +75,17 @@ export async function getBanners(): Promise<BannerSlide[]> {
   return data;
 }
 
-/** Active FOLLOW US strip images in admin order (D-064). Empty → component falls back to placeholders. */
-export async function getSocialImages(): Promise<SocialImage[]> {
+/**
+ * Active social tiles in admin order (D-064). brand null (default) = the
+ * landing-page FOLLOW US strip; a lib/brands.ts slug = that brand page's feed
+ * (0013). Empty → components fall back to their placeholders.
+ */
+export async function getSocialImages(brand: string | null = null): Promise<SocialImage[]> {
   const supabase = createPublicClient();
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("content_social_images")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+  let query = supabase.from("content_social_images").select("*").eq("is_active", true);
+  query = brand === null ? query.is("brand", null) : query.eq("brand", brand);
+  const { data, error } = await query.order("sort_order", { ascending: true });
   if (error || !data) return [];
   return data;
 }
