@@ -6,17 +6,19 @@ import { usePathname } from "next/navigation";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { useAgeVerified } from "@/components/site/AgeGate";
 import { brandBySlug } from "@/lib/brands";
+import { markPopupDismissed, popupSuppressed } from "@/lib/newsletter-suppression";
 import { X } from "lucide-react";
 
 /**
  * 15% merch code popup. Once per session, never over an unanswered age gate,
- * never again after a successful signup. Brand pages get the brand's name in
- * the headline (persona derives server-side from the submit path).
+ * never again after a successful signup ANYWHERE (the forms mark it), and not
+ * for 3 weeks after an [X] dismissal (lib/newsletter-suppression.ts). Brand
+ * pages get the brand's name in the headline (persona derives server-side
+ * from the submit path).
  */
 
 const SHOW_DELAY_MS = 8000;
 const SESSION_KEY = "ps_nl_popup_shown";
-const SUBSCRIBED_KEY = "ps_subscribed";
 
 // TerpKings terminal popup — dynamic so VT323 + its CSS only load on /terpkings.
 const TKNewsletterPopup = dynamic(() =>
@@ -34,7 +36,7 @@ export function NewsletterPopup() {
   useEffect(() => {
     if (!ageVerified) return;
     if (sessionStorage.getItem(SESSION_KEY) === "1") return;
-    if (localStorage.getItem(SUBSCRIBED_KEY) === "1") return;
+    if (popupSuppressed()) return;
     const t = setTimeout(() => {
       sessionStorage.setItem(SESSION_KEY, "1");
       setOpen(true);
@@ -44,13 +46,15 @@ export function NewsletterPopup() {
 
   if (!open) return null;
 
+  const dismiss = () => {
+    markPopupDismissed();
+    setOpen(false);
+  };
+
   // Brand-styled variant; same suppression rules as every other brand page.
   if (brand?.slug === "terpkings") {
     return (
-      <TKNewsletterPopup
-        onClose={() => setOpen(false)}
-        onSuccess={() => localStorage.setItem(SUBSCRIBED_KEY, "1")}
-      />
+      <TKNewsletterPopup onClose={dismiss} />
     );
   }
 
@@ -59,7 +63,7 @@ export function NewsletterPopup() {
       <div className="relative w-full max-w-md rounded-sm bg-neutral-950 p-8 text-center text-white shadow-2xl">
         <button
           aria-label="Close"
-          onClick={() => setOpen(false)}
+          onClick={dismiss}
           className="absolute right-3 top-3 p-1 opacity-60 transition-opacity hover:opacity-100"
         >
           <X className="h-5 w-5" />
@@ -73,10 +77,7 @@ export function NewsletterPopup() {
           combinable with other promotions.
         </p>
         <div className="mt-6">
-          <NewsletterForm
-            compact
-            onSuccess={() => localStorage.setItem(SUBSCRIBED_KEY, "1")}
-          />
+          <NewsletterForm compact />
         </div>
       </div>
     </div>

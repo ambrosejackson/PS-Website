@@ -7,15 +7,10 @@ import "./terpkings.css";
 /**
  * TerpKings-styled 15% merch popup. NewsletterPopup.tsx owns the suppression
  * rules (once per session, never over an unanswered age gate, never after a
- * signup) and mounts this on /terpkings via next/dynamic.
+ * signup, 3 weeks after a dismissal) and mounts this on /terpkings via
+ * next/dynamic; TKSignupForm marks the subscribed flag itself on success.
  */
-export function TKNewsletterPopup({
-  onClose,
-  onSuccess,
-}: {
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
+export function TKNewsletterPopup({ onClose }: { onClose: () => void }) {
   return (
     <div
       className={`${vt323.variable} fixed inset-0 z-[80] flex items-center justify-center p-4`}
@@ -49,7 +44,7 @@ export function TKNewsletterPopup({
             OPERATOR, NOT COMBINABLE WITH OTHER PROMOTIONS.
           </p>
           <div className="mt-2 w-full">
-            <TKSignupForm compact onSuccess={onSuccess} />
+            <TKSignupForm compact />
           </div>
         </div>
       </div>
