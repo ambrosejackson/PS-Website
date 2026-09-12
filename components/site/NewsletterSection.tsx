@@ -1,19 +1,23 @@
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 
 /**
- * Newsletter section per the docx reference: split layout — lifestyle photo
- * left (placeholder until Ambrose uploads the Private Stock tracksuit shot),
- * black panel right with large JOIN OUR NEWSLETTER heading, one line of copy,
- * inline email + Subscribe. Wired to the subscribers/persona/discount flow.
+ * Newsletter section per the docx reference: split layout — Private Stock
+ * tracksuit lifestyle photo left (square source, top-anchored so the crop
+ * keeps the face + chest logo at wide desktop ratios), black panel right with
+ * large JOIN OUR NEWSLETTER heading, one line of copy, inline email +
+ * Subscribe. Wired to the subscribers/persona/discount flow.
  */
 export function NewsletterSection() {
   return (
     <section className="grid md:grid-cols-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/placeholders/newsletter-photo.png"
-        alt="Private Stock apparel"
-        className="h-64 w-full object-cover md:h-full md:min-h-[480px]"
+        src="/brand-assets/newsletter-tracksuit.webp"
+        alt="Model wearing the black-and-white Private Stock Cannabis Co. tracksuit"
+        width={1600}
+        height={1600}
+        loading="lazy"
+        className="h-64 w-full object-cover object-top md:h-full md:min-h-[480px]"
       />
       <div className="flex flex-col justify-center bg-neutral-950 px-6 py-14 text-white md:px-14 md:py-20">
         <h2 className="font-condensed text-5xl font-bold uppercase leading-[0.95] tracking-tight md:text-6xl">
