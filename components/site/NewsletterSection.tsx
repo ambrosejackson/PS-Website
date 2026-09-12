@@ -14,8 +14,8 @@ export function NewsletterSection() {
       <img
         src="/brand-assets/newsletter-tracksuit.webp"
         alt="Model wearing the black-and-white Private Stock Cannabis Co. tracksuit"
-        width={1600}
-        height={1600}
+        width={1254}
+        height={1254}
         loading="lazy"
         className="h-64 w-full object-cover object-top md:h-full md:min-h-[480px]"
       />
