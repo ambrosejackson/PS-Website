@@ -5,7 +5,7 @@ import { categoriesForTab, isTab } from "@/lib/merchCategories";
 import type { Database } from "@/lib/database.types";
 
 /**
- * Server-side reads for the apparel shop (D-063..D-073). Public client (RLS:
+ * Server-side reads for the apparel shop (D-071..D-081). Public client (RLS:
  * active rows only), ISR pages + revalidatePath from admin actions.
  *
  * Category rule (Ambrose, 2026-09-13): products with NO category still appear

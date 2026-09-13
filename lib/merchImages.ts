@@ -7,9 +7,9 @@
  * Both shapes stay valid forever; everything reads through `normalizeImages`
  * so no component does index arithmetic on the raw column.
  *
- * Resolution rules (D-065, reference-driven per D-073):
+ * Resolution rules (D-073, reference-driven per D-081):
  *   card primary  = first role='primary', else images[0]
- *   card hover    = first role='hover' ONLY — no tag, no crossfade (D-073)
+ *   card hover    = first role='hover' ONLY — no tag, no crossfade (D-081)
  *   colour chosen = resolve primary/hover among images whose `color` matches
  *                   first, then fall back to the untagged rules above.
  */
@@ -66,7 +66,7 @@ export function primaryImage(images: MerchImage[], color?: string | null): Merch
 
 /**
  * Hover (crossfade) image — ONLY an image explicitly tagged role='hover'.
- * Untagged second images do not crossfade (D-073, matches the reference:
+ * Untagged second images do not crossfade (D-081, matches the reference:
  * hovering a card swaps the text row, not the picture, unless a hover shot exists).
  */
 export function hoverImage(images: MerchImage[], color?: string | null): MerchImage | null {
@@ -104,7 +104,7 @@ export function taggedColors(images: MerchImage[]): string[] {
 }
 
 /**
- * Default selected colour for a card (D-065): the colour of images[0] when it
+ * Default selected colour for a card (D-073): the colour of images[0] when it
  * is tagged, else the first active variant's colour, else null.
  */
 export function defaultColor(

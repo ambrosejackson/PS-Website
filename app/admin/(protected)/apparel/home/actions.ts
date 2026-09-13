@@ -45,7 +45,7 @@ export interface HomeSettingsInput {
   new_releases_count: number;
 }
 
-/** Upsert the single merch_settings row (D-071). */
+/** Upsert the single merch_settings row (D-079). */
 export async function saveHomeSettings(input: HomeSettingsInput): Promise<ActionResult> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const db = admin();

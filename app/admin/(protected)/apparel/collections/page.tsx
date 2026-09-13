@@ -6,7 +6,7 @@ import { CollectionsTable, type CollectionListRow } from "./CollectionsTable";
 
 export const dynamic = "force-dynamic";
 
-/** /admin/apparel/collections — merch_collections list (D-063/D-070). */
+/** /admin/apparel/collections — merch_collections list (D-071/D-078). */
 export default async function AdminCollectionsPage() {
   let rows: CollectionListRow[] = [];
   let loadError: string | null = null;

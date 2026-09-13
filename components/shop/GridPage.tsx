@@ -7,7 +7,7 @@ import { ShopSubNav, type SubNavCollection } from "./ShopSubNav";
 
 /**
  * Shared layout for /apparel/shop and /apparel/collections/[slug] (§6.3,
- * D-073): hero (our hero system, unchanged) with the title overlaid
+ * D-081): hero (our hero system, unchanged) with the title overlaid
  * bottom-left → shipping line → sticky sub-nav filtering in place → tagline
  * centered → grid with interstitials → Load more → footer.
  */

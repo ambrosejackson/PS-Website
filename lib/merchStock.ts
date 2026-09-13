@@ -1,5 +1,5 @@
 /**
- * Stock badge rules (D-066) — ONE helper shared by the storefront card, the
+ * Stock badge rules (D-074) — ONE helper shared by the storefront card, the
  * PDP and the admin badge preview so they never disagree.
  *
  *   - Only ACTIVE variants with a non-null stock_qty ("tracked") count. No

@@ -92,7 +92,7 @@ export function ApparelEditor({
   const brandValue = brand === HOUSE_BRAND ? null : brand;
   const variantColors = [...new Set(rows.map((r) => (r.color ?? "").trim()).filter(Boolean))];
 
-  // Badge preview — same helper as the storefront (D-066).
+  // Badge preview — same helper as the storefront (D-074).
   const badge = stockBadge(
     rows.map((r) => ({
       size: r.size,

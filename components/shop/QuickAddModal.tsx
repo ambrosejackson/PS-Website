@@ -12,12 +12,12 @@ import { DESKTOP_QUERY, useMediaQuery } from "./useMediaQuery";
 import { priceLabel, productHref, sizeOptions, variantLabel, type SizeOption } from "./product-utils";
 
 /**
- * Quick-add size picker (D-068, D-073): a centered modal on desktop, a bottom
+ * Quick-add size picker (D-076, D-081): a centered modal on desktop, a bottom
  * sheet on mobile — the reference's behaviour — with the brief's interior
  * rules: sizes in SIZE_ORDER, sold-out pills disabled + struck through, Add to
  * cart enabled once a size is chosen, opening focuses the first enabled pill,
  * Escape / × / backdrop close and focus returns to the trigger. Adds through
- * the existing cart context (drawer opens on add — D-067).
+ * the existing cart context (drawer opens on add — D-075).
  */
 export function QuickAddModal({
   product,

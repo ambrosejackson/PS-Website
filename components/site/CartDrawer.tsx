@@ -13,7 +13,7 @@ import { QuickAddModal } from "@/components/shop/QuickAddModal";
 import { isOneSize, priceLabel, sizeOptions, variantLabel } from "@/components/shop/product-utils";
 
 /**
- * Cart drawer (D-067): opens on every add and from the header cart icon.
+ * Cart drawer (D-075): opens on every add and from the header cart icon.
  * Right-side sheet, ~420 px desktop / full width mobile. Header "Cart" +
  * close · empty state · line items · "Pair with" (up to 3 products from the
  * last-added item's collection, not already in the cart) · Items / Subtotal ·

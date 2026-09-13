@@ -83,7 +83,7 @@ export interface VariantInput {
   color: string | null;
   /** Dollars as typed; stored as price_cents. */
   price: string;
-  /** "" = made to order (null); a number = tracked stock (D-066). */
+  /** "" = made to order (null); a number = tracked stock (D-074). */
   stock_qty: string;
   is_active: boolean;
 }

@@ -3,7 +3,7 @@
 Applies to the apparel shop (`/apparel`, `/apparel/shop`, `/apparel/collections/{slug}`,
 `/apparel/{slug}`) and `/admin/apparel`. Ratios below were **measured on the reference site**
 (jeeterapparel.com, captured 2026-09-13 at 1440 and 390, see
-`docs/reference/jeeterapparel/2026-09-13/`) and supersede the brief's guesses (D-073).
+`docs/reference/jeeterapparel/2026-09-13/`) and supersede the brief's guesses (D-081).
 Hero media is the one exception: our hero system and its ratios are unchanged
 (see `docs/HERO-MEDIA.md`).
 

@@ -18,11 +18,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * /apparel — showcase home (§6.2, D-071): hero with the merch_settings copy
+ * /apparel — showcase home (§6.2, D-079): hero with the merch_settings copy
  * overlaid (whole hero links to the CTA URL when set) → shipping line →
  * sub-nav → New Releases → featured collection → Collections carousel →
  * category tiles → footer. Sections with nothing to show render nothing.
- * Our hero system and ratios are unchanged (D-073).
+ * Our hero system and ratios are unchanged (D-081).
  */
 export default async function ApparelPage() {
   const home = await getApparelHome();

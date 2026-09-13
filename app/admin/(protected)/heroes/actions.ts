@@ -28,7 +28,7 @@ function normalizePage(page: string): string {
   return withSlash.length > 1 ? withSlash.replace(/\/+$/, "") : withSlash;
 }
 
-/** Static HERO_PAGES, or an apparel collection page whose slug exists (D-063). */
+/** Static HERO_PAGES, or an apparel collection page whose slug exists (D-071). */
 async function isKnownHeroPage(page: string): Promise<boolean> {
   if (HERO_PAGES.some((p) => p.page === page)) return true;
   const slug = collectionSlugFromHeroPage(page);

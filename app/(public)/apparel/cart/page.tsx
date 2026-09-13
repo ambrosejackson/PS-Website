@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** /apparel/cart — full-page cart (D-067: the drawer's "View cart"). Same chrome as checkout. */
+/** /apparel/cart — full-page cart (D-075: the drawer's "View cart"). Same chrome as checkout. */
 export default function ApparelCartPage() {
   return (
     <main className="flex min-h-svh flex-col bg-white">

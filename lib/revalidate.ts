@@ -4,7 +4,7 @@ import { BRANDS, brandByName, brandBySlug } from "@/lib/brands";
 
 /**
  * Which public paths an admin mutation invalidates (D-038..D-044 session,
- * apparel shop rebuild D-063..D-073):
+ * apparel shop rebuild D-071..D-081):
  *   products           → /, /products, /products/[brand]/[slug], the brand page
  *   apparel            → /, /apparel, /apparel/shop, /apparel/[slug]
  *   apparel-home       → /apparel (merch_settings / tiles)

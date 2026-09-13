@@ -28,7 +28,7 @@ export default async function AdminHeroesPage() {
     loadError = e instanceof Error ? e.message : "Could not load heroes.";
   }
 
-  // Apparel collection pages are dynamic (merch_collections.hero_page, D-063).
+  // Apparel collection pages are dynamic (merch_collections.hero_page, D-071).
   let collectionPages: HeroPageOption[] = [];
   try {
     const { data } = await createAdminClient()

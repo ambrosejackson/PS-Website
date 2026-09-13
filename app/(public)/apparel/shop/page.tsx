@@ -5,10 +5,10 @@ import { isTab, tabLabel } from "@/lib/merchCategories";
 import { getActiveCollections, getCollectionPage, SHOP_ALL_SLUG } from "@/lib/merch/queries";
 
 /**
- * /apparel/shop — the shop-all grid (D-063). Filters (?tab=, ?brand=) and
+ * /apparel/shop — the shop-all grid (D-071). Filters (?tab=, ?brand=) and
  * ?page= are read from the URL, so this route renders per request; the
  * unfiltered data is cached by Supabase/CDN and admin saves still call
- * revalidatePath. Interstitials come from the reserved 'all' collection (D-070).
+ * revalidatePath. Interstitials come from the reserved 'all' collection (D-078).
  */
 
 type Search = { tab?: string; brand?: string; page?: string };

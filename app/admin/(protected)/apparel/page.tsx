@@ -7,7 +7,7 @@ import { ApparelTabs } from "./ApparelTabs";
 
 export const dynamic = "force-dynamic";
 
-/** /admin/apparel — merch_products + merch_variants CRUD (D-039/D-040, D-063..D-072). */
+/** /admin/apparel — merch_products + merch_variants CRUD (D-039/D-040, D-071..D-080). */
 export default async function AdminApparelPage({
   searchParams,
 }: {

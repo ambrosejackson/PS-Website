@@ -1,5 +1,5 @@
 /**
- * Apparel categories and sub-nav tabs (D-064).
+ * Apparel categories and sub-nav tabs (D-072).
  *
  * `merch_products.category` is a free text column; THIS file is the validation
  * (admin select offers exactly CATEGORIES) and the grouping (sub-nav TABS).
@@ -33,7 +33,7 @@ export const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "One Size"] 
 export type CategoryValue = (typeof CATEGORIES)[number]["value"];
 export type TabSlug = (typeof TABS)[number]["slug"];
 
-/** Product slugs that would shadow the shop routes (D-063). Mirrors the DB check. */
+/** Product slugs that would shadow the shop routes (D-071). Mirrors the DB check. */
 export const RESERVED_PRODUCT_SLUGS = ["shop", "collections", "cart", "checkout", "order"] as const;
 
 export function isCategory(value: unknown): value is CategoryValue {

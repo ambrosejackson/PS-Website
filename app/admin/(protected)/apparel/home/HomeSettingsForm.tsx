@@ -9,7 +9,7 @@ import { saveHomeSettings, type SettingsRow } from "./actions";
 
 export type CollectionOption = { id: string; name: string; slug: string };
 
-/** merch_settings editor (D-071): hero copy + CTA, featured collection, New Releases count. */
+/** merch_settings editor (D-079): hero copy + CTA, featured collection, New Releases count. */
 export function HomeSettingsForm({ settings, collections }: { settings: SettingsRow | null; collections: CollectionOption[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();

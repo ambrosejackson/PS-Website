@@ -101,7 +101,7 @@ export async function saveCollection(input: CollectionInput): Promise<ActionResu
     slug,
     tagline: cleanText(input.tagline, 120),
     subtitle: cleanText(input.subtitle, 80),
-    cover_image_url: isAll ? null : cover, // the shop-all row never gets a cover (D-070)
+    cover_image_url: isAll ? null : cover, // the shop-all row never gets a cover (D-078)
     is_active: !!input.is_active,
     sort_order: input.sort_order ?? existing?.sort_order ?? 0,
     starts_at: starts,
@@ -172,7 +172,7 @@ export async function deleteCollection(id: string): Promise<ActionResult> {
   return { ok: true, data: undefined };
 }
 
-// ===== Interstitial banners (D-070) =====
+// ===== Interstitial banners (D-078) =====
 
 export interface BannerInput {
   id?: string;

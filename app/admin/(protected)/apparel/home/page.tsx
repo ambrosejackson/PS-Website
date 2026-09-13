@@ -8,7 +8,7 @@ import type { SettingsRow, TileRow } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-/** /admin/apparel/home — the /apparel showcase: merch_settings (D-071) + category tiles. */
+/** /admin/apparel/home — the /apparel showcase: merch_settings (D-079) + category tiles. */
 export default async function AdminApparelHomePage() {
   let settings: SettingsRow | null = null;
   let collections: CollectionOption[] = [];

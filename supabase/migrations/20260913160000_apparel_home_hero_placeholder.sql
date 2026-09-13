@@ -1,4 +1,4 @@
--- Apparel shop home hero (D-071): the /apparel showcase renders the hero from
+-- Apparel shop home hero (D-079): the /apparel showcase renders the hero from
 -- content_heroes page='/apparel' with the merch_settings copy overlaid. No row
 -- has ever existed for that page (it rendered FALLBACK_HERO), so seed a
 -- placeholder default — same media as the collection placeholders in 0011 — so

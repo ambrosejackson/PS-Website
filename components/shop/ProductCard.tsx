@@ -12,7 +12,7 @@ import { QuickAddModal } from "./QuickAddModal";
 import { colorsOf, isOneSize, priceLabel, productHref, sizeOptions, variantLabel, type SizeOption } from "./product-utils";
 
 /**
- * Apparel shop product card — built to the reference measurements (D-073),
+ * Apparel shop product card — built to the reference measurements (D-081),
  * NOT the landing page's components/site/ProductCard (which stays as is).
  *
  *   image 1:1 · `+` quick-add bottom-left, always visible · badge bottom-right
@@ -68,7 +68,7 @@ export function ProductCard({
     });
   }
 
-  /** `+`, the Add to Cart button and the hover row all funnel here (D-068). */
+  /** `+`, the Add to Cart button and the hover row all funnel here (D-076). */
   function quickAdd() {
     if (soldOut || options.length === 0) return;
     if (oneSize && !options[0].soldOut) {

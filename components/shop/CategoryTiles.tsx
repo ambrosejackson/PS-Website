@@ -4,7 +4,7 @@ import type { ShopTile } from "@/lib/merch/queries";
 import { tabLabel } from "@/lib/merchCategories";
 
 /**
- * Category feature tiles (§6.2 #7, D-073): two side-by-side near-square tiles
+ * Category feature tiles (§6.2 #7, D-081): two side-by-side near-square tiles
  * on desktop (660×650 measured at 1440), stacked on mobile. Label + "View
  * products" bottom-left; the whole tile links to /apparel/shop?tab={tab}.
  */

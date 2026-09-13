@@ -1,4 +1,4 @@
--- Migration 0011 — Apparel shop rebuild, Part A (Jeeter-structure; D-063..D-072).
+-- Migration 0011 — Apparel shop rebuild, Part A (Jeeter-structure; D-071..D-080).
 -- Website Supabase project ONLY (ihurvtxmcyahvtcydmnf). Never applied to the PSM project.
 --
 -- Introspected 2026-09-13 before writing (information_schema.columns, linked project):
@@ -19,10 +19,10 @@
 -- revalidateFor({kind:'heroes', page}) revalidates it as a path, and /admin/heroes
 -- uses page.slice(1) as the storage folder. The brief's draft key 'apparel:{slug}'
 -- would break all three, so hero_page is derived from the slug as a real route:
---   'all'  -> '/apparel/shop'          (the reserved shop-all row, D-070)
+--   'all'  -> '/apparel/shop'          (the reserved shop-all row, D-078)
 --   others -> '/apparel/collections/{slug}'
 
--- ===== Collections (D-063) =====
+-- ===== Collections (D-071) =====
 create table public.merch_collections (
   id              uuid primary key default gen_random_uuid(),
   name            text not null,
@@ -46,7 +46,7 @@ create table public.merch_collections (
 );
 
 comment on table public.merch_collections is
-  'Apparel collections (D-063). Row slug=''all'' is reserved for the shop-all grid: editable, never deletable, never in the carousel (D-070).';
+  'Apparel collections (D-071). Row slug=''all'' is reserved for the shop-all grid: editable, never deletable, never in the carousel (D-078).';
 comment on column public.merch_collections.hero_page is
   'Derived route key for content_heroes.page: /apparel/shop for the reserved ''all'' row, else /apparel/collections/{slug}.';
 
@@ -57,7 +57,7 @@ create trigger merch_collections_set_updated_at
   before update on public.merch_collections
   for each row execute function public.set_updated_at();
 
--- Reserved row for the shop-all grid (D-070); never shown in the carousel.
+-- Reserved row for the shop-all grid (D-078); never shown in the carousel.
 insert into public.merch_collections (name, slug, tagline, sort_order, is_active)
 values ('All apparel', 'all', null, -1, true);
 
@@ -66,7 +66,7 @@ insert into public.merch_collections (name, slug, tagline, sort_order) values
   ('Private Stock Essentials', 'essentials', 'Shop the essentials', 0),
   ('Fall 2026 Drop',           'fall-2026',  'Shop the drop',       1);
 
--- ===== Editorial interstitial banners (collection-scoped, D-070) =====
+-- ===== Editorial interstitial banners (collection-scoped, D-078) =====
 create table public.merch_collection_banners (
   id               uuid primary key default gen_random_uuid(),
   collection_id    uuid not null references public.merch_collections(id) on delete cascade,
@@ -81,7 +81,7 @@ create table public.merch_collection_banners (
 );
 
 comment on table public.merch_collection_banners is
-  'Full-row editorial images spliced into a collection grid after product N (insert_after). /apparel/shop uses the banners of the reserved ''all'' collection (D-070).';
+  'Full-row editorial images spliced into a collection grid after product N (insert_after). /apparel/shop uses the banners of the reserved ''all'' collection (D-078).';
 
 -- Covers the FK and the grid query (collection, ordered by position).
 create index merch_collection_banners_collection_idx
@@ -99,7 +99,7 @@ create table public.merch_tab_tiles (
 comment on table public.merch_tab_tiles is
   'Home-page category tiles, one per sub-nav tab (lib/merchCategories.ts TABS). Link target is /apparel/shop?tab={tab}.';
 
--- ===== Home-page settings singleton (D-071) =====
+-- ===== Home-page settings singleton (D-079) =====
 create table public.merch_settings (
   id                     boolean primary key default true check (id),   -- exactly one row
   hero_headline          text,
@@ -114,7 +114,7 @@ create table public.merch_settings (
 );
 
 comment on table public.merch_settings is
-  'Single-row settings for the /apparel showcase home (D-071). Hero MEDIA still comes from content_heroes page=''/apparel''; this row holds the copy, CTA, featured collection and New Releases count.';
+  'Single-row settings for the /apparel showcase home (D-079). Hero MEDIA still comes from content_heroes page=''/apparel''; this row holds the copy, CTA, featured collection and New Releases count.';
 
 create trigger merch_settings_set_updated_at
   before update on public.merch_settings
@@ -126,7 +126,7 @@ values
   (true, 'Fall 2026 Drop', 'Private Stock Apparel', 'View more', '/apparel/collections/fall-2026',
    (select id from public.merch_collections where slug = 'essentials'));
 
--- ===== Products (D-064 category, D-066 stock threshold, D-072 released_at) =====
+-- ===== Products (D-072 category, D-074 stock threshold, D-080 released_at) =====
 alter table public.merch_products
   add column if not exists collection_id       uuid references public.merch_collections(id) on delete set null,
   add column if not exists category            text,
@@ -134,18 +134,18 @@ alter table public.merch_products
   add column if not exists released_at         timestamptz;
 
 comment on column public.merch_products.category is
-  'Fine-grained category (nine values); validated in lib/merchCategories.ts + the admin select, grouped into sub-nav tabs by config (D-064). Not a DB enum on purpose.';
+  'Fine-grained category (nine values); validated in lib/merchCategories.ts + the admin select, grouped into sub-nav tabs by config (D-072). Not a DB enum on purpose.';
 comment on column public.merch_products.low_stock_threshold is
-  'Low Stock badge when any tracked variant has 0 < stock_qty <= threshold (D-066). Default 3.';
+  'Low Stock badge when any tracked variant has 0 < stock_qty <= threshold (D-074). Default 3.';
 comment on column public.merch_products.released_at is
-  'Drives New Releases ordering (D-072). Admin-editable; defaults to created_at so a re-import or edit never reshuffles the row.';
+  'Drives New Releases ordering (D-080). Admin-editable; defaults to created_at so a re-import or edit never reshuffles the row.';
 
 update public.merch_products set released_at = created_at where released_at is null;
 alter table public.merch_products
   alter column released_at set default now(),
   alter column released_at set not null;
 
--- Product slugs that would shadow the new routes (D-063). Admin validation rejects
+-- Product slugs that would shadow the new routes (D-071). Admin validation rejects
 -- them too; this is the backstop. All 8 existing slugs pass.
 alter table public.merch_products
   add constraint merch_products_slug_not_reserved
@@ -165,12 +165,12 @@ update public.merch_products
    set collection_id = (select id from public.merch_collections where slug = 'essentials')
  where collection_id is null;
 
--- ===== Variants: optional stock (D-066) =====
+-- ===== Variants: optional stock (D-074) =====
 alter table public.merch_variants
   add column if not exists stock_qty int check (stock_qty is null or stock_qty >= 0);
 
 comment on column public.merch_variants.stock_qty is
-  'null = made to order (Printify/Tapstitch), never badged; a number = tracked, admin-entered in v1 (D-066).';
+  'null = made to order (Printify/Tapstitch), never badged; a number = tracked, admin-entered in v1 (D-074).';
 
 -- ===== Default hero rows for the new hero pages =====
 -- Placeholder media, same shape as the landing default row, so /admin/heroes can

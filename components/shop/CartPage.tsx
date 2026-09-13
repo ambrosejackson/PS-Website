@@ -5,7 +5,7 @@ import { useCart } from "@/lib/cart/context";
 import { money } from "@/lib/commerce/config";
 import { CartLines, CartSummary } from "./CartLines";
 
-/** /apparel/cart — the full-page cart behind the drawer's "View cart" (D-067). */
+/** /apparel/cart — the full-page cart behind the drawer's "View cart" (D-075). */
 export function CartPage() {
   const cart = useCart();
   if (cart.lines.length === 0) {

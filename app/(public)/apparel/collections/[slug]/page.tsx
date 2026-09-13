@@ -5,9 +5,9 @@ import { isTab, tabLabel } from "@/lib/merchCategories";
 import { getActiveCollections, getCollectionBySlug, getCollectionPage, SHOP_ALL_SLUG } from "@/lib/merch/queries";
 
 /**
- * /apparel/collections/[slug] — one collection's grid (D-063). The reserved
+ * /apparel/collections/[slug] — one collection's grid (D-071). The reserved
  * 'all' slug lives at /apparel/shop and 404s here. Inactive / out-of-window
- * collections 404 (D-070 window rule). Filters and ?page= come from the URL.
+ * collections 404 (D-078 window rule). Filters and ?page= come from the URL.
  */
 
 type Search = { tab?: string; brand?: string; page?: string };
