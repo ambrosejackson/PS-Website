@@ -9,7 +9,7 @@ import { detectVideoHasAudio } from "@/lib/admin/video-audio";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { saveHeroRow } from "./actions";
-import { HERO_PAGES, NAV_TARGETS } from "./hero-config";
+import { HERO_PAGES, NAV_TARGETS, type HeroPageOption } from "./hero-config";
 
 /**
  * Add a hero: upload (shared AdminUploader → heroes bucket; PNG/JPG >300KB →
@@ -17,7 +17,14 @@ import { HERO_PAGES, NAV_TARGETS } from "./hero-config";
  * images (videos default to dark) with a manual override, default flag, and —
  * landing only — the nav hover target.
  */
-export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) {
+export function HeroUploadForm({
+  defaultPage = "/",
+  pages,
+}: {
+  defaultPage?: string;
+  /** Static pages + dynamic apparel collection pages (built by the page with heroPagesWith). */
+  pages?: ReadonlyArray<HeroPageOption>;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [page, setPage] = useState<string>(defaultPage);
@@ -101,7 +108,7 @@ export function HeroUploadForm({ defaultPage = "/" }: { defaultPage?: string }) 
       <div className="space-y-1.5">
         <Label htmlFor="hero-page">Page</Label>
         <select id="hero-page" value={page} onChange={(e) => { setPage(e.target.value); setNavTarget(""); }} className={selectCls} disabled={pending}>
-          {HERO_PAGES.map((p) => (
+          {(pages ?? HERO_PAGES).map((p) => (
             <option key={p.page} value={p.page}>
               {p.label} — {p.page}
             </option>

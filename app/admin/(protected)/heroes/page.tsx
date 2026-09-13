@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { HeroAsset } from "@/lib/data";
 import { HeroUploadForm } from "./HeroUploadForm";
 import { HeroRowActions } from "./HeroRowActions";
-import { HERO_PAGES, navTargetLabel } from "./hero-config";
+import { heroAnchorId, heroPagesWith, navTargetLabel, type HeroPageOption } from "./hero-config";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +28,24 @@ export default async function AdminHeroesPage() {
     loadError = e instanceof Error ? e.message : "Could not load heroes.";
   }
 
+  // Apparel collection pages are dynamic (merch_collections.hero_page, D-063).
+  let collectionPages: HeroPageOption[] = [];
+  try {
+    const { data } = await createAdminClient()
+      .from("merch_collections")
+      .select("name, slug, hero_page")
+      .order("sort_order", { ascending: true });
+    collectionPages = (data ?? [])
+      .filter((c) => c.slug !== "all")
+      .map((c) => ({ page: c.hero_page, label: `Apparel collection — ${c.name}` }));
+  } catch {
+    // service key missing: the static list still renders
+  }
+  const pages = heroPagesWith(collectionPages);
+
   const byPage = new Map<string, HeroAsset[]>();
   for (const r of rows) byPage.set(r.page, [...(byPage.get(r.page) ?? []), r]);
-  const knownPages = new Set<string>(HERO_PAGES.map((p) => p.page));
+  const knownPages = new Set<string>(pages.map((p) => p.page));
   const extraPages = [...byPage.keys()].filter((p) => !knownPages.has(p));
 
   return (
@@ -47,18 +62,18 @@ export default async function AdminHeroesPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Add a hero</h2>
-        <HeroUploadForm defaultPage="/" />
+        <HeroUploadForm defaultPage="/" pages={pages} />
       </section>
 
       <section className="space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Heroes by page</h2>
         {loadError && <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p>}
-        {[...HERO_PAGES.map((p) => ({ page: p.page, label: p.label })), ...extraPages.map((p) => ({ page: p, label: p }))].map(
+        {[...pages, ...extraPages.map((p) => ({ page: p, label: p }))].map(
           ({ page, label }) => {
             const list = byPage.get(page) ?? [];
             const hasDefault = list.some((h) => h.is_default && h.is_active);
             return (
-              <div key={page} className="rounded border bg-white">
+              <div key={page} id={heroAnchorId(page)} className="scroll-mt-4 rounded border bg-white">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
                   <div>
                     <span className="font-condensed text-sm font-semibold uppercase tracking-wide">{label}</span>

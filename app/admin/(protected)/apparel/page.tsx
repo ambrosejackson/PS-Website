@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
 import { ApparelTable, type ApparelListRow } from "./ApparelTable";
+import { ApparelTabs } from "./ApparelTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function AdminApparelPage({
         </div>
         <Button render={<Link href="/admin/apparel/new">New apparel product</Link>} />
       </div>
+      <ApparelTabs />
       {saved && (
         <p className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800">
           Saved <code>{saved}</code>. /apparel and the landing grid revalidated.
