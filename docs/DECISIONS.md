@@ -773,3 +773,47 @@ to this log. The numbers below are authoritative.
   history; their recorded statements are now saved verbatim as
   `supabase/migrations/2026…_*.sql` so `supabase db push` sees a consistent
   history. Going forward every schema change lands as a tracked file first.
+
+## 2026-09-13 — Apparel shop rebuild, Parts B + C (admin + storefront)
+
+- **Part B shipped in three commits** (Home tab, Collections tab, product form
+  + variants). Hero pages for collections are listed and validated
+  dynamically from `merch_collections.hero_page` — never hard-coded — so a
+  collection created in admin appears in Heroes without a code change.
+  `/apparel/shop` and `/apparel` are static entries. Migration 20260913160000
+  seeded the missing `/apparel` default hero row (placeholder media).
+
+- **Part C shipped in the order Ambrose set:** (1) queries + card + quick-add
+  modal/sheet, (2) cart drawer, (3) `/apparel/shop`, (4)
+  `/apparel/collections/[slug]`, (5) `/apparel` home, then (6) the brief's
+  §6.8 PDP touch-ups. Built to the reference measurements (D-073); the hero
+  system is untouched.
+
+- **Category rule (Ambrose, 2026-09-13).** Products with no category still
+  appear in Shop all, New Releases and their collection; they drop out only
+  under a `?tab=` filter (the tab expands to a category IN-list).
+
+- **Landing page untouched.** The landing "Merch & Apparel" section and
+  `components/site/ProductCard` are unchanged; the shop card is
+  `components/shop/ProductCard`.
+
+- **`/apparel/cart` added.** D-067 said the full cart page "remains" — it
+  never existed (only checkout and order). It now exists with the checkout
+  page's chrome and shares `CartLines` / `CartSummary` with the drawer. The
+  header cart icon already opened the drawer, so it was left as is.
+
+- **Grid pages render per request.** `/apparel/shop` and
+  `/apparel/collections/[slug]` read `?tab=`, `?brand=`, `?page=` from the
+  URL, which makes them dynamic in Next; the brief's "ISR 300" applies to
+  `/apparel` (no search params) and the PDP (which reads `?color=` on the
+  client to stay static). Admin saves still call `revalidatePath` for all of
+  them.
+
+- **`next/image` allowed for the website Supabase storage host** via
+  `images.remotePatterns` in `next.config.ts`; every shop image declares
+  `sizes`. Legacy `<img>` usage elsewhere is unchanged.
+
+- **Quick-add on a card.** `+`, the Add to cart text button and the hover
+  row's outlined button all funnel through one handler: One Size adds
+  directly; a size chosen in the hover row's select adds directly; otherwise
+  the size modal (desktop) / bottom sheet (mobile) opens.
