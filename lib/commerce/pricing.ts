@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { shippingCents } from "@/lib/commerce/config";
 import { createStripePromotionCode, stripeConfigured } from "@/lib/commerce/stripe";
+import { normalizeImages } from "@/lib/merchImages";
 
 /**
  * Server-side cart pricing — THE only source of truth for amounts. The client
@@ -64,7 +65,7 @@ export async function priceCart(input: CartLineInput[]): Promise<PricedCart> {
       | undefined;
     if (!v || !p) throw new PricingError("An item in your cart is no longer available.");
     if (!v.is_active || !p.is_active) throw new PricingError(`${p.name} is no longer available.`);
-    const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+    const images = normalizeImages(p.images).map((i) => i.url);
     lines.push({
       variantId: v.id,
       productId: p.id,

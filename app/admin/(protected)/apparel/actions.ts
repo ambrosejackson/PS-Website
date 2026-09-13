@@ -6,6 +6,8 @@ import { isAdminEmail } from "@/lib/admin/allowlist";
 import { brandByName } from "@/lib/brands";
 import { revalidateFor } from "@/lib/revalidate";
 import { slugify } from "@/lib/sheet-sync/map";
+import { isCategory, RESERVED_PRODUCT_SLUGS } from "@/lib/merchCategories";
+import { normalizeImages, type MerchImage } from "@/lib/merchImages";
 import type { Database } from "@/lib/database.types";
 
 type MerchRow = Database["public"]["Tables"]["merch_products"]["Row"];
@@ -67,6 +69,7 @@ export async function deleteMerch(id: string): Promise<ActionResult> {
 
 export async function checkMerchSlugAvailable(slug: string, excludeId?: string): Promise<boolean> {
   if (!(await requireAdmin())) return false;
+  if ((RESERVED_PRODUCT_SLUGS as readonly string[]).includes(slug)) return false;
   let q = admin().from("merch_products").select("id").eq("slug", slug).limit(1);
   if (excludeId) q = q.neq("id", excludeId);
   const { data } = await q;
@@ -80,6 +83,8 @@ export interface VariantInput {
   color: string | null;
   /** Dollars as typed; stored as price_cents. */
   price: string;
+  /** "" = made to order (null); a number = tracked stock (D-066). */
+  stock_qty: string;
   is_active: boolean;
 }
 
@@ -90,10 +95,16 @@ export interface MerchInput {
   description: string | null;
   /** null = Private Stock (house), else an allowlisted brand name. */
   brand: string | null;
-  images: string[];
+  /** Ordered; tagged per docs/MERCH-MEDIA.md. */
+  images: MerchImage[];
   fulfillment_provider: FulfillmentProvider;
   is_active: boolean;
   sort_order: number | null;
+  collection_id: string | null;
+  category: string | null;
+  low_stock_threshold: number;
+  /** datetime-local value; "" = keep (existing) / now (new). */
+  released_at: string;
   variants: VariantInput[];
 }
 
@@ -101,6 +112,14 @@ function dollarsToCents(v: string): number | null {
   const n = Number(String(v).replace(/[$,\s]/g, ""));
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.round(n * 100);
+}
+
+function parseStock(v: string): number | null | false {
+  const s = (v ?? "").trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (!Number.isInteger(n) || n < 0) return false;
+  return n;
 }
 
 export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: string; slug: string }>> {
@@ -111,15 +130,47 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
   if (!name) return { ok: false, error: "Name is required." };
   const slug = slugify(input.slug || name);
   if (!slug) return { ok: false, error: "Slug is required." };
+  if ((RESERVED_PRODUCT_SLUGS as readonly string[]).includes(slug)) {
+    return { ok: false, error: `"${slug}" is a reserved shop route — pick another slug.` };
+  }
   if (input.brand && !brandByName(input.brand)) return { ok: false, error: "Brand must be Private Stock or an allowlisted brand." };
   const brand = input.brand ? brandByName(input.brand)!.name : null;
   if (!FULFILLMENT_PROVIDERS.includes(input.fulfillment_provider)) {
     return { ok: false, error: "Fulfillment provider must be self, printify or tapstitch." };
   }
-  const images = (input.images ?? []).map((u) => u.trim()).filter(Boolean);
+  if (input.category && !isCategory(input.category)) return { ok: false, error: "Pick a category from the list." };
+  const threshold = Math.round(Number(input.low_stock_threshold));
+  if (!Number.isFinite(threshold) || threshold < 0) return { ok: false, error: "Low stock threshold must be 0 or more." };
+  let releasedAt: string | null = null;
+  if (input.released_at.trim()) {
+    const d = new Date(input.released_at);
+    if (Number.isNaN(d.getTime())) return { ok: false, error: "Enter a valid Released at date." };
+    releasedAt = d.toISOString();
+  }
+  if (input.collection_id) {
+    const { data } = await db.from("merch_collections").select("id").eq("id", input.collection_id).maybeSingle();
+    if (!data) return { ok: false, error: "Collection not found." };
+  }
+
+  // Images: keep the tagged-object shape (docs/MERCH-MEDIA.md); drop empties.
+  const variantColors = new Set((input.variants ?? []).map((v) => (v.color ?? "").trim().toUpperCase()).filter(Boolean));
+  const images = normalizeImages(input.images).map((i) => ({
+    url: i.url,
+    ...(i.alt ? { alt: i.alt } : {}),
+    ...(i.color && variantColors.has(i.color.toUpperCase()) ? { color: i.color } : {}),
+    ...(i.role ? { role: i.role } : {}),
+  }));
 
   // Validate variants up front.
-  const variants: { id?: string; sku: string; size: string | null; color: string | null; price_cents: number; is_active: boolean }[] = [];
+  const variants: {
+    id?: string;
+    sku: string;
+    size: string | null;
+    color: string | null;
+    price_cents: number;
+    stock_qty: number | null;
+    is_active: boolean;
+  }[] = [];
   const skus = new Set<string>();
   for (const v of input.variants ?? []) {
     const sku = v.sku.trim().toUpperCase();
@@ -128,12 +179,15 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     skus.add(sku);
     const cents = dollarsToCents(v.price);
     if (cents === null) return { ok: false, error: `Variant ${sku}: enter a valid price in dollars.` };
+    const stock = parseStock(v.stock_qty);
+    if (stock === false) return { ok: false, error: `Variant ${sku}: stock must be a whole number (blank = made to order).` };
     variants.push({
       id: v.id,
       sku,
       size: v.size?.trim() || null,
       color: v.color?.trim() || null,
       price_cents: cents,
+      stock_qty: stock,
       is_active: !!v.is_active,
     });
   }
@@ -147,6 +201,10 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     fulfillment_provider: input.fulfillment_provider,
     is_active: !!input.is_active,
     sort_order: input.sort_order ?? null,
+    collection_id: input.collection_id || null,
+    category: input.category || null,
+    low_stock_threshold: threshold,
+    ...(releasedAt ? { released_at: releasedAt } : {}),
   };
 
   let productId = input.id;
@@ -186,22 +244,12 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     if (error) await db.from("merch_variants").update({ is_active: false }).eq("id", ev.id);
   }
   for (const v of variants) {
+    const row = { sku: v.sku, size: v.size, color: v.color, price_cents: v.price_cents, stock_qty: v.stock_qty, is_active: v.is_active };
     if (v.id) {
-      const { error } = await db
-        .from("merch_variants")
-        .update({ sku: v.sku, size: v.size, color: v.color, price_cents: v.price_cents, is_active: v.is_active })
-        .eq("id", v.id)
-        .eq("product_id", productId);
+      const { error } = await db.from("merch_variants").update(row).eq("id", v.id).eq("product_id", productId);
       if (error) return { ok: false, error: `Variant ${v.sku}: ${error.message}` };
     } else {
-      const { error } = await db.from("merch_variants").insert({
-        product_id: productId,
-        sku: v.sku,
-        size: v.size,
-        color: v.color,
-        price_cents: v.price_cents,
-        is_active: v.is_active,
-      });
+      const { error } = await db.from("merch_variants").insert({ product_id: productId, ...row });
       if (error) return { ok: false, error: `Variant ${v.sku}: ${error.message}` };
     }
   }

@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/site/ProductCard";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { ApparelDetail } from "@/components/site/ApparelDetail";
 import { getHeroesForPage, getMerchListingBySlug, getMerchListings, merchFromCents } from "@/lib/data";
+import { normalizeImages } from "@/lib/merchImages";
 
 /**
  * /apparel/[slug] — merch detail: gallery, variant picker, qty, Add to Cart
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const product = await getMerchListingBySlug(slug);
   if (!product) return {};
-  const images = Array.isArray(product.images) ? (product.images as string[]) : [];
+  const images = normalizeImages(product.images).map((i) => i.url);
   const title = `${product.name} — Apparel`;
   return {
     title,
@@ -44,7 +45,7 @@ export default async function ApparelProductPage({ params }: { params: Promise<{
   if (!product) notFound();
   const [heroes, all] = await Promise.all([getHeroesForPage("/apparel"), getMerchListings()]);
   const others = all.filter((p) => p.id !== product.id).slice(0, 6);
-  const images = Array.isArray(product.images) ? (product.images as string[]) : [];
+  const images = normalizeImages(product.images).map((i) => i.url);
   const active = product.merch_variants.filter((v) => v.is_active);
   const from = merchFromCents(product);
 
@@ -91,7 +92,7 @@ export default async function ApparelProductPage({ params }: { params: Promise<{
             <SectionHeader title="More Merch & Apparel" seeMoreHref="/apparel" />
             <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
               {others.map((p) => {
-                const imgs = Array.isArray(p.images) ? (p.images as string[]) : [];
+                const imgs = normalizeImages(p.images).map((i) => i.url);
                 const f = merchFromCents(p);
                 return (
                   <ProductCard

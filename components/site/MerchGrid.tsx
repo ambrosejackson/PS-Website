@@ -1,6 +1,7 @@
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { ProductCard } from "@/components/site/ProductCard";
 import { merchFromCents, type MerchListing } from "@/lib/data";
+import { normalizeImages } from "@/lib/merchImages";
 
 /**
  * Merch & Apparel section per the reference screenshots: same section pattern
@@ -21,7 +22,7 @@ export function MerchGrid({
         <SectionHeader title="Merch & Apparel" seeMoreHref="/apparel" />
         <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           {products.slice(0, limit).map((p) => {
-            const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+            const images = normalizeImages(p.images).map((i) => i.url);
             const from = merchFromCents(p);
             return (
               <ProductCard

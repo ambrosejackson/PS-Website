@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { MerchListing } from "@/lib/data";
 import { useCart } from "@/lib/cart/context";
+import { normalizeImages } from "@/lib/merchImages";
 
 /**
  * Apparel product detail (client): gallery, size/color variant picker that
@@ -12,7 +13,7 @@ import { useCart } from "@/lib/cart/context";
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 
 export function ApparelDetail({ product }: { product: MerchListing }) {
-  const images = Array.isArray(product.images) ? (product.images as string[]) : [];
+  const images = normalizeImages(product.images).map((i) => i.url);
   const variants = useMemo(() => product.merch_variants.filter((v) => v.is_active), [product.merch_variants]);
   const sizes = useMemo(() => [...new Set(variants.map((v) => v.size).filter((s): s is string => !!s))], [variants]);
   const colors = useMemo(() => [...new Set(variants.map((v) => v.color).filter((c): c is string => !!c))], [variants]);

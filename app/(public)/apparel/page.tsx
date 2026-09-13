@@ -4,6 +4,7 @@ import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
 import { ProductCard } from "@/components/site/ProductCard";
 import { getHeroesForPage, getMerchListings, merchFromCents } from "@/lib/data";
+import { normalizeImages } from "@/lib/merchImages";
 
 export const revalidate = 300;
 export const metadata: Metadata = {
@@ -28,7 +29,7 @@ export default async function ApparelPage() {
         {products.length > 0 ? (
           <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
             {products.map((p) => {
-              const images = Array.isArray(p.images) ? (p.images as string[]) : [];
+              const images = normalizeImages(p.images).map((i) => i.url);
               const from = merchFromCents(p);
               return (
                 <ProductCard
