@@ -8,11 +8,14 @@ import { SectionHeader } from "@/components/site/SectionHeader";
 import { ApparelDetail } from "@/components/site/ApparelDetail";
 import { getHeroesForPage, getMerchListingBySlug, getMerchListings, merchFromCents } from "@/lib/data";
 import { normalizeImages } from "@/lib/merchImages";
+import { isProductSoldOut } from "@/lib/merchStock";
 
 /**
- * /apparel/[slug] — merch detail: gallery, variant picker, qty, Add to Cart
- * (intent only until checkout ships). Metadata + Product/Offer structured data
- * (merch pricing is fine — guardrail #2 covers cannabis products only).
+ * /apparel/[slug] — merch detail: gallery (lib/merchImages), colour + size
+ * picker with the card's stock rules (lib/merchStock), qty, Add to Cart →
+ * cart drawer. `?color=` is read client-side so the page stays static.
+ * Metadata + Product/Offer structured data (merch pricing is fine — guardrail
+ * #2 covers cannabis products only).
  */
 
 export const revalidate = 300;
@@ -65,7 +68,7 @@ export default async function ApparelProductPage({ params }: { params: Promise<{
             lowPrice: money(Math.min(...active.map((v) => v.price_cents))),
             highPrice: money(Math.max(...active.map((v) => v.price_cents))),
             offerCount: active.length,
-            availability: "https://schema.org/PreOrder",
+            availability: isProductSoldOut(active) ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
           },
         }
       : {}),
