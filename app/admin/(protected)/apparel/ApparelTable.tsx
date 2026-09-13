@@ -1,29 +1,51 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CATEGORIES, categoryLabel } from "@/lib/merchCategories";
+import { normalizeImages } from "@/lib/merchImages";
+import { STOCK_BADGE_LABEL } from "@/lib/merchStock";
 import { deleteMerch, reorderMerch, setMerchActive, type MerchRow } from "./actions";
 import { FULFILLMENT_PROVIDERS, HOUSE_BRAND } from "./apparel-config";
 
 export type ApparelListRow = MerchRow & {
+  collectionName: string | null;
   variantCount: number;
   activeVariantCount: number;
   fromCents: number | null;
+  badge: "sold_out" | "low_stock" | null;
 };
 
-const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+export type CollectionFilterOption = { id: string; name: string };
 
-export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
+const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+export function ApparelTable({ rows, collections }: { rows: ApparelListRow[]; collections: CollectionFilterOption[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [order, setOrder] = useState<string[] | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [collectionFilter, setCollectionFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
 
-  const items = order ? [...rows].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)) : rows;
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (collectionFilter === "none" && r.collection_id) return false;
+        if (collectionFilter && collectionFilter !== "none" && r.collection_id !== collectionFilter) return false;
+        if (categoryFilter === "none" && r.category) return false;
+        if (categoryFilter && categoryFilter !== "none" && r.category !== categoryFilter) return false;
+        return true;
+      }),
+    [rows, collectionFilter, categoryFilter],
+  );
+  const filtering = !!collectionFilter || !!categoryFilter;
+  const items = order && !filtering ? [...filtered].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)) : filtered;
 
   function toggle(r: ApparelListRow) {
     setError(null);
@@ -43,7 +65,7 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
     });
   }
   function onDrop(targetId: string) {
-    if (!dragId || dragId === targetId) return;
+    if (filtering || !dragId || dragId === targetId) return;
     const ids = items.map((i) => i.id);
     const from = ids.indexOf(dragId);
     const to = ids.indexOf(targetId);
@@ -65,17 +87,41 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
     );
   }
 
+  const selectCls = "h-8 rounded-md border bg-white px-2 text-xs";
+
   return (
     <div className="space-y-3">
       {error && <p className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">{error}</p>}
-      <p className="text-xs text-neutral-500">Drag rows to reorder (this is the storefront order).</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <select value={collectionFilter} onChange={(e) => setCollectionFilter(e.target.value)} className={selectCls} aria-label="Filter by collection">
+          <option value="">All collections</option>
+          <option value="none">No collection</option>
+          {collections.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={selectCls} aria-label="Filter by category">
+          <option value="">All categories</option>
+          <option value="none">No category</option>
+          {CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-neutral-500">
+          {filtering ? `${items.length} of ${rows.length} · clear filters to drag-reorder` : "Drag rows to reorder (this is the storefront order)."}
+        </p>
+      </div>
       <ul className="divide-y rounded border bg-white">
         {items.map((r) => {
-          const images = Array.isArray(r.images) ? (r.images as string[]) : [];
+          const images = normalizeImages(r.images);
           return (
             <li
               key={r.id}
-              draggable
+              draggable={!filtering}
               onDragStart={() => setDragId(r.id)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => onDrop(r.id)}
@@ -88,7 +134,7 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-neutral-100">
                 {images[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={images[0]} alt="" className="h-full w-full object-cover" />
+                  <img src={images[0].url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[10px] text-neutral-400">no cover</div>
                 )}
@@ -98,10 +144,23 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
                   <Link href={`/admin/apparel/${r.id}`} className="font-medium hover:underline">
                     {r.name}
                   </Link>
+                  {r.badge && (
+                    <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{STOCK_BADGE_LABEL[r.badge]}</span>
+                  )}
                   <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px]">{r.brand ?? HOUSE_BRAND}</span>
                   <span className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-800">
                     {FULFILLMENT_PROVIDERS.includes(r.fulfillment_provider as never) ? r.fulfillment_provider : "self"}
                   </span>
+                  {r.collectionName ? (
+                    <span className="rounded bg-violet-50 px-2 py-0.5 text-[11px] text-violet-800">{r.collectionName}</span>
+                  ) : (
+                    <span className="rounded bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800">no collection</span>
+                  )}
+                  {r.category ? (
+                    <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px]">{categoryLabel(r.category) ?? r.category}</span>
+                  ) : (
+                    <span className="rounded bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800">no category — hidden from tabs</span>
+                  )}
                   {r.activeVariantCount === 0 && (
                     <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] text-amber-800">no active variants — won’t be purchasable</span>
                   )}
@@ -109,6 +168,7 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
                 <p className="mt-0.5 truncate text-xs text-neutral-500">
                   <code>{r.slug}</code> · {r.variantCount} variant{r.variantCount === 1 ? "" : "s"}
                   {r.fromCents != null ? ` · from ${money(r.fromCents)}` : ""} · {images.length} image{images.length === 1 ? "" : "s"}
+                  {` · released ${fmtDate(r.released_at)}`}
                   {r.sort_order != null ? ` · #${r.sort_order}` : ""}
                 </p>
               </div>
@@ -143,6 +203,7 @@ export function ApparelTable({ rows }: { rows: ApparelListRow[] }) {
           );
         })}
       </ul>
+      {items.length === 0 && <p className="rounded border border-dashed p-6 text-center text-sm text-neutral-400">No products match these filters.</p>}
     </div>
   );
 }

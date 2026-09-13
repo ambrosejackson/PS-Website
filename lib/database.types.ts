@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -350,48 +350,231 @@ export type Database = {
           },
         ]
       }
+      merch_collection_banners: {
+        Row: {
+          alt: string | null
+          collection_id: string
+          created_at: string
+          id: string
+          insert_after: number
+          is_active: boolean
+          link_url: string | null
+          media_type: string
+          media_url: string
+          media_url_mobile: string | null
+        }
+        Insert: {
+          alt?: string | null
+          collection_id: string
+          created_at?: string
+          id?: string
+          insert_after: number
+          is_active?: boolean
+          link_url?: string | null
+          media_type?: string
+          media_url: string
+          media_url_mobile?: string | null
+        }
+        Update: {
+          alt?: string | null
+          collection_id?: string
+          created_at?: string
+          id?: string
+          insert_after?: number
+          is_active?: boolean
+          link_url?: string | null
+          media_type?: string
+          media_url?: string
+          media_url_mobile?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merch_collection_banners_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "merch_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merch_collections: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          ends_at: string | null
+          hero_page: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          ends_at?: string | null
+          hero_page?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          ends_at?: string | null
+          hero_page?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          tagline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       merch_products: {
         Row: {
           brand: string | null
+          category: string | null
+          collection_id: string | null
           created_at: string
           description: string | null
           fulfillment_provider: string
           id: string
           images: Json
           is_active: boolean
+          low_stock_threshold: number
           name: string
           provider_product_id: string | null
+          released_at: string
           slug: string
           sort_order: number | null
           updated_at: string
         }
         Insert: {
           brand?: string | null
+          category?: string | null
+          collection_id?: string | null
           created_at?: string
           description?: string | null
           fulfillment_provider?: string
           id?: string
           images?: Json
           is_active?: boolean
+          low_stock_threshold?: number
           name: string
           provider_product_id?: string | null
+          released_at?: string
           slug: string
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
           brand?: string | null
+          category?: string | null
+          collection_id?: string | null
           created_at?: string
           description?: string | null
           fulfillment_provider?: string
           id?: string
           images?: Json
           is_active?: boolean
+          low_stock_threshold?: number
           name?: string
           provider_product_id?: string | null
+          released_at?: string
           slug?: string
           sort_order?: number | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merch_products_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "merch_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merch_settings: {
+        Row: {
+          featured_collection_id: string | null
+          featured_cta_label: string | null
+          hero_cta_label: string | null
+          hero_cta_url: string | null
+          hero_headline: string | null
+          hero_subline: string | null
+          id: boolean
+          new_releases_count: number
+          updated_at: string
+        }
+        Insert: {
+          featured_collection_id?: string | null
+          featured_cta_label?: string | null
+          hero_cta_label?: string | null
+          hero_cta_url?: string | null
+          hero_headline?: string | null
+          hero_subline?: string | null
+          id?: boolean
+          new_releases_count?: number
+          updated_at?: string
+        }
+        Update: {
+          featured_collection_id?: string | null
+          featured_cta_label?: string | null
+          hero_cta_label?: string | null
+          hero_cta_url?: string | null
+          hero_headline?: string | null
+          hero_subline?: string | null
+          id?: boolean
+          new_releases_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merch_settings_featured_collection_id_fkey"
+            columns: ["featured_collection_id"]
+            isOneToOne: false
+            referencedRelation: "merch_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merch_tab_tiles: {
+        Row: {
+          image_url: string
+          is_active: boolean
+          label: string | null
+          sort_order: number
+          tab: string
+        }
+        Insert: {
+          image_url: string
+          is_active?: boolean
+          label?: string | null
+          sort_order?: number
+          tab: string
+        }
+        Update: {
+          image_url?: string
+          is_active?: boolean
+          label?: string | null
+          sort_order?: number
+          tab?: string
         }
         Relationships: []
       }
@@ -405,6 +588,7 @@ export type Database = {
           provider_variant_id: string | null
           size: string | null
           sku: string
+          stock_qty: number | null
           stripe_price_id: string | null
         }
         Insert: {
@@ -416,6 +600,7 @@ export type Database = {
           provider_variant_id?: string | null
           size?: string | null
           sku: string
+          stock_qty?: number | null
           stripe_price_id?: string | null
         }
         Update: {
@@ -427,6 +612,7 @@ export type Database = {
           provider_variant_id?: string | null
           size?: string | null
           sku?: string
+          stock_qty?: number | null
           stripe_price_id?: string | null
         }
         Relationships: [
@@ -863,12 +1049,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -892,11 +1078,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -917,11 +1103,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -942,11 +1128,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -959,11 +1145,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

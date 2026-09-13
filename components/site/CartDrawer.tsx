@@ -1,137 +1,156 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart/context";
-import { centsToFreeShipping, money } from "@/lib/commerce/config";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { money } from "@/lib/commerce/config";
+import { pairWithProducts } from "@/lib/merch/actions";
+import type { ShopProduct } from "@/lib/merch/queries";
+import { normalizeImages, primaryImage } from "@/lib/merchImages";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { CartLines, CartSummary } from "@/components/shop/CartLines";
+import { QuickAddModal } from "@/components/shop/QuickAddModal";
+import { isOneSize, priceLabel, sizeOptions, variantLabel } from "@/components/shop/product-utils";
 
 /**
- * Cart drawer (header cart icon). Lines: image / name / variant / price, qty
- * edit + remove, subtotal, shipping line with the free-shipping nudge, "Taxes
- * calculated at checkout", CHECKOUT → /apparel/checkout.
+ * Cart drawer (D-075): opens on every add and from the header cart icon.
+ * Right-side sheet, ~420 px desktop / full width mobile. Header "Cart" +
+ * close · empty state · line items · "Pair with" (up to 3 products from the
+ * last-added item's collection, not already in the cart) · Items / Subtotal ·
+ * Check Out (→ existing checkout) · View cart (→ /apparel/cart) · disclaimer.
+ * Base UI Sheet provides the focus trap, Escape, aria-modal and scroll lock.
  */
 export function CartDrawer() {
   const cart = useCart();
-  const toFree = centsToFreeShipping(cart.subtotalCents);
+  const close = () => cart.setOpen(false);
+  const last = cart.lines[cart.lines.length - 1];
+  const lastProductId = last?.productId ?? null;
+  const productIdsKey = cart.lines.map((l) => l.productId).join(",");
+  const [pair, setPair] = useState<{ key: string; products: ShopProduct[] }>({ key: "", products: [] });
+
+  useEffect(() => {
+    if (!cart.open || !lastProductId) return;
+    const key = `${lastProductId}|${productIdsKey}`;
+    if (pair.key === key) return;
+    let cancelled = false;
+    pairWithProducts({ productId: lastProductId, excludeProductIds: productIdsKey.split(",").filter(Boolean) })
+      .then((products) => {
+        if (!cancelled) setPair({ key, products });
+      })
+      .catch(() => {
+        if (!cancelled) setPair({ key, products: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cart.open, lastProductId, productIdsKey, pair.key]);
 
   return (
     <Sheet open={cart.open} onOpenChange={cart.setOpen}>
-      <SheetContent side="right" className="flex w-full flex-col sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle className="font-condensed uppercase tracking-wide">
-            Your cart{cart.count > 0 ? ` (${cart.count})` : ""}
+      <SheetContent side="right" className="flex w-full flex-col gap-0 bg-white p-0 motion-reduce:transition-none sm:max-w-[420px]">
+        <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+          <SheetTitle className="font-condensed text-lg font-bold uppercase tracking-wide text-ink">
+            Cart{cart.count > 0 ? ` (${cart.count})` : ""}
           </SheetTitle>
-          <SheetDescription>
-            {cart.count > 0
-              ? "Merch & apparel ship from Chicago. Secure checkout with Apple Pay, Google Pay, cards, Link, Cash App Pay or PayPal."
-              : "Your cart is empty."}
-          </SheetDescription>
-        </SheetHeader>
+          <SheetDescription className="sr-only">Your shopping cart.</SheetDescription>
+        </div>
 
         {cart.lines.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center">
-            <p className="text-sm text-neutral-500">Nothing here yet.</p>
-            <Link
-              href="/apparel"
-              onClick={() => cart.setOpen(false)}
+          <div className="flex flex-1 flex-col items-center justify-center gap-5 px-5 text-center">
+            <p className="font-condensed text-base uppercase tracking-wide text-ink">Your cart is empty</p>
+            <button
+              type="button"
+              onClick={close}
               className="bg-ink px-6 py-3 font-condensed text-xs font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85"
             >
-              Shop Apparel
-            </Link>
+              Continue shopping
+            </button>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y overflow-y-auto px-4">
-              {cart.lines.map((l) => (
-                <li key={l.variantId} className="flex gap-3 py-4">
-                  <Link
-                    href={`/apparel/${l.slug}`}
-                    onClick={() => cart.setOpen(false)}
-                    className="h-20 w-20 shrink-0 overflow-hidden bg-[#f5f5f5]"
-                  >
-                    {l.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={l.image} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </Link>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/apparel/${l.slug}`}
-                      onClick={() => cart.setOpen(false)}
-                      className="block truncate font-condensed text-sm font-semibold uppercase tracking-wide text-ink"
-                    >
-                      {l.name}
-                    </Link>
-                    <p className="text-xs text-neutral-500">{l.variantLabel || l.sku}</p>
-                    <p className="mt-1 text-sm text-ink">{money(l.priceCents)}</p>
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="inline-flex items-center border border-hairline">
-                        <button
-                          type="button"
-                          aria-label="Decrease quantity"
-                          onClick={() => cart.setQty(l.variantId, l.qty - 1)}
-                          className="px-2.5 py-1 text-sm"
-                        >
-                          −
-                        </button>
-                        <span className="min-w-8 text-center text-sm">{l.qty}</span>
-                        <button
-                          type="button"
-                          aria-label="Increase quantity"
-                          onClick={() => cart.setQty(l.variantId, l.qty + 1)}
-                          className="px-2.5 py-1 text-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => cart.remove(l.variantId)}
-                        className="text-xs text-neutral-500 underline hover:text-ink"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  <p className="shrink-0 text-sm font-medium text-ink">{money(l.priceCents * l.qty)}</p>
-                </li>
-              ))}
-            </ul>
-
-            <div className="space-y-2 border-t px-4 py-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Subtotal</span>
-                <span>{money(cart.subtotalCents)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Shipping</span>
-                <span>{cart.shippingCents === 0 ? "FREE" : money(cart.shippingCents)}</span>
-              </div>
-              {toFree > 0 ? (
-                <p className="text-xs text-neutral-500">
-                  You&apos;re <span className="font-semibold text-ink">{money(toFree)}</span> from free shipping.
-                </p>
-              ) : (
-                <p className="text-xs text-green-700">You&apos;ve unlocked free shipping.</p>
+            <div className="flex-1 overflow-y-auto px-5">
+              <CartLines lines={cart.lines} onNavigate={close} compact />
+              {pair.products.length > 0 && (
+                <div className="border-t border-hairline py-4">
+                  <p className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-500">Pair with</p>
+                  <ul className="mt-3 space-y-3">
+                    {pair.products.map((p) => (
+                      <PairRow key={p.id} product={p} onNavigate={close} />
+                    ))}
+                  </ul>
+                </div>
               )}
-              <p className="text-xs text-neutral-400">Taxes calculated at checkout.</p>
+            </div>
+            <div className="border-t border-hairline px-5 py-4">
+              <CartSummary />
               <Link
                 href="/apparel/checkout"
-                onClick={() => cart.setOpen(false)}
-                className="mt-2 block bg-ink py-3.5 text-center font-condensed text-sm font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85"
+                onClick={close}
+                className="mt-4 block bg-ink py-3.5 text-center font-condensed text-sm font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85"
               >
-                Checkout — {money(cart.subtotalCents + cart.shippingCents)}
+                Check out — {money(cart.subtotalCents)}
+              </Link>
+              <Link href="/apparel/cart" onClick={close} className="nav-underline mx-auto mt-3 block w-fit font-condensed text-xs font-semibold uppercase tracking-wide text-ink">
+                View cart
               </Link>
             </div>
           </>
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Compact "Pair with" row: thumb, name, price, `+` (One Size adds directly, else the size modal). */
+function PairRow({ product, onNavigate }: { product: ShopProduct; onNavigate: () => void }) {
+  const cart = useCart();
+  const [open, setOpen] = useState(false);
+  const images = normalizeImages(product.images);
+  const image = primaryImage(images, null);
+  const options = sizeOptions(product, null);
+  const oneSize = isOneSize(options);
+  function add() {
+    if (oneSize && !options[0].soldOut) {
+      const o = options[0];
+      cart.add({
+        variantId: o.variant.id,
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        variantLabel: variantLabel(o.variant),
+        sku: o.variant.sku,
+        priceCents: o.variant.price_cents,
+        image: image?.url ?? null,
+      });
+      return;
+    }
+    setOpen(true);
+  }
+  return (
+    <li className="flex items-center gap-3">
+      <Link href={`/apparel/${product.slug}`} onClick={onNavigate} className="h-14 w-14 shrink-0 overflow-hidden bg-[#f0f0f0]">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image.url} alt="" className="h-full w-full object-cover" />
+        ) : null}
+      </Link>
+      <div className="min-w-0 flex-1">
+        <Link href={`/apparel/${product.slug}`} onClick={onNavigate} className="block truncate font-condensed text-xs font-semibold uppercase tracking-wide text-ink">
+          {product.name}
+        </Link>
+        <p className="text-xs text-neutral-500">{priceLabel(product, null)}</p>
+      </div>
+      {options.length > 0 && !options.every((o) => o.soldOut) && (
+        <button
+          type="button"
+          onClick={add}
+          aria-label={oneSize ? `Add ${product.name} to cart` : `Choose a size for ${product.name}`}
+          className="flex h-[22px] w-[22px] shrink-0 items-center justify-center border border-ink bg-white text-base leading-none text-ink hover:bg-ink hover:text-white"
+        >
+          +
+        </button>
+      )}
+      {!oneSize && <QuickAddModal product={product} color={null} open={open} onOpenChange={setOpen} />}
+    </li>
   );
 }

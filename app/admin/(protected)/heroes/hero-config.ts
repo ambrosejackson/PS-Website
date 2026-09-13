@@ -15,7 +15,14 @@ export const HERO_ALLOWED_MIME: Record<string, "video" | "image"> = {
   "image/webp": "image",
 };
 
-/** Pages with a hero, in the admin's display order (content_heroes.page values). */
+export type HeroPageOption = { page: string; label: string };
+
+/**
+ * Static pages with a hero, in the admin's display order (content_heroes.page
+ * values — always leading-slash routes). Apparel COLLECTION pages
+ * (`/apparel/collections/{slug}`) are dynamic: they come from
+ * `merch_collections.hero_page` and are merged in with `heroPagesWith()`.
+ */
 export const HERO_PAGES = [
   { page: "/", label: "Landing" },
   { page: "/outfitters", label: "Outfitters" },
@@ -23,7 +30,8 @@ export const HERO_PAGES = [
   { page: "/savagesquadstrains", label: "Savage Squad Strains" },
   { page: "/terpkings", label: "TerpKings (video sits under the CRT layers)" },
   { page: "/products", label: "Products" },
-  { page: "/apparel", label: "Apparel" },
+  { page: "/apparel", label: "Apparel (shop home)" },
+  { page: "/apparel/shop", label: "Apparel — Shop all grid" },
   { page: "/about", label: "About" },
   { page: "/contact", label: "Contact" },
   { page: "/rewards", label: "Rewards" },
@@ -31,8 +39,32 @@ export const HERO_PAGES = [
   { page: "/store-locator", label: "Store Locator" },
 ] as const;
 
+/** `/apparel/collections/{slug}` → slug, else null. Mirrors merch_collections.hero_page. */
+export function collectionSlugFromHeroPage(page: string): string | null {
+  const m = /^\/apparel\/collections\/([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(page);
+  return m ? m[1] : null;
+}
+
+/** Static pages + collection pages, the latter inserted right after the shop-all grid. */
+export function heroPagesWith(collectionPages: ReadonlyArray<HeroPageOption>): HeroPageOption[] {
+  const out: HeroPageOption[] = [];
+  for (const p of HERO_PAGES) {
+    out.push({ page: p.page, label: p.label });
+    if (p.page === "/apparel/shop") out.push(...collectionPages);
+  }
+  return out;
+}
+
 export function heroPageLabel(page: string): string {
-  return HERO_PAGES.find((p) => p.page === page)?.label ?? page;
+  const known = HERO_PAGES.find((p) => p.page === page)?.label;
+  if (known) return known;
+  const slug = collectionSlugFromHeroPage(page);
+  return slug ? `Apparel collection — ${slug}` : page;
+}
+
+/** DOM id for a page's group on /admin/heroes (deep links from other admin sections). */
+export function heroAnchorId(page: string): string {
+  return `hero${page.replace(/[^a-z0-9]+/gi, "_")}`;
 }
 
 /**

@@ -3,14 +3,17 @@ import { revalidatePath } from "next/cache";
 import { BRANDS, brandByName, brandBySlug } from "@/lib/brands";
 
 /**
- * Which public paths an admin mutation invalidates (D-038..D-044 session):
- *   products → /, /products, /products/[brand]/[slug], the brand page
- *   apparel  → /, /apparel, /apparel/[slug]
- *   heroes   → its page
- *   banners  → /
- *   social   → /   (FOLLOW US strip, D-064)
- *   blog     → /news, /news/[slug]
- *   messages/contact → none
+ * Which public paths an admin mutation invalidates (D-038..D-044 session,
+ * apparel shop rebuild D-071..D-081):
+ *   products           → /, /products, /products/[brand]/[slug], the brand page
+ *   apparel            → /, /apparel, /apparel/shop, /apparel/[slug]
+ *   apparel-home       → /apparel (merch_settings / tiles)
+ *   apparel-collection → /apparel, /apparel/shop, /apparel/collections/[slug]
+ *   heroes             → its page (hero pages are routes, incl. /apparel/collections/[slug])
+ *   banners            → /
+ *   social             → / + every brand page (FOLLOW US strip, D-064)
+ *   blog               → /news, /news/[slug]
+ *   messages/contact   → none
  * Every admin mutation calls `revalidateFor(...)` directly (same process, no
  * token round-trip); /api/revalidate stays for out-of-process callers (the
  * PSM publish job) and only accepts paths produced by these rules.
@@ -19,6 +22,8 @@ import { BRANDS, brandByName, brandBySlug } from "@/lib/brands";
 export type RevalidateTarget =
   | { kind: "products"; brand?: string; slug?: string }
   | { kind: "apparel"; slug?: string }
+  | { kind: "apparel-home" }
+  | { kind: "apparel-collection"; slug?: string }
   | { kind: "heroes"; page: string }
   | { kind: "banners" }
   | { kind: "social" }
@@ -47,7 +52,16 @@ export function pathsFor(target: RevalidateTarget): string[] {
     case "apparel":
       out.add("/");
       out.add("/apparel");
+      out.add("/apparel/shop");
       if (target.slug) out.add(`/apparel/${target.slug}`);
+      break;
+    case "apparel-home":
+      out.add("/apparel");
+      break;
+    case "apparel-collection":
+      out.add("/apparel");
+      out.add("/apparel/shop");
+      if (target.slug) out.add(`/apparel/collections/${target.slug}`);
       break;
     case "heroes":
       out.add(normalizePage(target.page));
@@ -89,6 +103,7 @@ const STATIC_PATHS = new Set([
   "/",
   "/products",
   "/apparel",
+  "/apparel/shop",
   "/news",
   "/about",
   "/contact",
@@ -103,6 +118,7 @@ const SLUG = "[a-z0-9-]{1,120}";
 const DYNAMIC_PATHS = [
   new RegExp(`^/products/(outfitters|terpkings|higherself|savagesquadstrains)/${SLUG}$`),
   new RegExp(`^/apparel/${SLUG}$`),
+  new RegExp(`^/apparel/collections/${SLUG}$`),
   new RegExp(`^/news/${SLUG}$`),
 ];
 

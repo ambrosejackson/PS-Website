@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { deleteUploadedObject } from "@/lib/admin/upload-actions";
 import { revalidateFor } from "@/lib/revalidate";
-import { HERO_PAGES, NAV_TARGETS, type ActionResult } from "./hero-config";
+import { HERO_PAGES, NAV_TARGETS, collectionSlugFromHeroPage, type ActionResult } from "./hero-config";
 
 /**
  * /admin/heroes server actions (D-044: heroes admin-managed on every public
@@ -26,6 +26,15 @@ function normalizePage(page: string): string {
   const p = page.trim();
   const withSlash = p.startsWith("/") ? p : `/${p}`;
   return withSlash.length > 1 ? withSlash.replace(/\/+$/, "") : withSlash;
+}
+
+/** Static HERO_PAGES, or an apparel collection page whose slug exists (D-071). */
+async function isKnownHeroPage(page: string): Promise<boolean> {
+  if (HERO_PAGES.some((p) => p.page === page)) return true;
+  const slug = collectionSlugFromHeroPage(page);
+  if (!slug) return false;
+  const { data } = await createAdminClient().from("merch_collections").select("id").eq("slug", slug).limit(1);
+  return !!data && data.length > 0;
 }
 
 function normalizeNavTarget(page: string, raw: string | null | undefined): string | null {
@@ -49,7 +58,7 @@ export async function saveHeroRow(input: {
 }): Promise<ActionResult<{ id: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const page = normalizePage(input.page);
-  if (!HERO_PAGES.some((p) => p.page === page)) return { ok: false, error: `Unknown page ${page}.` };
+  if (!(await isKnownHeroPage(page))) return { ok: false, error: `Unknown page ${page}.` };
   if (!/^https?:\/\//.test(input.mediaUrl)) return { ok: false, error: "Upload the media first." };
   let admin;
   try {

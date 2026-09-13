@@ -792,3 +792,137 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   `social:cta:ig:{profile}:{strip|lightbox}`. Footer / hamburger menu still
   show the single Private Stock icon (not asked; easy to extend).
 
+## 2026-09-13 — Apparel shop rebuild (Jeeter-structure), Part A
+
+Numbering note: the social-strip decisions D-063..D-070 (2026-09-02) landed on
+`main` while this work was on `dev`; the apparel decisions were first logged as
+D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merged.
+
+- **D-071 — Three apparel page types.** `/apparel` = showcase home, `/apparel/shop`
+  = shop-all grid, `/apparel/collections/{slug}` = collection grid, `/apparel/{slug}`
+  stays the PDP. Product slugs `shop`, `collections`, `cart`, `checkout`, `order` are
+  reserved — rejected in admin AND by the DB check
+  `merch_products_slug_not_reserved` (migration 0011).
+
+- **D-072 — Category is a fine-grained text column grouped into tabs by config.**
+  Nine values on `merch_products.category`, seven sub-nav tabs, mapped in
+  `lib/merchCategories.ts` (same pattern as `lib/brands.ts`). No DB enum: the
+  admin select and that file are the validation. Sub-nav filters with `?tab=`;
+  brand filter = chips.
+
+- **D-073 — Colour stays a variant dimension.** One card per product; swatches =
+  distinct active colours; hover previews, click commits (image, ring, size-panel
+  filter); "See All" past 4 colours; `?color=` carries to the PDP. Not sibling
+  products. Images are tagged per colour/role through the jsonb contract in
+  `docs/MERCH-MEDIA.md` and read only via `lib/merchImages.ts`.
+
+- **D-074 — Stock is optional per variant.** `merch_variants.stock_qty` null =
+  made to order (Printify/Tapstitch), never badged; a number = tracked,
+  admin-entered in v1. Threshold per product (`low_stock_threshold`, default 3).
+
+- **D-075 — Cart drawer opens on add.** `/apparel/cart` stays as the full page
+  ("View cart"); the drawer's Check Out goes wherever the cart page's does.
+
+- **D-076 — No Add to Cart from a card without a size.** The card button opens the
+  same size picker as `+` unless the product is One Size (adds directly).
+
+- **D-077 — Reduced motion.** Crossfade, sheet/modal slide and carousel animation
+  become instant under `prefers-reduced-motion`; nothing else changes.
+
+- **D-078 — Interstitial banners are collection-scoped.** `merch_collection_banners`
+  keyed by collection + `insert_after`. `/apparel/shop` uses the banners of the
+  reserved collection row `slug='all'` (editable, never deletable, never in the
+  carousel).
+
+- **D-079 — Home-page content is a singleton settings row.** `merch_settings`
+  (one row, `id = true`): hero headline/subline/CTA, featured collection + CTA
+  label, New Releases count. Hero MEDIA still comes from `content_heroes`
+  (`page='/apparel'`) so `/admin/heroes` keeps working. Seed: headline "Fall 2026
+  Drop", subline "Private Stock Apparel", CTA "View more" →
+  `/apparel/collections/fall-2026`, featured = `essentials`.
+
+- **D-080 — New Releases = newest by `released_at`.** Admin-editable, defaults to
+  `created_at` (backfilled), so a re-import or edit never reshuffles the row.
+
+- **Launch collections (Ambrose, 2026-09-13).** `Private Stock Essentials`
+  (`essentials`) — every existing product assigned at migration time so the home
+  page is populated on the first preview; `Fall 2026 Drop` (`fall-2026`) —
+  created empty. Both get a placeholder `content_heroes` default row.
+
+- **Hero page keys are routes, not `apparel:{slug}`.** `content_heroes.page` is a
+  leading-slash route everywhere (`getHeroesForPage`, `revalidateFor`, the admin
+  storage folder = `page.slice(1)`), so `merch_collections.hero_page` is a
+  generated column: `/apparel/shop` for `all`, else
+  `/apparel/collections/{slug}`. The brief's `apparel:{slug}` draft would have
+  broken all three consumers.
+
+- **`images` jsonb left as-is in the migration.** Production on `main` still
+  reads it as `string[]`; converting rows would have broken the live `/apparel`.
+  `lib/merchImages.ts` normalises both shapes forever.
+
+- **D-081 — Reference measurements supersede the brief's placement guesses.**
+  The brief's card/panel geometry was written from memory; jeeterapparel.com was
+  captured and measured at 1440/390 on 2026-09-13
+  (`docs/reference/jeeterapparel/2026-09-13/`). Ambrose: build to the REFERENCE
+  for every row except the hero —
+  card image 1:1, 4-up with the measured 13 px gutter; `+` quick-add bottom-left
+  and always visible (desktop and mobile); `Low Stock` badge bottom-right; size
+  picker = centered modal on desktop / bottom sheet on mobile, keeping the brief's
+  interior rules (SIZE_ORDER, sold-out pills disabled, One Size adds directly,
+  focus handling, Escape closes); desktop card hover swaps the name/price row to
+  the size select + Add to Cart, with an image crossfade ONLY when the product has
+  an image tagged `role='hover'`; collection title overlaid bottom-left on the
+  banner with the tagline centered below; category tiles two side-by-side, near
+  square; interstitials 2:1 desktop / ~2:3 mobile. **Hero: our existing hero
+  system and ratios stay unchanged — the reference's 3.2:1 is NOT adopted.**
+  Ratios recorded in `docs/MERCH-MEDIA.md`.
+
+- **Migration history back-filled.** Three migrations applied through the
+  Supabase MCP on 2026-09-02/09-09 (social strip) existed only in the remote
+  history; their recorded statements are now saved verbatim as
+  `supabase/migrations/2026…_*.sql` so `supabase db push` sees a consistent
+  history. Going forward every schema change lands as a tracked file first.
+
+## 2026-09-13 — Apparel shop rebuild, Parts B + C (admin + storefront)
+
+- **Part B shipped in three commits** (Home tab, Collections tab, product form
+  + variants). Hero pages for collections are listed and validated
+  dynamically from `merch_collections.hero_page` — never hard-coded — so a
+  collection created in admin appears in Heroes without a code change.
+  `/apparel/shop` and `/apparel` are static entries. Migration 20260913160000
+  seeded the missing `/apparel` default hero row (placeholder media).
+
+- **Part C shipped in the order Ambrose set:** (1) queries + card + quick-add
+  modal/sheet, (2) cart drawer, (3) `/apparel/shop`, (4)
+  `/apparel/collections/[slug]`, (5) `/apparel` home, then (6) the brief's
+  §6.8 PDP touch-ups. Built to the reference measurements (D-081); the hero
+  system is untouched.
+
+- **Category rule (Ambrose, 2026-09-13).** Products with no category still
+  appear in Shop all, New Releases and their collection; they drop out only
+  under a `?tab=` filter (the tab expands to a category IN-list).
+
+- **Landing page untouched.** The landing "Merch & Apparel" section and
+  `components/site/ProductCard` are unchanged; the shop card is
+  `components/shop/ProductCard`.
+
+- **`/apparel/cart` added.** D-075 said the full cart page "remains" — it
+  never existed (only checkout and order). It now exists with the checkout
+  page's chrome and shares `CartLines` / `CartSummary` with the drawer. The
+  header cart icon already opened the drawer, so it was left as is.
+
+- **Grid pages render per request.** `/apparel/shop` and
+  `/apparel/collections/[slug]` read `?tab=`, `?brand=`, `?page=` from the
+  URL, which makes them dynamic in Next; the brief's "ISR 300" applies to
+  `/apparel` (no search params) and the PDP (which reads `?color=` on the
+  client to stay static). Admin saves still call `revalidatePath` for all of
+  them.
+
+- **`next/image` allowed for the website Supabase storage host** via
+  `images.remotePatterns` in `next.config.ts`; every shop image declares
+  `sizes`. Legacy `<img>` usage elsewhere is unchanged.
+
+- **Quick-add on a card.** `+`, the Add to cart text button and the hover
+  row's outlined button all funnel through one handler: One Size adds
+  directly; a size chosen in the hover row's select adds directly; otherwise
+  the size modal (desktop) / bottom sheet (mobile) opens.
