@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, ShoppingBag, User } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
 import { FullscreenMenu } from "@/components/site/FullscreenMenu";
 import { BrandsNav } from "@/components/site/BrandsNav";
 import { useHeroChrome } from "@/components/site/hero-context";
 import { useCart } from "@/lib/cart/context";
+import { brandBySlug } from "@/lib/brands";
 import {
   barClass,
   clusterClass,
@@ -52,6 +54,10 @@ export function Header({
   const [menuOpen, setMenuOpen] = useState(false);
   const { theme, navEnter, navLeave } = useHeroChrome();
   const cart = useCart();
+  const pathname = usePathname();
+  // On a brand landing page (/terpkings etc.) STORE LOCATOR deep-links to the
+  // locator pre-filtered for that brand (?brand=<slug>, same as BUY NOW).
+  const pageBrand = brandBySlug(pathname.split("/")[1] ?? "");
 
   const overlay = variant === "overlay";
   // Overlay only: "light" asset (bright top band) → dark text; "dark" → white.
@@ -94,10 +100,14 @@ export function Header({
             />
             {NAV_ITEMS.map((item) => {
               const itemClass = `nav-underline hidden font-condensed font-semibold uppercase md:inline-block ${navTextClass(variant)}`;
+              const href =
+                item.href === "/store-locator" && pageBrand
+                  ? `/store-locator?brand=${pageBrand.slug}`
+                  : item.href;
               return (
                 <Link
                   key={item.label}
-                  href={item.href}
+                  href={href}
                   className={itemClass}
                   onMouseEnter={() => navEnter(item.label)}
                   onMouseLeave={navLeave}

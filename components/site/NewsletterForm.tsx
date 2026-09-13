@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { markSubscribed } from "@/lib/newsletter-suppression";
 
 /**
  * Newsletter signup. Sends the exact page path — the server derives the
@@ -48,6 +49,8 @@ export function NewsletterForm({
         return;
       }
       setState({ status: "done", code: body.discountCode ?? null });
+      // Any successful signup stops the 15%-merch popup for good.
+      markSubscribed();
       onSuccess?.(body.discountCode ?? null);
     } catch {
       setState({ status: "error", message: "Network error — please try again." });

@@ -38,7 +38,7 @@ const CATEGORY_CARDS = [
   {
     title: "Pre-rolls",
     description: "Perfectly portioned pre-rolls for balanced consumption",
-    image: null, // reference card uses an icon circle, not a photo
+    image: "/brand-pages/higherself/prerolls-category.webp",
     href: "/products?brand=Higher+Self&category=Pre-Rolls",
   },
   {

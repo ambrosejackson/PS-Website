@@ -1,0 +1,56 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+import { SocialUploader } from "./SocialUploader";
+import { SocialImagesTable } from "./SocialImagesTable";
+import { SOCIAL_MAX_ACTIVE, SOCIAL_SOFT_MIN } from "./config";
+import type { SocialImageRow } from "./actions";
+
+export const dynamic = "force-dynamic";
+
+/** /admin/social-media — tiles (image / muted video) for the landing-page FOLLOW US strip (D-064, D-068). */
+export default async function AdminSocialMediaPage() {
+  let rows: SocialImageRow[] = [];
+  let loadError: string | null = null;
+  try {
+    const { data, error } = await createAdminClient()
+      .from("content_social_images")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    if (error) loadError = error.message;
+    else rows = data ?? [];
+  } catch (e) {
+    loadError = e instanceof Error ? e.message : "Could not load images.";
+  }
+  const active = rows.filter((r) => r.is_active).length;
+  const activeCounts: Record<string, number> = {};
+  for (const r of rows) {
+    if (!r.is_active) continue;
+    const key = r.brand ?? "";
+    activeCounts[key] = (activeCounts[key] ?? 0) + 1;
+  }
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Social Media</h1>
+        <p className="mt-2 max-w-prose text-sm text-neutral-600">
+          Tiles for the FOLLOW US strip on the landing page and each brand page&apos;s feed — images or short MP4
+          clips (≤ 15 s, muted, looped). They scroll continuously in this order. Give each tile its Instagram post
+          link and clicking it opens the post; landing tiles without a link open a larger view instead. Keep{" "}
+          {SOCIAL_SOFT_MIN}–{SOCIAL_MAX_ACTIVE} active per pool.
+        </p>
+        <p className={`mt-2 text-sm font-semibold ${active < SOCIAL_SOFT_MIN ? "text-amber-700" : "text-neutral-700"}`}>
+          {active} of {SOCIAL_MAX_ACTIVE} active
+          {active === 0 ? " — site is showing placeholders" : active < SOCIAL_SOFT_MIN ? ` — under ${SOCIAL_SOFT_MIN}, the strip will repeat visibly` : ""}
+        </p>
+      </div>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Add tiles</h2>
+        <SocialUploader activeCounts={activeCounts} />
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Strip tiles</h2>
+        {loadError ? <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p> : <SocialImagesTable rows={rows} />}
+      </section>
+    </div>
+  );
+}

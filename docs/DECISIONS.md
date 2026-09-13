@@ -371,7 +371,7 @@ Ambrose's correction, which supersedes those entries:
   Gear / Merch) · format ← "Brand Category" title-cased (Vape: + "Product
   Type") · weight ← pack-size columns per tab (Pre-Roll "5pk · 1.75g"; Vape
   non-standard size or size parsed from the name) · strain_type ← "Lineage" ·
-  image_url ← Drive link → `https://drive.google.com/uc?export=view&id=<ID>`
+  image_url ← Drive link → `https://lh3.googleusercontent.com/d/<ID>=w1200` (was `uc?export=view`; see D-063)
   (blank → image_missing; junk → quarantined) · thc_range untouched ·
   description + terp_category (TerpKings `[Fruit]` tag) seeded ONCE on insert,
   admin-owned after · "Jane Use" status ignored.
@@ -682,6 +682,115 @@ Decisions D1–D6 arrived pre-made in the task brief; recorded here as D-050..D-
   an *empty* locator rather than the real one. The gate is now
   `availabilityVisible() = showRealAvailability()`, and the comment in
   `showRealAvailability.ts` is accurate again.
+
+## Sheet-sync image URLs (2026-09-02) — D-063
+
+- **D-063 — Drive images are stored as `lh3.googleusercontent.com/d/<ID>=w1200`,
+  not `drive.google.com/uc?export=view&id=<ID>`.** Every synced image was blank on
+  the site and in admin. The DB was fine (217 rows had a URL); the `uc?export=view`
+  endpoint returns the PNG to a bare GET but **403 text/html** to a browser `<img>`
+  fetch (`Sec-Fetch-Dest: image` + Referer) — Google has blocked hotlinking there
+  since 2024. `lh3.googleusercontent.com/d/<ID>` (what Drive's own thumbnail
+  redirect resolves to) serves inline under the same request; `=w1200` returns a
+  resized copy instead of the ~1 MB originals. `normalizeImage()` now emits
+  `driveImageUrl(id)`; lh3 links pasted into the sheet are normalized too.
+  `image_url` is sheet-owned, so one SYNC FROM SHEET rewrites all rows.
+  Manual products and `image_missing` rows (50, blank in the sheet) unaffected.
+  Caveat: lh3 is also undocumented. Durable fix queued for a PRD: copy each image
+  into website Supabase Storage at sync time and store that URL.
+
+## Social Media strip (2026-09-02) — D-064
+
+- **D-064 — FOLLOW US strip images are admin-managed at `/admin/social-media`;
+  tiles open a lightbox, never a post.** New `content_social_images` table +
+  `social` bucket (migration 0011, additive). Admin uploads 6–50 images at once
+  (`SocialUploader`, multi-file, webp conversion as elsewhere), drags to
+  reorder, shows/hides, deletes. Order is always the admin order — no
+  randomization (Ambrose). Hard cap 50 active; soft warning under 6.
+  `FollowUs` now takes `images` from `getSocialImages()` and falls back to the
+  four placeholder PNGs when none are active. `SocialStrip` renders the set
+  exactly twice with the −50% keyframe (the old ×3 jumped at the loop seam) and
+  scales the duration by count (5 s/tile) so speed is constant. Clicking a tile
+  opens a Dialog (≈80 % viewport, white card) with prev/next + arrow keys and
+  the same IG/FB pills underneath — that repeat is the point of the feature.
+  "Not downloadable" is deterrence only (context menu / drag / iOS long-press
+  suppressed, transparent layer over the image, `.ps-nosave`); screenshots
+  still work and Ambrose accepted that. Tracking via existing `data-track`
+  clicks: `social:tile`, `social:cta:{ig|fb}:{strip|lightbox}` — consent-gated
+  like every web_event. Section heading on the public page stays "Follow Us".
+
+## Instagram only (2026-09-02) — D-065
+
+- **D-065 — Facebook is gone from the site; Instagram is `https://www.instagram.com/privatestock_co/`.
+  REVISES A-09 (IG + FB pills).** Ambrose removed Facebook from FOLLOW US and,
+  when asked, from the Footer and hamburger menu too. The old handle
+  `/privatestockcannabis` was wrong everywhere. URL now lives once in
+  `lib/social.ts`; `SocialButtons`, `Footer` and `FullscreenMenu` import it.
+  `FacebookIcon` stays in `social-icons.tsx` (unused) in case it returns.
+
+## Auto-resize oversize images (2026-09-02) — D-066
+
+- **D-066 — Admin image uploads never fail on size; the browser shrinks them.**
+  The 10 MB bucket cap was enforced on the ORIGINAL file before the webp
+  re-encode ever ran, so iPhone photos bounced at `/admin/social-media`. New
+  `shrinkImage(file, {maxBytes, maxEdge})` in `lib/admin/upload.tsx`: decode →
+  downscale to `maxEdge` → webp q80 → step quality to 0.5, then dimensions ×0.8,
+  until ≤ cap (JPEG fallback where webp can't be encoded). Selection checks MIME
+  only; size is validated after shrinking. Wired into `AdminUploader` (all
+  buckets, maxEdge 4000) and `SocialUploader` (maxEdge 2000 — tiles are 208 px,
+  lightbox ≈ 800 px). Verified headless on a 49 MB noise PNG → 6.9 MB.
+  HEIC is still rejected (browsers can't decode it) — export as JPG first.
+
+## Bigger FOLLOW US tiles (2026-09-02) — D-067
+
+- **D-067 — Strip tiles are `calc(100vw − 3rem)` wide on mobile (one per screen,
+  24 px each side, next tile peeking) and 600 px on desktop, still 4:5.** Was
+  160 / 208 px. Marquee timing 7 s per tile. Ambrose's call from the phone view.
+
+## Social tiles link to posts, video tiles (2026-09-02) — D-068
+
+- **D-068 — Strip tiles may be images OR ≤ 15 s muted MP4 clips, and each may
+  link to its Instagram post. REVISES D-064 ("tiles never link to posts").**
+  Ambrose wanted to point at real posts, including collabs he doesn't hold the
+  files for. Pulling media from Instagram was rejected on evidence: the official
+  API returns a collab post only through the ORIGINAL publisher's media endpoint
+  (Meta forum thread 1011039596753699; Socialinsider help doc), so it can't
+  supply the collab media anyway; the embed iframe can't be cropped/autoplayed;
+  oEmbed is thumbnail-only. Decision: download the image/MP4 (Instagram's own
+  ⋯ → Download on Reels, or from the collaborator), upload it, paste the post
+  link. Migration 0012 adds `link_url`, `media_type` (image|video, checked),
+  `poster_url`; `social` bucket takes `video/mp4` ≤ 20 MB. Uploader probes MP4
+  duration client-side (cap 15 s, no transcoding) and captures a webp poster at
+  0.5 s. Strip: `<video muted loop playsInline>` plays only while ≥ 25 % in
+  view (IntersectionObserver). A tile with a link opens the post in a new tab
+  (`social:tile:post`); without one it opens the lightbox (`social:tile:lightbox`).
+  Link validated to `instagram.com/{p|reel|reels|tv}/…`. Desktop tiles 600 px
+  (folds D-067's 480 → 600).
+
+## Auto-fit strip videos in the browser (2026-09-02) — D-069
+
+- **D-069 — Over-limit MP4s are trimmed to 15 s, muted, scaled to ≤ 1080 px and
+  re-encoded in the browser instead of being rejected.** D-068's "no
+  transcoding" bounced the first real Reel (> 20 MB). `lib/admin/video-fit.ts`
+  uses WebCodecs through `mediabunny` (successor of the deprecated mp4-muxer;
+  demux + decode + encode + mux, lazy-imported so the admin bundle stays small):
+  `Conversion` with `trim {0, 15}`, `audio.discard`, `fit: contain`, bitrate =
+  (20 MB × 0.8 × 8) / seconds clamped 0.8–6 Mbps → always under the cap. H.264
+  when the browser can encode it, VP9-in-MP4 otherwise; a browser with neither
+  (old Safari/Firefox) gets a clear "use Chrome or trim first" error. Clips
+  already within limits pass through untouched. ffmpeg.wasm rejected (30 MB
+  download, minutes per clip). Fixed alongside: the uploader's `patch()` matched
+  by object identity and missed every update after the first — now by id.
+
+## FOLLOW US pills per brand (2026-09-02) — D-070
+
+- **D-070 — Five Instagram pills, not one: Private Stock (`privatestock_co`),
+  Outfitters (`outfitters_original`), Higher Self (`findhigherself`), TerpKings
+  (`terpkingsofficial`), Savage Squad Strains (`savagesquadstrains`).** Handles
+  live in `lib/social.ts` (`INSTAGRAM_PROFILES`); `SocialButtons` maps over
+  them, wraps on mobile, and the lightbox shows the same row. Tracking key is
+  `social:cta:ig:{profile}:{strip|lightbox}`. Footer / hamburger menu still
+  show the single Private Stock icon (not asked; easy to extend).
 
 ## 2026-09-13 — Apparel shop rebuild (Jeeter-structure), Part A
 

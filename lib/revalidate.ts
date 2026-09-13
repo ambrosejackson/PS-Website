@@ -1,6 +1,6 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
-import { brandByName, brandBySlug } from "@/lib/brands";
+import { BRANDS, brandByName, brandBySlug } from "@/lib/brands";
 
 /**
  * Which public paths an admin mutation invalidates (D-038..D-044 session,
@@ -11,6 +11,7 @@ import { brandByName, brandBySlug } from "@/lib/brands";
  *   apparel-collection → /apparel, /apparel/shop, /apparel/collections/[slug]
  *   heroes             → its page (hero pages are routes, incl. /apparel/collections/[slug])
  *   banners            → /
+ *   social             → / + every brand page (FOLLOW US strip, D-064)
  *   blog               → /news, /news/[slug]
  *   messages/contact   → none
  * Every admin mutation calls `revalidateFor(...)` directly (same process, no
@@ -25,6 +26,7 @@ export type RevalidateTarget =
   | { kind: "apparel-collection"; slug?: string }
   | { kind: "heroes"; page: string }
   | { kind: "banners" }
+  | { kind: "social" }
   | { kind: "blog"; slug?: string }
   | { kind: "messages" };
 
@@ -65,7 +67,10 @@ export function pathsFor(target: RevalidateTarget): string[] {
       out.add(normalizePage(target.page));
       break;
     case "banners":
+    case "social":
+      // Landing strip + every brand page: tiles are pooled per brand (0013).
       out.add("/");
+      for (const b of BRANDS) out.add(`/${b.slug}`);
       break;
     case "blog":
       out.add("/news");

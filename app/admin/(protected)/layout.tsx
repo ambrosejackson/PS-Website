@@ -11,6 +11,7 @@ const SECTIONS = [
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/heroes", label: "Heroes" },
   { href: "/admin/banners", label: "Banners" },
+  { href: "/admin/social-media", label: "Social Media" },
   { href: "/admin/blog", label: "Blog" },
   { href: "/admin/subscribers", label: "Subscribers" },
   { href: "/admin/messages", label: "Messages" },

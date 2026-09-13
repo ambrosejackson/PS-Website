@@ -117,7 +117,17 @@ const DRIVE_ID_RES = [
   /drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,})/,
   /drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([A-Za-z0-9_-]{10,})/,
   /drive\.google\.com\/thumbnail\?(?:[^#]*&)?id=([A-Za-z0-9_-]{10,})/,
+  /lh3\.googleusercontent\.com\/d\/([A-Za-z0-9_-]{10,})/,
 ];
+
+/**
+ * Drive file ID → browser-loadable image URL (D-063). `drive.google.com/uc?
+ * export=view` answers a bare GET with the image but returns 403 text/html to
+ * an <img> fetch (Sec-Fetch-Dest: image + Referer) — Google blocks hotlinking
+ * there. The lh3 CDN form serves inline; `=w1200` asks for a resized copy
+ * instead of the multi-MB original.
+ */
+export const driveImageUrl = (id: string) => `https://lh3.googleusercontent.com/d/${id}=w1200`;
 
 /** Returns {url} for a usable image URL, {missing} for blank, {bad} for junk. */
 export function normalizeImage(raw: string): { url: string } | { missing: true } | { bad: string } {
@@ -125,7 +135,7 @@ export function normalizeImage(raw: string): { url: string } | { missing: true }
   if (!s) return { missing: true };
   for (const re of DRIVE_ID_RES) {
     const m = s.match(re);
-    if (m) return { url: `https://drive.google.com/uc?export=view&id=${m[1]}` };
+    if (m) return { url: driveImageUrl(m[1]) };
   }
   try {
     const u = new URL(s);

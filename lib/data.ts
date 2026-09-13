@@ -6,6 +6,7 @@ import { showRealAvailability } from "@/lib/showRealAvailability";
 type Tables = Database["public"]["Tables"];
 export type HeroAsset = Tables["content_heroes"]["Row"];
 export type BannerSlide = Tables["content_banners"]["Row"];
+export type SocialImage = Tables["content_social_images"]["Row"];
 export type BlogPost = Tables["blog_posts"]["Row"];
 export type CatalogProduct = Tables["catalog_products"]["Row"];
 export type MerchProduct = Tables["merch_products"]["Row"];
@@ -70,6 +71,21 @@ export async function getBanners(): Promise<BannerSlide[]> {
     .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
     .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
     .order("sort_order", { ascending: true });
+  if (error || !data) return [];
+  return data;
+}
+
+/**
+ * Active social tiles in admin order (D-064). brand null (default) = the
+ * landing-page FOLLOW US strip; a lib/brands.ts slug = that brand page's feed
+ * (0013). Empty → components fall back to their placeholders.
+ */
+export async function getSocialImages(brand: string | null = null): Promise<SocialImage[]> {
+  const supabase = createPublicClient();
+  if (!supabase) return [];
+  let query = supabase.from("content_social_images").select("*").eq("is_active", true);
+  query = brand === null ? query.is("brand", null) : query.eq("brand", brand);
+  const { data, error } = await query.order("sort_order", { ascending: true });
   if (error || !data) return [];
   return data;
 }

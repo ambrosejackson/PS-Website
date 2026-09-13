@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { markSubscribed } from "@/lib/newsletter-suppression";
 import { usePathname } from "next/navigation";
 import { SIGNUP } from "@/lib/terpkings-content";
 
@@ -55,9 +56,8 @@ export function TKSignupForm({
       }
       const code = body.discountCode ?? null;
       setState({ status: "done", code });
-      try {
-        localStorage.setItem("ps_subscribed", "1");
-      } catch {}
+      // Any successful signup stops the 15%-merch popup for good.
+      markSubscribed();
       onSuccess?.(code);
     } catch {
       setState({ status: "error", message: "> ERROR: NETWORK FAULT — RETRY." });

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Footer } from "@/components/site/Footer";
 import { TKHero } from "@/components/brand/terpkings/TKHero";
 import { TKArsenal } from "@/components/brand/terpkings/TKArsenal";
-import { TKCatalog } from "@/components/brand/terpkings/TKCatalog";
 import { TKComic } from "@/components/brand/terpkings/TKComic";
 import { TKDossiers } from "@/components/brand/terpkings/TKDossiers";
 import { TKScanner } from "@/components/brand/terpkings/TKScanner";
@@ -11,7 +10,7 @@ import { TKLocator } from "@/components/brand/terpkings/TKLocator";
 import { TKSignalFeed } from "@/components/brand/terpkings/TKSignalFeed";
 import { TKSignup } from "@/components/brand/terpkings/TKSignup";
 import { vt323 } from "@/components/brand/terpkings/tk-font";
-import { getCatalogProducts, getHeroesForPage, pickHeroVideo } from "@/lib/data";
+import { getHeroesForPage, getSocialImages, pickHeroVideo } from "@/lib/data";
 import { PRODUCTS, TERPS, TK_HERO } from "@/lib/terpkings-content";
 import { assetAvailability } from "@/lib/terpkings-assets";
 import "@/components/brand/terpkings/terpkings.css";
@@ -52,9 +51,9 @@ const jsonLd = {
 };
 
 export default async function TerpKingsPage() {
-  const [heroes, catalog] = await Promise.all([
+  const [heroes, social] = await Promise.all([
     getHeroesForPage("/terpkings"),
-    getCatalogProducts("TerpKings"),
+    getSocialImages("terpkings"),
   ]);
   const heroVideo = pickHeroVideo(heroes);
   // Optional renders: real file if present, brand placeholder if not.
@@ -72,13 +71,12 @@ export default async function TerpKingsPage() {
 
       <TKHero hero={heroVideo} />
       <TKArsenal available={available} />
-      <TKCatalog products={catalog} />
+      <TKScanner available={available} />
       <TKComic />
       <TKDossiers />
-      <TKScanner available={available} />
       <TKMerch />
       <TKLocator />
-      <TKSignalFeed />
+      <TKSignalFeed images={social} />
       <TKSignup />
 
       <Footer />
