@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="_ds/private-stock-5c1bed4d-c767-4419-accd-7408c87faeb7/fonts/fonts.css">
+  <link rel="stylesheet" href="_ds/private-stock-5c1bed4d-c767-4419-accd-7408c87faeb7/tokens/tokens.css">
+  <link rel="stylesheet" href="_ds/private-stock-5c1bed4d-c767-4419-accd-7408c87faeb7/tokens/theme.css">
+  <link rel="stylesheet" href="_ds/private-stock-5c1bed4d-c767-4419-accd-7408c87faeb7/styles.css">
+  <script src="_ds/private-stock-5c1bed4d-c767-4419-accd-7408c87faeb7/_ds_bundle.js"></script>
+  <style>
+    html,body{margin:0;background:#e9edf2;}
+    a{color:#fff;text-decoration:none;} a:hover{color:hsl(var(--accent));}
+  </style>
+</helmet>
+<section class="font-poppins" style="display:flex;flex-wrap:wrap;gap:48px;padding:48px 48px 0;align-items:flex-start;">
+  <div id="2a" style="display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;color:#0f172a;"><span style="background:#000;color:#fff;font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;">2a</span><span style="font-size:14px;font-weight:600;">Gallery — full-height, diagonal dividers (from <a href="#1c" style="color:#0f172a;text-decoration:underline;">1c</a>)</span></div>
+    <section data-screen-label="2a Diagonal gallery" class="dark" style="position:relative;width:1440px;height:600px;background:#000;color:#fff;overflow:hidden;">
+      <sc-for list="{{ panels }}" as="p" hint-placeholder-count="4">
+        <a href="#2a" onMouseEnter="{{ p.focus }}" style="{{ p.style }}">
+          <span style="{{ p.cover }}"></span>
+          <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 45%,rgba(0,0,0,.88) 100%);"></span>
+          <span style="{{ p.label }}">
+            <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.72);">{{ p.short }}</span>
+            <span style="font-weight:600;font-size:28px;line-height:1.05;letter-spacing:-.01em;">{{ p.name }}</span>
+          </span>
+        </a>
+      </sc-for>
+    </section>
+  </div>
+</section>
+<section class="font-poppins" style="display:flex;flex-wrap:wrap;gap:48px;padding:48px;align-items:flex-start;">
+
+  <div id="1a" style="display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;color:#0f172a;"><span style="background:#000;color:#fff;font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;">1a</span><span style="font-size:14px;font-weight:600;">Split — copy left, brand mosaic right</span></div>
+    <section data-screen-label="1a Split" class="dark" style="position:relative;width:1440px;height:720px;background:#000;color:#fff;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;">
+      <div style="display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding:48px 56px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;letter-spacing:.24em;font-size:13px;text-transform:uppercase;">Private Stock</span><span style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:hsl(var(--muted-foreground));">New Hampshire</span></div>
+        <div style="display:flex;flex-direction:column;gap:22px;max-width:560px;">
+          <span style="font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:hsl(var(--muted-foreground));">Four brands. One house.</span>
+          <h1 style="margin:0;font-weight:600;font-size:68px;line-height:.98;letter-spacing:-.02em;text-wrap:pretty;">Craft cannabis, <span style="color:hsl(var(--muted-foreground));font-weight:300;">every mood</span> covered.</h1>
+          <p style="margin:0;font-family:Lato,sans-serif;font-size:18px;line-height:1.55;color:hsl(var(--muted-foreground));max-width:460px;">From top‑shelf flower to diamond‑infused blunts and everyday pre‑rolls — grown, rolled and packed by Private Stock.</p>
+          <div style="display:flex;gap:12px;">
+            <a href="#1a" style="display:inline-flex;align-items:center;height:48px;padding:0 24px;border-radius:var(--radius);background:#fff;color:#000;font-weight:600;font-size:15px;">Explore the brands</a>
+            <a href="#1a" style="display:inline-flex;align-items:center;height:48px;padding:0 24px;border-radius:var(--radius);border:1px solid hsl(var(--border));color:#fff;font-weight:500;font-size:15px;">Find a dispensary</a>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;border-top:1px solid hsl(var(--border));padding-top:16px;">
+          <sc-for list="{{ brands }}" as="b" hint-placeholder-count="4"><span style="font-weight:600;font-size:13px;">{{ b.name }}</span></sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:4px;">
+        <sc-for list="{{ brands }}" as="b" hint-placeholder-count="4">
+          <a href="#1a" style="position:relative;display:block;overflow:hidden;border-radius:6px;background:#0a0a0a;color:#fff;">
+            <span style="{{ b.coverStyle }}"></span>
+            <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.85) 100%);"></span>
+            <span style="position:absolute;left:20px;right:20px;bottom:16px;display:flex;flex-direction:column;gap:3px;"><span style="font-weight:600;font-size:22px;line-height:1.1;">{{ b.name }}</span><span style="font-family:Lato,sans-serif;font-size:13px;color:rgba(255,255,255,.78);">{{ b.line }}</span></span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <div id="1b" style="display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;color:#0f172a;"><span style="background:#000;color:#fff;font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;">1b</span><span style="font-size:14px;font-weight:600;">Editorial — full-bleed lifestyle photo, brand rail</span></div>
+    <section data-screen-label="1b Editorial" class="dark" style="position:relative;width:1440px;height:720px;background:#000;color:#fff;overflow:hidden;">
+      <span style="position:absolute;inset:0;background:url('uploads/Copy of D85_1639 (1).jpg') 62% 30% / cover no-repeat;filter:saturate(.7);"></span>
+      <span style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.78) 38%,rgba(0,0,0,.15) 70%,rgba(0,0,0,.35) 100%);"></span>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:44px 64px 40px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:700;letter-spacing:.24em;font-size:13px;text-transform:uppercase;">Private Stock</span><span style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75);">Grown in New Hampshire</span></div>
+        <div style="display:flex;flex-direction:column;gap:24px;max-width:640px;">
+          <h1 style="margin:0;font-weight:300;font-size:92px;line-height:.95;letter-spacing:-.03em;text-wrap:pretty;">Elevate <em style="font-style:normal;font-weight:600;">your</em><br>everyday.</h1>
+          <p style="margin:0;font-family:Lato,sans-serif;font-size:19px;line-height:1.5;color:rgba(255,255,255,.82);max-width:440px;">Four brands, one standard. Small‑batch flower, pre‑rolls and infused blunts from Private Stock.</p>
+          <div style="display:flex;gap:12px;">
+            <a href="#1b" style="display:inline-flex;align-items:center;height:48px;padding:0 26px;border-radius:999px;background:#fff;color:#000;font-weight:600;font-size:15px;">Shop the brands</a>
+            <a href="#1b" style="display:inline-flex;align-items:center;height:48px;padding:0 26px;border-radius:999px;border:1px solid rgba(255,255,255,.5);color:#fff;font-weight:500;font-size:15px;">Find a dispensary</a>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;border-top:1px solid rgba(255,255,255,.28);padding-top:18px;">
+          <sc-for list="{{ brands }}" as="b" hint-placeholder-count="4">
+            <a href="#1b" style="display:flex;align-items:center;gap:14px;color:#fff;">
+              <span style="{{ b.thumbStyle }}"></span>
+              <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:600;font-size:15px;">{{ b.name }}</span><span style="font-family:Lato,sans-serif;font-size:12px;color:rgba(255,255,255,.7);">{{ b.short }}</span></span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="1c" style="display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;color:#0f172a;"><span style="background:#000;color:#fff;font-weight:700;font-size:12px;padding:4px 8px;border-radius:6px;">1c</span><span style="font-size:14px;font-weight:600;">Gallery — four brand columns, hover to expand</span></div>
+    <section data-screen-label="1c Gallery" class="dark" style="position:relative;width:1440px;height:720px;background:#000;color:#fff;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:40px 56px 28px;gap:40px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span style="font-weight:700;letter-spacing:.24em;font-size:13px;text-transform:uppercase;">Private Stock</span>
+          <h1 style="margin:0;font-weight:600;font-size:52px;line-height:1;letter-spacing:-.02em;">The house of four brands.</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px;">
+          <p style="margin:0;font-family:Lato,sans-serif;font-size:16px;line-height:1.5;color:hsl(var(--muted-foreground));max-width:360px;text-align:right;">Flower, pre‑rolls and infused blunts — each brand with its own voice, all grown under one roof in New Hampshire.</p>
+          <a href="#1c" style="display:inline-flex;align-items:center;white-space:nowrap;height:48px;padding:0 24px;border-radius:var(--radius);background:#fff;color:#000;font-weight:600;font-size:15px;">Find a dispensary</a>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;gap:4px;padding:0 4px 4px;">
+        <sc-for list="{{ brands }}" as="b" hint-placeholder-count="4">
+          <a href="#1c" onMouseEnter="{{ b.focus }}" style="{{ b.colStyle }}">
+            <span style="{{ b.colCover }}"></span>
+            <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 40%,rgba(0,0,0,.88) 100%);"></span>
+            <span style="position:absolute;left:24px;right:24px;bottom:22px;display:flex;flex-direction:column;gap:6px;">
+              <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);">{{ b.short }}</span>
+              <span style="font-weight:600;font-size:28px;line-height:1.05;letter-spacing:-.01em;">{{ b.name }}</span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { active: 'outfitters' };
+  renderVals() {
+    const data = [
+      { key:'outfitters', name:'Outfitters', short:'Crafted without compromise', line:'Top-shelf flower & diamond-infused blunts', img:'uploads/Untitled design (25).png', pos:'42% 55%', colPos:'30% 60%' },
+      { key:'higherself', name:'Higher Self', short:'Pause in your everyday life', line:'Everyday pre-rolls, light & easy', img:'uploads/Copy of D85_1598.jpg', pos:'50% 45%', colPos:'50% 55%' },
+      { key:'terpkings', name:'TerpKings', short:'Experience the full potential of cannabis', line:'Loud terps, louder flavor', img:'uploads/Untitled design (24).png', pos:'50% 60%', colPos:'50% 35%' },
+      { key:'sss', name:'Savage Squad Strains', short:'Not a brand. A movement.', line:'Heavy-hitting flower, 1g to 7g', img:'uploads/925006D5-8C36-45F1-9674-C2DCB033A0A7.PNG', pos:'50% 50%', colPos:'50% 45%' },
+    ];
+    const a = this.state.active;
+    const brands = data.map(b => {
+      const on = a === b.key;
+      return { ...b,
+        focus: () => this.setState({ active: b.key }),
+        coverStyle: `position:absolute;inset:0;background:url("${b.img}") ${b.pos} / cover no-repeat;`,
+        thumbStyle: `flex:none;width:52px;height:52px;border-radius:6px;background:url("${b.img}") center / cover no-repeat;border:1px solid rgba(255,255,255,.25);`,
+        colStyle: `position:relative;display:block;overflow:hidden;border-radius:6px;background:#0a0a0a;color:#fff;flex:${on?2.2:1} 1 0;transition:flex .55s cubic-bezier(.2,.7,.2,1);`,
+        colCover: `position:absolute;inset:0;background:url("${b.img}") ${b.colPos} / cover no-repeat;transform:scale(${on?1:1.08});transition:transform .55s cubic-bezier(.2,.7,.2,1);`,
+      };
+    });
+    // 2a: diagonal gallery, geometry computed in px for a 1440x600 stage
+    const W = 1440, S = 90, G = 3, ease = 'cubic-bezier(.2,.7,.2,1)';
+    const flex = data.map(b => a === b.key ? 2.2 : 1), total = flex.reduce((x, y) => x + y, 0);
+    let x = 0;
+    const panels = data.map((b, i) => {
+      const w = W * flex[i] / total, left = x - S; x += w;
+      const first = i === 0, last = i === data.length - 1;
+      const tl = first ? S : 2 * S + G, bl = first ? S : S + G;
+      const tr = last ? S + w : 2 * S + w - G, br = last ? S + w : S + w - G;
+      const on = a === b.key;
+      return { ...b,
+        focus: () => this.setState({ active: b.key }),
+        style: `position:absolute;top:0;bottom:0;left:${left}px;width:${w + 2 * S}px;display:block;overflow:hidden;color:#fff;clip-path:polygon(${tl}px 0,${tr}px 0,${br}px 100%,${bl}px 100%);transition:left .55s ${ease},width .55s ${ease},clip-path .55s ${ease};`,
+        cover: `position:absolute;inset:0;background:url("${b.img}") ${b.colPos} / cover no-repeat;transform:scale(${on ? 1 : 1.08});transition:transform .55s ${ease};`,
+        label: `position:absolute;left:${bl + 26}px;bottom:26px;display:flex;flex-direction:column;gap:6px;max-width:${w - 60}px;transition:left .55s ${ease};`,
+      };
+    });
+    return { brands, panels };
+  }
+}
+</script>
+</body>
+</html>

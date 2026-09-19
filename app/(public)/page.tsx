@@ -1,4 +1,5 @@
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
+import { BrandGalleryHero } from "@/components/site/BrandGalleryHero";
 import { RotatingBanner } from "@/components/site/RotatingBanner";
 import { IntroSection } from "@/components/site/IntroSection";
 import { BrandsShowcase } from "@/components/site/BrandsShowcase";
@@ -31,7 +32,11 @@ export default async function LandingPage() {
 
   return (
     <main className="bg-white">
-      <HeroSwitcher heroes={heroes} />
+      {/* BRANDS hover-swap is the interactive Brand Gallery Hero, not the admin image (D-082) */}
+      <HeroSwitcher
+        heroes={heroes}
+        navTargetNodes={{ BRANDS: <BrandGalleryHero /> }}
+      />
       {/* Banners live BELOW the hero — never above or over it (guardrail #4) */}
       <RotatingBanner slides={banners} />
       {/* Intro carries the only on-page pointer to the catalog modal (D-021) */}

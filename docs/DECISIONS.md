@@ -926,3 +926,39 @@ D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merg
   row's outlined button all funnel through one handler: One Size adds
   directly; a size chosen in the hover row's select adds directly; otherwise
   the size modal (desktop) / bottom sheet (mobile) opens.
+
+- **D-082 — Landing BRANDS hover-swap is the coded Brand Gallery Hero (Ambrose, 2026-09-18).**
+  Hovering BRANDS on the landing now shows the interactive four-panel gallery
+  (`components/site/BrandGalleryHero.tsx`, design handoff option 2a in
+  `docs/design_handoff_brand_gallery_hero/`) instead of the admin-managed BRANDS
+  image. Ambrose chose "BRANDS swap only": the landing DEFAULT hero and the
+  STORE LOCATOR / YOUR REWARDS swaps stay admin-managed and unchanged; hero
+  height stays one-screen (`h-svh`); Outfitters is expanded by default, no
+  auto-cycle. Clicking anywhere on a panel navigates to that brand's page.
+  This knowingly steps outside the admin static-image-swap system for this one
+  slot: the four photos are code-owned WebPs in
+  `public/brand-assets/gallery-hero/` (changing them is a code change, not an
+  admin upload). `HeroSwitcher` gained `navTargetNodes` — a node keyed by nav
+  target wins over the DB row and works even if the row is missing/inactive;
+  inactive hero layers are now `inert` + `pointer-events-none`. The `/` BRANDS
+  row in `content_heroes` is left in place (no DB change) and flagged "not
+  shown" in /admin/heroes. Not mounted on touch devices (no hover there, so it
+  could never appear). Geometry per README: S=90px, G=3px, flex 2.2/1, 550ms
+  cubic-bezier(.2,.7,.2,1); 2×2 grid when the hero is under 900px wide.
+
+- **D-083 — Touch swipe steps through the hover-swap heroes (Ambrose, 2026-09-18).**
+  Supersedes D-082's "not mounted on touch devices". On devices with no hover,
+  a horizontal finger swipe on the hero steps through exactly what desktop can
+  reach by hover — default → each nav-target swap in admin sort order (landing:
+  default → BRANDS gallery → STORE LOCATOR → YOUR REWARDS). Swipe left = next,
+  right = previous, wraps at the ends, and stays where it lands (no revert
+  timer). Pager dots at the bottom of the hero on touch only; tapping a dot
+  jumps to that hero; dots go black on `theme: light` assets. Lives in
+  `HeroSwitcher` so it is data-driven: any page whose heroes have nav-target
+  rows gets it, pages with only a default hero get neither swipe nor dots.
+  Vertical swipes still scroll (`touch-action: pan-y`; a swipe needs ≥40px and
+  1.5× more horizontal than vertical travel). A swipe that ends on a gallery
+  panel does not follow its link; a tap does. The gallery node mounts on touch
+  2.5s after load or on first touch, so a phone's first paint doesn't pay for
+  its images. Below 560px the gallery's 2×2 labels step down to 9px / 19px
+  (handoff 11px / 28px doesn't fit a ~190px tile). Desktop hover unchanged.
