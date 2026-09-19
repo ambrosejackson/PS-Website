@@ -962,3 +962,13 @@ D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merg
   2.5s after load or on first touch, so a phone's first paint doesn't pay for
   its images. Below 560px the gallery's 2×2 labels step down to 9px / 19px
   (handoff 11px / 28px doesn't fit a ~190px tile). Desktop hover unchanged.
+
+- **D-084 — Hero swipe is iPad-only; phones reverted (Ambrose, 2026-09-18).**
+  Narrows D-083. Ambrose reversed the phone swipe: on phones the hero is the
+  default asset only, exactly as before D-083 — no swipe, no pager dots, and
+  the Brand Gallery never mounts (no image download). The interactive gallery
+  is for desktop (hover) and iPad. Since an iPad has no hover, it keeps D-083's
+  swipe + dots as its only way to reach the gallery. "Tablet" = no-hover device
+  with a viewport of at least 700px wide AND 600px tall (the height test keeps
+  landscape phones out; iPad mini is 744×1133). An iPad with a trackpad/mouse
+  reports hover and gets the desktop behaviour.

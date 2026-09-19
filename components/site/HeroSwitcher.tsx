@@ -25,7 +25,8 @@ import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
  * cursor leaves, the default returns. Mobile (no hover capability) always shows
  * the default. Supports image and video assets.
  *
- * Touch devices (D-083): there is no hover, so a horizontal finger swipe on the
+ * Touch TABLETS (D-083, narrowed to tablets by D-084 — phones always show the
+ * default, as before): there is no hover, so a horizontal finger swipe on the
  * hero steps through the same assets — default → each nav-target swap in admin
  * sort order — wrapping at the ends and staying put (no revert). Pager dots show
  * on touch only. Vertical swipes still scroll the page (`touch-action: pan-y`).
@@ -49,6 +50,18 @@ const SWIPE_AXIS_RATIO = 1.5;
 /** Touch devices mount a nav-target node (the gallery) after this idle delay, or on first touch. */
 const TOUCH_NODE_MOUNT_MS = 2500;
 const HOVER_QUERY = "(hover: hover) and (pointer: fine)";
+/**
+ * Tablet-sized viewport (D-084): swipe is for iPads, NOT phones. Width alone
+ * would let a landscape phone in (~900px wide), so height is required too —
+ * iPad mini is 744×1133 either way round; the tallest landscape phone is ~440.
+ */
+const TABLET_QUERY = "(min-width: 700px) and (min-height: 600px)";
+
+function subscribeToTabletViewport(callback: () => void) {
+  const mq = window.matchMedia(TABLET_QUERY);
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
 
 function subscribeToHoverCapability(callback: () => void) {
   const mq = window.matchMedia(HOVER_QUERY);
@@ -155,7 +168,13 @@ export function HeroSwitcher({
     () => assets.filter((h) => h.id === defaultHero.id || h.nav_target),
     [assets, defaultHero.id],
   );
-  const swipeEnabled = !canHover && swipeAssets.length > 1;
+  const isTabletViewport = useSyncExternalStore(
+    subscribeToTabletViewport,
+    () => window.matchMedia(TABLET_QUERY).matches,
+    () => false,
+  );
+  // Phones get the default hero only — no swipe, no dots, gallery never mounts.
+  const swipeEnabled = !canHover && isTabletViewport && swipeAssets.length > 1;
 
   // A nav-target node (the Brand Gallery) is not needed for first paint on a
   // phone — mount it once the page has settled, or the moment the hero is touched.
