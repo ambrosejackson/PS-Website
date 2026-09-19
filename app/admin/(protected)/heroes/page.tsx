@@ -103,6 +103,9 @@ export default async function AdminHeroesPage() {
                             {h.nav_target && (
                               <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">hover: {navTargetLabel(h.nav_target)}</span>
                             )}
+                            {h.page === "/" && h.nav_target?.toUpperCase() === "BRANDS" && (
+                              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">⚠ not shown — the landing BRANDS hover is the coded Brand Gallery Hero (D-082)</span>
+                            )}
                             {!h.is_active && <span className="rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">inactive</span>}
                             {h.media_type === "video" &&
                               (h.poster_url ? (
