@@ -1007,3 +1007,21 @@ D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merg
 - **D-088 — Header login icon → `/account` (2026-09-20).** Supersedes build-plan
   decision 12 ("login → rewards waitlist"). Plain link, so static pages never
   read the session; `/account` redirects signed-out visitors to `/login`.
+
+- **D-089 — Rewards hero replaces the admin hero on `/rewards` (Ambrose, 2026-09-19; built 2026-09-21).**
+  `components/site/RewardsHero.tsx`, recreated from `design_handoff_rewards_hero/`
+  (copy verbatim, no "launching soon" qualifier — Ambrose's call, knowing members
+  cannot earn until receipt scanning ships). `/rewards` renders `<Header />` +
+  the hero instead of `HeroSwitcher`: the `/admin/heroes` rows for page
+  `/rewards` no longer render there (rows untouched) and the header hover-swap
+  has nothing to swap on that page. "Sign up free" → `/signup`; "See how it
+  works →" → `#how-it-works`, inert until that section is built. **Theme:** the
+  handoff assumed the PS Management pale-blue `--accent`; this site's
+  `--accent`/`--secondary` stay neutral and the hero gets its own tokens in
+  `globals.css` (`--gold`, `--gold-deep`, `--gold-ink`, `--gold-ink-muted`,
+  `--ps-blue`, `--ps-blue-deep`, `--ps-navy`); Poppins gains weight 300.
+  **Card size:** the README says `width:240px`, but the handoff HTML has no
+  box-sizing reset, so the reference screenshot shows 280px cards — the
+  screenshot wins (`box-content`). Under 460px the card stage is 36px taller so
+  the toast clears the gold card's footer. Floats stop under
+  `prefers-reduced-motion`; each card keeps its tilt.
