@@ -29,7 +29,8 @@ const oswald = Oswald({
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  // 300 is the Rewards hero subline (D-089).
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const caveat = Caveat({

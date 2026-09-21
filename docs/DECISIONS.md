@@ -972,3 +972,56 @@ D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merg
   with a viewport of at least 700px wide AND 600px tall (the height test keeps
   landscape phones out; iPad mini is 744×1133). An iPad with a trackpad/mouse
   reports hover and gets the desktop behaviour.
+
+- **D-085 — Rewards earning mechanic is receipt scan, not QR scan (Ambrose, 2026-09-19).**
+  Supersedes BUILD-PLAN §7 Phase 4 and PSM-CONTEXT §7 ("QR on packaging →
+  scan → points"). A later feature lets a member scan a purchase receipt; an AI
+  reader validates it and credits 1 point per dollar spent on that purchase.
+  Points redeem for merch and accessories only, never cannabis — that clarifier
+  belongs in the future How It Works section, not the hero. Receipt scanning,
+  the points ledger, tiers and redemption are NOT built yet.
+
+- **D-086 — Rewards compliance gate lifted (Ambrose, 2026-09-19).**
+  Ambrose confirmed counsel sign-off on the D-085 mechanic (review date not
+  recorded). Closes BUILD-PLAN Open Item 5 and the Phase 4 dependency.
+
+- **D-087 — Consumer accounts: magic link only (Ambrose, 2026-09-19/20).**
+  `/signup`, `/login`, `/account`, `/auth/callback`, `POST /account/logout`.
+  No customer passwords. Signup collects first name, last name, login email,
+  optional personal email, birthday (month + day, no year), ZIP, a required 21+
+  box and an unchecked marketing opt-in. **Personal email** captures a personal
+  address when someone signs up with a work one: backup contact only, stored
+  unverified, never used for login or order matching, stored null when it
+  equals the login email. The newsletter is touched ONLY when the opt-in box is
+  checked — then login + personal addresses go through the same path as
+  `/api/subscribe` (persona `Website Sign-up – Private Stock`, source_path
+  `/signup`, 15% code; existing rows reused). Form values ride in
+  `user_metadata.pending_profile` and become a `customer_profiles` row only
+  after the link is verified (`lib/account/ensure-profile.ts`). Table:
+  migration `20260920220536_customer_profiles` — RLS, owner select/update, no
+  insert policy (service role only). `/account` lists paid orders whose
+  `orders.email` equals the verified login email. Staff auth is unchanged:
+  `/admin/login` password + `isAdminEmail()` allowlist; `proxy.ts` now also
+  refreshes sessions on `/account`, `/login`, `/signup` but gates `/admin` only.
+
+- **D-088 — Header login icon → `/account` (2026-09-20).** Supersedes build-plan
+  decision 12 ("login → rewards waitlist"). Plain link, so static pages never
+  read the session; `/account` redirects signed-out visitors to `/login`.
+
+- **D-089 — Rewards hero replaces the admin hero on `/rewards` (Ambrose, 2026-09-19; built 2026-09-21).**
+  `components/site/RewardsHero.tsx`, recreated from `design_handoff_rewards_hero/`
+  (copy verbatim, no "launching soon" qualifier — Ambrose's call, knowing members
+  cannot earn until receipt scanning ships). `/rewards` renders `<Header />` +
+  the hero instead of `HeroSwitcher`: the `/admin/heroes` rows for page
+  `/rewards` no longer render there (rows untouched) and the header hover-swap
+  has nothing to swap on that page. "Sign up free" → `/signup`; "See how it
+  works →" → `#how-it-works`, inert until that section is built. **Theme:** the
+  handoff assumed the PS Management pale-blue `--accent`; this site's
+  `--accent`/`--secondary` stay neutral and the hero gets its own tokens in
+  `globals.css` (`--gold`, `--gold-deep`, `--gold-ink`, `--gold-ink-muted`,
+  `--ps-blue`, `--ps-blue-deep`, `--ps-navy`); Poppins gains weight 300.
+  **Card size:** the README says `width:240px`, but the handoff HTML has no
+  box-sizing reset, so the reference screenshot shows 280px cards — the
+  screenshot wins (`box-content`). Under 460px the card stage is 36px taller so
+  the toast clears the gold card's footer. Floats stop under
+  `prefers-reduced-motion`; each card keeps its tilt.

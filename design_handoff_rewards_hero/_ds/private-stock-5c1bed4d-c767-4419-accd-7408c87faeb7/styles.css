@@ -1,0 +1,45 @@
+/* PS Management design system — stylesheet entry point.
+   The design runtime gives each rendered design ONLY this file's transitive
+   @import closure, so everything on-brand must be reachable from here:
+     - fonts/fonts.css   self-hosted Poppins + Lato (@font-face)
+     - tokens/tokens.css  the HSL design tokens (:root light, .dark dark)
+     - tokens/theme.css   semantic utility classes mapped onto those tokens
+   Toggle dark mode by adding class="dark" to a container/root element. */
+
+@import './fonts/fonts.css';
+@import './tokens/tokens.css';
+@import './tokens/theme.css';
+
+/* ---- Base defaults (mirrors src/index.css @layer base) ---------------- */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+
+*,
+*::before,
+*::after {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Branded component style ------------------------------------------ */
+/* Dark gradient section header used across dashboards (src/index.css). */
+.section-header {
+  color: hsl(var(--section-header-foreground));
+  background: var(--section-header-gradient);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.25), 0 2px 6px -2px rgba(0, 0, 0, 0.15);
+  transition: background-position 0.4s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.section-header:hover {
+  background-position: 100% 50%;
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.3), 0 4px 8px -2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}

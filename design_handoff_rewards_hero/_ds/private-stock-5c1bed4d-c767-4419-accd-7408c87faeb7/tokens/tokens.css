@@ -1,0 +1,88 @@
+/* PS Management — design tokens (source of truth: src/index.css).
+   All colors are HSL *channels* (e.g. "0 0% 0%"); wrap in hsl() at use:
+   color: hsl(var(--primary)); background: hsl(var(--muted) / 0.5);
+   Light theme is :root; dark theme activates under a .dark ancestor. */
+
+:root {
+  --background: 0 0% 100%; /* @kind color */
+  --foreground: 222.2 84% 4.9%; /* @kind color */
+
+  --card: 0 0% 100%; /* @kind color */
+  --card-foreground: 222.2 84% 4.9%; /* @kind color */
+
+  --popover: 0 0% 100%; /* @kind color */
+  --popover-foreground: 222.2 84% 4.9%; /* @kind color */
+
+  --primary: 0 0% 0%; /* @kind color */
+  --primary-foreground: 0 0% 100%; /* @kind color */
+
+  --secondary: 215 100% 96%; /* @kind color */
+  --secondary-foreground: 215 100% 20%; /* @kind color */
+
+  --muted: 215 100% 96%; /* @kind color */
+  --muted-foreground: 215 20% 50%; /* @kind color */
+
+  --accent: 215 100% 90%; /* @kind color */
+  --accent-foreground: 215 100% 20%; /* @kind color */
+
+  --destructive: 0 84.2% 60.2%; /* @kind color */
+  --destructive-foreground: 210 40% 98%; /* @kind color */
+
+  --border: 214.3 31.8% 91.4%; /* @kind color */
+  --input: 214.3 31.8% 91.4%; /* @kind color */
+  --ring: 222.2 84% 4.9%; /* @kind color */
+
+  --radius: 0.5rem; /* @kind radius */
+
+  --sidebar-background: 0 0% 0%; /* @kind color */
+  --sidebar-foreground: 0 0% 100%; /* @kind color */
+  --sidebar-primary: 0 0% 100%; /* @kind color */
+  --sidebar-primary-foreground: 0 0% 0%; /* @kind color */
+  --sidebar-accent: 0 0% 100%; /* @kind color */
+  --sidebar-accent-foreground: 0 0% 0%; /* @kind color */
+  --sidebar-border: 220 13% 91%; /* @kind color */
+  --sidebar-ring: 217.2 91.2% 59.8%; /* @kind color */
+
+  --section-header-foreground: 0 0% 95%; /* @kind color */
+  --section-header-gradient: hsl(0 0% 8%); /* @kind color */
+  --sidebar-menu-item: 0 0% 95%; /* @kind color */
+}
+
+.dark {
+  --background: 222.2 84% 4.9%; /* @kind color */
+  --foreground: 210 40% 98%; /* @kind color */
+
+  --card: 222.2 84% 4.9%; /* @kind color */
+  --card-foreground: 210 40% 98%; /* @kind color */
+
+  --popover: 222.2 84% 4.9%; /* @kind color */
+  --popover-foreground: 210 40% 98%; /* @kind color */
+
+  --primary: 210 40% 98%; /* @kind color */
+  --primary-foreground: 222.2 47.4% 11.2%; /* @kind color */
+
+  --secondary: 217.2 32.6% 17.5%; /* @kind color */
+  --secondary-foreground: 210 40% 98%; /* @kind color */
+
+  --muted: 217.2 32.6% 17.5%; /* @kind color */
+  --muted-foreground: 215 20.2% 65.1%; /* @kind color */
+
+  --accent: 217.2 32.6% 17.5%; /* @kind color */
+  --accent-foreground: 210 40% 98%; /* @kind color */
+
+  --destructive: 0 62.8% 30.6%; /* @kind color */
+  --destructive-foreground: 210 40% 98%; /* @kind color */
+
+  --border: 217.2 32.6% 17.5%; /* @kind color */
+  --input: 217.2 32.6% 17.5%; /* @kind color */
+  --ring: 212.7 26.8% 83.9%; /* @kind color */
+
+  --sidebar-background: 240 5.9% 10%; /* @kind color */
+  --sidebar-foreground: 240 4.8% 95.9%; /* @kind color */
+  --sidebar-primary: 224.3 76.3% 48%; /* @kind color */
+  --sidebar-primary-foreground: 0 0% 100%; /* @kind color */
+  --sidebar-accent: 0 0% 100%; /* @kind color */
+  --sidebar-accent-foreground: 0 0% 0%; /* @kind color */
+  --sidebar-border: 240 3.7% 15.9%; /* @kind color */
+  --sidebar-ring: 217.2 91.2% 59.8%; /* @kind color */
+}

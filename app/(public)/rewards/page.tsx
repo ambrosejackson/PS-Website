@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { HeroSwitcher } from "@/components/site/HeroSwitcher";
+import { Header } from "@/components/site/Header";
+import { RewardsHero } from "@/components/site/RewardsHero";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { Footer } from "@/components/site/Footer";
-import { getHeroesForPage } from "@/lib/data";
 
 export const revalidate = 300;
 
@@ -12,15 +12,21 @@ export const metadata: Metadata = {
     "Private Stock rewards are coming soon — join the waitlist to be first in line.",
 };
 
-export default async function RewardsPage() {
-  const heroes = await getHeroesForPage("/rewards");
+/**
+ * /rewards. The Rewards hero replaces the admin-managed HeroSwitcher here
+ * (D-089): /admin/heroes rows for page "/rewards" no longer render on this page
+ * (rows untouched), and the header's nav hover-swap has nothing to swap.
+ */
+export default function RewardsPage() {
   return (
     <main>
-      <HeroSwitcher heroes={heroes} heightClassName="h-[45svh]" />
+      <Header />
+      <RewardsHero />
       <section className="mx-auto max-w-2xl px-5 py-20 text-center md:py-28">
-        <h1 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
+        {/* h2: the hero above owns the page's h1. */}
+        <h2 className="font-condensed text-4xl font-bold uppercase tracking-tight text-ink">
           YOUR REWARDS
-        </h1>
+        </h2>
         <p className="mt-6 leading-relaxed text-neutral-600">
           Points for every scan, redeemable for merch and exclusives. The
           rewards program is going through final review — join the waitlist and

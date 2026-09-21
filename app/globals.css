@@ -240,3 +240,49 @@
 html[data-age-ok="1"] [data-age-gate] {
   display: none !important;
 }
+
+/*
+ * Rewards hero (D-089, components/site/RewardsHero.tsx). Hero-scoped tokens:
+ * the design handoff assumed the PS Management theme (pale-blue --accent), but
+ * this site's --accent / --secondary are neutral and drive every shadcn
+ * surface + /admin, so they stay as they are and the hero gets its own.
+ */
+:root {
+  --gold: hsl(43 74% 66%);
+  --gold-deep: hsl(38 60% 48%);
+  --gold-ink: hsl(30 30% 8%);
+  --gold-ink-muted: hsl(30 30% 20%);
+  --ps-blue: hsl(215 100% 90%);
+  --ps-blue-deep: hsl(215 100% 20%);
+  --ps-navy: hsl(222 84% 5%);
+}
+@theme inline {
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-ink: var(--gold-ink);
+  --color-gold-ink-muted: var(--gold-ink-muted);
+  --color-ps-blue: var(--ps-blue);
+  --color-ps-blue-deep: var(--ps-blue-deep);
+  --color-ps-navy: var(--ps-navy);
+}
+
+/* Card float. The base transform carries each card's tilt, so turning the
+   animation off for prefers-reduced-motion keeps the rotation. */
+@keyframes ps-float-a {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-10px) rotate(-4deg); }
+}
+@keyframes ps-float-b {
+  0%, 100% { transform: translateY(0) rotate(3deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes ps-float-c {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
+}
+.ps-float-a { transform: rotate(-4deg); animation: ps-float-a 7s ease-in-out infinite; }
+.ps-float-b { transform: rotate(3deg); animation: ps-float-b 8s ease-in-out infinite; }
+.ps-float-c { transform: rotate(-2deg); animation: ps-float-c 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ps-float-a, .ps-float-b, .ps-float-c { animation: none; }
+}

@@ -1,0 +1,88 @@
+/* PS Management — theme utility layer.
+   Source of truth: tailwind.config.ts (theme.extend). These classes map the
+   design system's semantic color / radius / font vocabulary onto the tokens in
+   tokens.css, so class names the design agent writes (bg-primary, text-muted-
+   foreground, rounded-lg, font-poppins, ...) resolve and track light/dark
+   automatically. Names here match Tailwind's generated utilities 1:1. */
+
+/* ---- Base surfaces ---------------------------------------------------- */
+.bg-background { background-color: hsl(var(--background)); }
+.text-background { color: hsl(var(--background)); }
+.bg-foreground { background-color: hsl(var(--foreground)); }
+.text-foreground { color: hsl(var(--foreground)); }
+
+.border-border { border-color: hsl(var(--border)); }
+.bg-input { background-color: hsl(var(--input)); }
+.border-input { border-color: hsl(var(--input)); }
+.ring-ring { --tw-ring-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring)); }
+.border-ring { border-color: hsl(var(--ring)); }
+
+/* ---- Primary ---------------------------------------------------------- */
+.bg-primary { background-color: hsl(var(--primary)); }
+.text-primary { color: hsl(var(--primary)); }
+.border-primary { border-color: hsl(var(--primary)); }
+.bg-primary-foreground { background-color: hsl(var(--primary-foreground)); }
+.text-primary-foreground { color: hsl(var(--primary-foreground)); }
+
+/* ---- Secondary -------------------------------------------------------- */
+.bg-secondary { background-color: hsl(var(--secondary)); }
+.text-secondary { color: hsl(var(--secondary)); }
+.border-secondary { border-color: hsl(var(--secondary)); }
+.bg-secondary-foreground { background-color: hsl(var(--secondary-foreground)); }
+.text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+
+/* ---- Destructive ------------------------------------------------------ */
+.bg-destructive { background-color: hsl(var(--destructive)); }
+.text-destructive { color: hsl(var(--destructive)); }
+.border-destructive { border-color: hsl(var(--destructive)); }
+.bg-destructive-foreground { background-color: hsl(var(--destructive-foreground)); }
+.text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+
+/* ---- Muted ------------------------------------------------------------ */
+.bg-muted { background-color: hsl(var(--muted)); }
+.text-muted { color: hsl(var(--muted)); }
+.border-muted { border-color: hsl(var(--muted)); }
+.bg-muted-foreground { background-color: hsl(var(--muted-foreground)); }
+.text-muted-foreground { color: hsl(var(--muted-foreground)); }
+
+/* ---- Accent ----------------------------------------------------------- */
+.bg-accent { background-color: hsl(var(--accent)); }
+.text-accent { color: hsl(var(--accent)); }
+.border-accent { border-color: hsl(var(--accent)); }
+.bg-accent-foreground { background-color: hsl(var(--accent-foreground)); }
+.text-accent-foreground { color: hsl(var(--accent-foreground)); }
+
+/* ---- Popover ---------------------------------------------------------- */
+.bg-popover { background-color: hsl(var(--popover)); }
+.text-popover { color: hsl(var(--popover)); }
+.bg-popover-foreground { background-color: hsl(var(--popover-foreground)); }
+.text-popover-foreground { color: hsl(var(--popover-foreground)); }
+
+/* ---- Card ------------------------------------------------------------- */
+.bg-card { background-color: hsl(var(--card)); }
+.text-card { color: hsl(var(--card)); }
+.bg-card-foreground { background-color: hsl(var(--card-foreground)); }
+.text-card-foreground { color: hsl(var(--card-foreground)); }
+
+/* ---- Sidebar ---------------------------------------------------------- */
+.bg-sidebar { background-color: hsl(var(--sidebar-background)); }
+.text-sidebar-foreground { color: hsl(var(--sidebar-foreground)); }
+.bg-sidebar-primary { background-color: hsl(var(--sidebar-primary)); }
+.text-sidebar-primary-foreground { color: hsl(var(--sidebar-primary-foreground)); }
+.bg-sidebar-accent { background-color: hsl(var(--sidebar-accent)); }
+.text-sidebar-accent-foreground { color: hsl(var(--sidebar-accent-foreground)); }
+.border-sidebar-border { border-color: hsl(var(--sidebar-border)); }
+.ring-sidebar-ring { --tw-ring-color: hsl(var(--sidebar-ring)); }
+
+/* ---- Section header (custom brand token) ------------------------------ */
+.text-section-header-foreground { color: hsl(var(--section-header-foreground)); }
+.bg-section-header-foreground { background-color: hsl(var(--section-header-foreground)); }
+
+/* ---- Radius (var(--radius) = 0.5rem) ---------------------------------- */
+.rounded-sm { border-radius: calc(var(--radius) - 4px); }
+.rounded-md { border-radius: calc(var(--radius) - 2px); }
+.rounded-lg { border-radius: var(--radius); }
+
+/* ---- Font families ---------------------------------------------------- */
+.font-poppins { font-family: 'Poppins', sans-serif; }
+.font-lato { font-family: 'Lato', sans-serif; }

@@ -1,25 +1,15 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { personaForPath } from "@/lib/personas";
-import { createStripePromotionCode, stripeConfigured } from "@/lib/commerce/stripe";
+import { subscribeEmail } from "@/lib/newsletter/subscribe";
 
 /**
  * Newsletter signup: inserts into subscribers with persona / brand_context /
  * source_path (guardrail #7) and issues a unique single-use 15% merch code.
- * Stripe promotion-code creation is stubbed behind STRIPE_ENABLED until the
- * Stripe account exists (decision 6: first_time_transaction, not stackable).
+ * The insert + code issuance live in lib/newsletter/subscribe.ts so the account
+ * signup opt-in can reuse them; this route owns request validation and consent.
  */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L
-
-function generateCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  const suffix = Array.from(bytes)
-    .map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length])
-    .join("");
-  return `PS15-${suffix}`;
-}
 
 export async function POST(request: Request) {
   let body: { email?: string; sourcePath?: string; consent?: boolean };
@@ -54,78 +44,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // Already subscribed? Return their existing code rather than erroring.
-  const { data: existing } = await supabase
-    .from("subscribers")
-    .select("id, discount_code_id")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (existing) {
-    let code: string | null = null;
-    if (existing.discount_code_id) {
-      const { data: dc } = await supabase
-        .from("discount_codes")
-        .select("code")
-        .eq("id", existing.discount_code_id)
-        .maybeSingle();
-      code = dc?.code ?? null;
-    }
-    return NextResponse.json({ ok: true, alreadySubscribed: true, discountCode: code });
-  }
-
-  const { persona, brandContext } = personaForPath(sourcePath);
-
-  const { data: subscriber, error: subError } = await supabase
-    .from("subscribers")
-    .insert({
-      email,
-      persona,
-      source_path: sourcePath,
-      brand_context: brandContext,
-      consent_marketing: true,
-    })
-    .select("id")
-    .single();
-
-  if (subError || !subscriber) {
+  const result = await subscribeEmail(supabase, { email, sourcePath });
+  if (!result.ok) {
     return NextResponse.json(
       { error: "Could not complete signup — please try again." },
       { status: 500 },
     );
   }
-
-  // Unique single-use 15% code. With STRIPE_SECRET_KEY present the real Stripe
-  // promotion code is created now (max_redemptions 1, first_time_transaction);
-  // without it the row keeps a stub id and lib/commerce/pricing.validatePromo
-  // creates the Stripe side lazily the first time the code is used.
-  const code = generateCode();
-  let stripePromotionCodeId = "stub_pending_stripe";
-  if (stripeConfigured()) {
-    try {
-      stripePromotionCodeId = await createStripePromotionCode(code);
-    } catch (e) {
-      console.error("[subscribe] Stripe promotion code failed:", e instanceof Error ? e.message : e);
-    }
+  if (result.alreadySubscribed) {
+    return NextResponse.json({ ok: true, alreadySubscribed: true, discountCode: result.discountCode });
   }
-
-  const { data: discount, error: codeError } = await supabase
-    .from("discount_codes")
-    .insert({
-      subscriber_id: subscriber.id,
-      code,
-      pct: 15,
-      stripe_promotion_code_id: stripePromotionCodeId,
-    })
-    .select("id")
-    .single();
-
-  if (!codeError && discount) {
-    await supabase
-      .from("subscribers")
-      .update({ discount_code_id: discount.id })
-      .eq("id", subscriber.id);
-  }
-
-  return NextResponse.json({ ok: true, discountCode: codeError ? null : code });
+  return NextResponse.json({ ok: true, discountCode: result.discountCode });
 }

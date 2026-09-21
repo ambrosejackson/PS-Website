@@ -116,9 +116,11 @@ export function Header({
                 </Link>
               );
             })}
+            {/* /account sends signed-out visitors on to /login. Kept a plain link
+                so static pages never need to read the session. */}
             <Link
-              href="/rewards"
-              aria-label="Log in"
+              href="/account"
+              aria-label="Account"
               className="p-1 transition-opacity hover:opacity-60"
             >
               <User className={navIconClass(variant)} strokeWidth={1.5} />
