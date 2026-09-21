@@ -312,6 +312,48 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_profiles: {
+        Row: {
+          age_attested_at: string
+          birth_day: number | null
+          birth_month: number | null
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          marketing_opt_in_at: string | null
+          personal_email: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          age_attested_at: string
+          birth_day?: number | null
+          birth_month?: number | null
+          created_at?: string
+          first_name: string
+          id: string
+          last_name: string
+          marketing_opt_in_at?: string | null
+          personal_email?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          age_attested_at?: string
+          birth_day?: number | null
+          birth_month?: number | null
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          marketing_opt_in_at?: string | null
+          personal_email?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       discount_codes: {
         Row: {
           code: string

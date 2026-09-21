@@ -3,8 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 
 /**
- * Session refresh + gate for /admin routes only (Next 16 proxy, formerly middleware).
- * Public pages never touch Supabase auth, so the matcher stays narrow.
+ * Session refresh for the routes that read a Supabase session, plus the staff
+ * gate for /admin (Next 16 proxy, formerly middleware). Static public pages
+ * never touch Supabase auth, so the matcher stays narrow: /admin and the three
+ * customer-account routes. The allowlist gate applies to /admin ONLY — a
+ * customer session refreshes here but never satisfies isAdminEmail().
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -35,6 +38,9 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Customer-account routes: refresh only. Their pages do their own redirects.
+  if (!request.nextUrl.pathname.startsWith("/admin")) return response;
+
   const isLoginPage = request.nextUrl.pathname.startsWith("/admin/login");
   const authorized = isAdminEmail(user?.email);
 
@@ -55,5 +61,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/login", "/signup"],
 };
