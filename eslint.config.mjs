@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design reference only (prototype HTML + its bundled runtime) — never
+    // imported by the app, so it is not held to the app's lint rules.
+    "design_handoff_rewards_hero/**",
   ]),
 ]);
 
