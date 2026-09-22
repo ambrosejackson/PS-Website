@@ -19,7 +19,7 @@ PRD: `claude/PRD-KICKBACK-RSVP.md` (Rev 3, signed off 2026-09-22). Decisions D-0
 ## One-time setup (in order)
 
 1. **Vercel env (Production + Preview):** `PSM_INGEST_TOKEN` (same value as PSM's `PS_INGEST_TOKEN`), `RESEND_WEBHOOK_SECRET`. `CRON_SECRET` and `RESEND_API_KEY` already exist. Redeploy.
-2. **PSM side:** W4 steps 1–5 (migration, `crm_qr_codes` row, function secret, two Edge Functions). Paste the new `crm_qr_codes.id` into /admin/events/kickback → Event settings.
+2. **PSM side:** W4 steps 1–5 (migration, `crm_qr_codes` row, function secret, two Edge Functions). (Done 2026-09-22: migration, `crm_qr_codes` row `f68aa352-8ad8-4465-8f72-39ca88295af9` already set on the event, both functions deployed. Remaining: the `PS_INGEST_TOKEN` secret.)
 3. **Dispensary list:** /admin/events/kickback → "Refresh dispensary list from PSM" (expects ~274). The cron refreshes it daily after that.
 4. **Resend:** the sender `events@privatestock.co` needs no new DNS (domain already verified). Webhooks → add `https://privatestock.co/api/webhooks/resend`, events `email.delivered`, `email.bounced`, `email.complained`; copy the signing secret into `RESEND_WEBHOOK_SECRET`.
 5. **10-minute scheduler (website Supabase project `ihurvtxmcyahvtcydmnf`).** Vercel Hobby crons run once a day, so pg_cron calls the route instead:
@@ -27,17 +27,8 @@ PRD: `claude/PRD-KICKBACK-RSVP.md` (Rev 3, signed off 2026-09-22). Decisions D-0
    -- a) Store the secret (paste the CRON_SECRET value from Vercel; run this yourself so it never lands in chat/logs):
    select vault.create_secret('<CRON_SECRET value>', 'event_jobs_cron_secret');
 
-   -- b) Extensions + job:
-   create extension if not exists pg_cron;
-   create extension if not exists pg_net;
-   select cron.schedule('event-jobs', '*/10 * * * *', $job$
-     select net.http_get(
-       url := 'https://privatestock.co/api/cron/event-jobs',
-       headers := jsonb_build_object('Authorization', 'Bearer ' ||
-         (select decrypted_secret from vault.decrypted_secrets where name = 'event_jobs_cron_secret')),
-       timeout_milliseconds := 300000
-     );
-   $job$);
+   -- b) Extensions + job: ALREADY APPLIED 2026-09-22 (migration event_jobs_cron, job "event-jobs").
+   --    It reads the secret above at run time; until the secret exists (or the route is deployed) runs just get 401/404.
    ```
    Check it: `select status, return_message, start_time from cron.job_run_details order by start_time desc limit 5;` and `select status_code, content from net._http_response order by created desc limit 3;` (expect 200 + JSON).
    Stop it: `select cron.unschedule('event-jobs');`

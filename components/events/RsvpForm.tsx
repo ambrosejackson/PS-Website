@@ -30,11 +30,15 @@ function Done({ state, slug }: { state: Extract<RsvpFormState, { status: "done" 
   return (
     <div className="border border-hairline p-6 md:p-8" role="status">
       <p className="font-condensed text-3xl font-bold uppercase tracking-tight text-ink">
-        {state.duplicate ? "You're already on the list" : "You're on the list"}
+        {state.upgraded ? "You're now on the list as a budtender" : state.duplicate ? "You're already on the list" : "You're on the list"}
       </p>
       <p className="mt-3 leading-relaxed text-neutral-600">
-        {state.duplicate ? "We just re-sent your ticket" : "Your ticket is on its way"} to{" "}
-        <span className="font-medium text-ink">{state.email}</span>. Show the QR code at the gate.
+        {state.upgraded
+          ? "We updated your existing RSVP and sent a new confirmation"
+          : state.duplicate
+            ? "We just re-sent your ticket"
+            : "Your ticket is on its way"}{" "}
+        to <span className="font-medium text-ink">{state.email}</span>. {state.upgraded ? "Your ticket and QR code stay the same." : "Show the QR code at the gate."}
       </p>
       {state.plateStatus === "confirmed" && (
         <div className="mt-6">
