@@ -8,7 +8,7 @@ Two documents in `/docs` are the source of truth. Read both fully before any wor
 1. `docs/PRIVATE-STOCK-WEBSITE-BUILD-PLAN.md` — decisions, schema, phases, feature specs.
 2. `docs/PS-MANAGEMENT-CONTEXT.md` — the PSM back-office system this site integrates with.
 
-If a requirement conflicts between them, the BUILD-PLAN wins (it is newer). If something
+If a requirement conflicts between them, the BUILD-PLAN wins (it is newer) — except PS-MANAGEMENT-CONTEXT §3 (integration rule, rewritten 2026-09-22), which wins over any older "silo" wording. If something
 you need is in neither document, ASK Ambrose — do not guess schema, IDs, URLs, or copy.
 
 ## Stack (fixed — do not substitute)
@@ -17,7 +17,10 @@ you need is in neither document, ASK Ambrose — do not guess schema, IDs, URLs,
 - GitHub flow: work on `dev`, PR to `main`. Vercel: `dev` = preview, `main` = production. Never commit secrets; env vars via Vercel/Supabase dashboards.
 
 ## Hard guardrails (violating any of these is a critical failure)
-1. NEVER connect this site to the PSM production Supabase (`skdhqrjxvhegbufykhyp`) — no keys, no direct reads, no writes, in either direction, no exceptions. **PSM data arrives by PUSH only (D-058):** PSM's `publish_store_locator()` POSTs a curated payload to `POST /api/psm/publish`, which the website authenticates with `PSM_PUBLISH_SECRET` — a secret the website *verifies* and never sends anywhere. If you ever find yourself adding a PSM URL, key, or fetch to this repo, you have taken a wrong turn: the data you want is already arriving, or belongs in the PSM-side view. (This supersedes BUILD-PLAN §2's "dedicated restricted key" pull design and `docs/psm-side/W2-publish-rpc.md`.) PSM-side work (migrations, views, RPCs, cron) is done in the PSM project — you produce SQL clearly labeled "PSM-SIDE — do not run here."
+1. ONE ECOSYSTEM, TWO DATABASES, API-CONNECTED (rewritten 2026-09-22, D-091; supersedes the earlier "no connection in either direction" wording). Website data (RSVPs, sign-ups, orders, rewards, analytics) SHOULD flow into PSM and PSM data flows to the website — but website code (browser or server) NEVER holds a PSM (`skdhqrjxvhegbufykhyp`) database key and never reads/writes PSM tables directly. Two sanctioned bridges only:
+   - **PSM → website, push:** PSM's `publish_store_locator()` POSTs to `POST /api/psm/publish`, which the website verifies with `PSM_PUBLISH_SECRET` (D-058).
+   - **Website → PSM, purpose-built Edge Functions:** the website calls a named PSM Edge Function (today: `ingest-event-rsvp`, `dispensary-directory`) at `PSM_FUNCTIONS_URL` with the shared secret `PSM_INGEST_TOKEN` in `x-ps-ingest-token`. Each function does one job and returns only the fields that job needs. All calls live in `lib/events/psm.ts`; add a new function there only with Ambrose's sign-off.
+   Anything else — a PSM service key, anon key, direct table query, or PostgREST URL in this repo — is a wrong turn. PSM-side work (migrations, Edge Functions, RPCs, cron) is produced as SQL/code clearly labeled "PSM-SIDE — do not run here" (see `docs/psm-side/`) and applied only after Ambrose's explicit "proceed." Reasoning: `docs/PS-MANAGEMENT-CONTEXT.md` §3.
 2. NEVER display product prices, MSRP, or discounts from menu-check data. Product availability = presence + store menu link + image + checked_at only.
 3. Brand allowlist: `Outfitters, TerpKings, Higher Self, Savage Squad Strains` (single config in `lib/brands.ts`). Kush League and Clusters are excluded everywhere until the allowlist changes.
 4. No promotional banners above or over the hero on any page. Banners render below the hero only.
@@ -30,6 +33,7 @@ you need is in neither document, ASK Ambrose — do not guess schema, IDs, URLs,
 7. Newsletter persona tag is exactly `Website Sign-up – {Brand}`; non-brand pages tag `Private Stock`. Store persona + brand_context + source_path on every subscriber row.
 8. Merch only through Stripe (cards, Apple Pay, Google Pay, Link, Cash App Pay). No THC commerce anywhere on this site. Keep merch presentation clean of plant-touching commerce.
 9. SEO is a launch gate: every product, brand, and blog post gets its own statically-renderable page with metadata + structured data; 301 map lives in `next.config.js`.
+10. No cannabis-related SMS through Twilio or standard 10DLC routes (carriers reject it, Twilio error 30940). Event reminders are email-only; any SMS needs a cannabis-compliant provider Ambrose has approved (D-014).
 
 ## Working style
 - Ambrose is the sole decision-maker. Give exact commands, exact paths, exact values; present options with tradeoffs when they exist; ask rather than assume.

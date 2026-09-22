@@ -35,7 +35,9 @@ export default function AdminLoginPage() {
       setLoading(false);
       return;
     }
-    router.push("/admin");
+    // Check-in staff arrive with ?next=/checkin/<slug> (D-096); anything else goes to /admin.
+    const next = new URLSearchParams(window.location.search).get("next") ?? "";
+    router.push(/^\/(checkin|admin)(\/[a-z0-9-]+)*$/.test(next) ? next : "/admin");
     router.refresh();
   }
 

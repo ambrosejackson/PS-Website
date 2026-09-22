@@ -5,8 +5,9 @@ import { isAdminEmail } from "@/lib/admin/allowlist";
 /**
  * Session refresh for the routes that read a Supabase session, plus the staff
  * gate for /admin (Next 16 proxy, formerly middleware). Static public pages
- * never touch Supabase auth, so the matcher stays narrow: /admin and the three
- * customer-account routes. The allowlist gate applies to /admin ONLY — a
+ * never touch Supabase auth, so the matcher stays narrow: /admin, the three
+ * customer-account routes and /checkin (event door staff, D-096; that page
+ * checks admin-or-staff_roles itself). The allowlist gate applies to /admin ONLY — a
  * customer session refreshes here but never satisfies isAdminEmail().
  */
 export async function proxy(request: NextRequest) {
@@ -61,5 +62,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/login", "/signup"],
+  matcher: ["/admin/:path*", "/account/:path*", "/login", "/signup", "/checkin/:path*"],
 };

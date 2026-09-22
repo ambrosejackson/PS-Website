@@ -158,6 +158,9 @@
   --color-ink: #111318;
   --color-caption: #24334a;
   --color-hairline: #e7e7e7;
+  /* The Kickback event palette (sponsorship deck, D-097) — event pages only. */
+  --color-kb-yellow: #f7d117;
+  --color-kb-blue: #2458d6;
 }
 
 /* FOLLOW US scrolling image strip */
