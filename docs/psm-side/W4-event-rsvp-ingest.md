@@ -1,7 +1,7 @@
 # PSM-SIDE — do not run here
 
 **Workstream W4 — Event RSVP ingest + dispensary directory** (The Kickback, PRD `claude/PRD-KICKBACK-RSVP.md` Rev 3, D-091)
-Applied to PS Management (`skdhqrjxvhegbufykhyp`) only after Ambrose's explicit "proceed." Production-only DB: read-only checks first, each write in a transaction, rollback stated.
+**APPLIED 2026-09-22 after Ambrose's "proceed":** §1 migration `crm_contacts_marketing_opt_in`; §2 row id `f68aa352-8ad8-4465-8f72-39ca88295af9` (needed `created_by` = Ambrose's user `a0000001-0000-0000-0000-000000000002`, added below); §4 + §5 deployed (verify_jwt off, 401 without the secret). Pending: §3 secret. Production-only DB: read-only checks first, each write in a transaction, rollback stated.
 
 ## 0. Read-only checks (done 2026-09-22)
 
@@ -28,10 +28,11 @@ Then regenerate PS Management `types.ts`.
 ```sql
 begin;
 insert into public.crm_qr_codes (company_id, slug, name, description, brand, audience_type,
-  target_type, target_url, use_direct_url, is_active, display_order, redirect_key)
+  target_type, target_url, use_direct_url, is_active, display_order, redirect_key, created_by)
 values ('f730fddb-bcb0-464a-80ab-c2c6bf77ac1d', 'kickback-2026', 'The Kickback 2026',
   'RSVPs from privatestock.co/events/kickback (Sun Oct 25, 2026). Print this QR for the gate sign.',
-  'private_stock', 'consumer', 'external_url', 'https://privatestock.co/events/kickback', true, true, 0, 'kb2026')
+  'private_stock', 'consumer', 'external_url', 'https://privatestock.co/events/kickback', true, true, 0, 'kb2026',
+  'a0000001-0000-0000-0000-000000000002')
 returning id;
 commit;
 ```

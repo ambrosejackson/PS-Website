@@ -26,6 +26,8 @@ export type RsvpFormState =
       plateStatus: PlateStatus;
       waitlistPosition: number | null;
       duplicate: boolean;
+      /** An existing guest re-submitted as a budtender and was upgraded in place (D-098). */
+      upgraded: boolean;
       isBudtender: boolean;
     };
 
@@ -107,7 +109,8 @@ export async function rsvpAction(_prev: RsvpFormState, fd: FormData): Promise<Rs
     console.error("[rsvp] claim_rsvp failed:", error.message);
     return { status: "error", message: "We couldn't save your RSVP. Please try again in a minute.", values };
   }
-  const c = claim as { id: string; ticket_token: string; plate_status: PlateStatus; plate_waitlist_position: number | null; duplicate: boolean };
+  const c = claim as { id: string; ticket_token: string; plate_status: PlateStatus; plate_waitlist_position: number | null; duplicate: boolean; upgraded?: boolean };
+  const upgraded = c.upgraded === true;
 
   const { data: row } = await admin.from("event_rsvps").select("*").eq("id", c.id).single();
 
@@ -120,6 +123,7 @@ export async function rsvpAction(_prev: RsvpFormState, fd: FormData): Promise<Rs
       await admin.from("event_rsvps").update({ confirmation_sent_at: new Date().toISOString() }).eq("id", row.id);
     }
     // CRM sync + newsletter after the response is sent; failures are retried by cron.
+    // An upgrade re-syncs too, so PSM flips the contact to budtender and links the dispensary.
     if (!c.duplicate) {
       after(async () => {
         await syncRsvp(admin, ev as EventRow, row as RsvpRow);
@@ -136,7 +140,8 @@ export async function rsvpAction(_prev: RsvpFormState, fd: FormData): Promise<Rs
     plateStatus: c.plate_status,
     waitlistPosition: c.plate_waitlist_position,
     duplicate: c.duplicate,
-    isBudtender,
+    upgraded,
+    isBudtender: upgraded || (!c.duplicate && isBudtender) || (c.duplicate && c.plate_status !== "none"),
   };
 }
 
