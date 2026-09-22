@@ -392,6 +392,355 @@ export type Database = {
           },
         ]
       }
+      dispensaries: {
+        Row: {
+          address: string | null
+          chain_name: string | null
+          city: string | null
+          is_active: boolean
+          license_number: string | null
+          name: string
+          psm_account_id: string
+          refreshed_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          chain_name?: string | null
+          city?: string | null
+          is_active?: boolean
+          license_number?: string | null
+          name: string
+          psm_account_id: string
+          refreshed_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          chain_name?: string | null
+          city?: string | null
+          is_active?: boolean
+          license_number?: string | null
+          name?: string
+          psm_account_id?: string
+          refreshed_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      event_reminder_sends: {
+        Row: {
+          channel: string
+          error: string | null
+          id: string
+          provider_message_id: string | null
+          reminder_id: string
+          rsvp_id: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          reminder_id: string
+          rsvp_id: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          error?: string | null
+          id?: string
+          provider_message_id?: string | null
+          reminder_id?: string
+          rsvp_id?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminder_sends_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "event_reminders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_reminder_sends_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: false
+            referencedRelation: "event_rsvps"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      event_reminders: {
+        Row: {
+          audience: string
+          body_html: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          event_id: string
+          id: string
+          is_marketing: boolean
+          last_error: string | null
+          local_time: string | null
+          name: string
+          offset_days: number | null
+          recipient_count: number | null
+          resolved_send_at: string | null
+          send_at: string | null
+          send_mode: string
+          sent_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          body_html: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          event_id: string
+          id?: string
+          is_marketing?: boolean
+          last_error?: string | null
+          local_time?: string | null
+          name: string
+          offset_days?: number | null
+          recipient_count?: number | null
+          resolved_send_at?: string | null
+          send_at?: string | null
+          send_mode?: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          body_html?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          event_id?: string
+          id?: string
+          is_marketing?: boolean
+          last_error?: string | null
+          local_time?: string | null
+          name?: string
+          offset_days?: number | null
+          recipient_count?: number | null
+          resolved_send_at?: string | null
+          send_at?: string | null
+          send_mode?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      event_rsvps: {
+        Row: {
+          badge_verified_at: string | null
+          badge_verified_by: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          checked_in_by: string | null
+          confirmation_sent_at: string | null
+          confirmed_21: boolean
+          created_at: string
+          dispensary_city: string | null
+          dispensary_name: string | null
+          dispensary_psm_account_id: string | null
+          email: string
+          email_bounced: boolean
+          event_id: string
+          first_name: string
+          id: string
+          is_budtender: boolean
+          last_name: string
+          marketing_opt_in: boolean
+          marketing_opt_in_at: string | null
+          phone: string | null
+          plate_redeemed_at: string | null
+          plate_redeemed_by: string | null
+          plate_status: string
+          plate_waitlist_position: number | null
+          psm_contact_id: string | null
+          psm_sync_attempts: number
+          psm_sync_error: string | null
+          psm_synced_at: string | null
+          source: string
+          status: string
+          ticket_token: string
+          updated_at: string
+        }
+        Insert: {
+          badge_verified_at?: string | null
+          badge_verified_by?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          confirmation_sent_at?: string | null
+          confirmed_21: boolean
+          created_at?: string
+          dispensary_city?: string | null
+          dispensary_name?: string | null
+          dispensary_psm_account_id?: string | null
+          email: string
+          email_bounced?: boolean
+          event_id: string
+          first_name: string
+          id?: string
+          is_budtender?: boolean
+          last_name: string
+          marketing_opt_in?: boolean
+          marketing_opt_in_at?: string | null
+          phone?: string | null
+          plate_redeemed_at?: string | null
+          plate_redeemed_by?: string | null
+          plate_status?: string
+          plate_waitlist_position?: number | null
+          psm_contact_id?: string | null
+          psm_sync_attempts?: number
+          psm_sync_error?: string | null
+          psm_synced_at?: string | null
+          source?: string
+          status?: string
+          ticket_token?: string
+          updated_at?: string
+        }
+        Update: {
+          badge_verified_at?: string | null
+          badge_verified_by?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          confirmation_sent_at?: string | null
+          confirmed_21?: boolean
+          created_at?: string
+          dispensary_city?: string | null
+          dispensary_name?: string | null
+          dispensary_psm_account_id?: string | null
+          email?: string
+          email_bounced?: boolean
+          event_id?: string
+          first_name?: string
+          id?: string
+          is_budtender?: boolean
+          last_name?: string
+          marketing_opt_in?: boolean
+          marketing_opt_in_at?: string | null
+          phone?: string | null
+          plate_redeemed_at?: string | null
+          plate_redeemed_by?: string | null
+          plate_status?: string
+          plate_waitlist_position?: number | null
+          psm_contact_id?: string | null
+          psm_sync_attempts?: number
+          psm_sync_error?: string | null
+          psm_synced_at?: string | null
+          source?: string
+          status?: string
+          ticket_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      events: {
+        Row: {
+          address: string
+          created_at: string
+          email_from: string
+          email_reply_to: string
+          ends_at: string
+          id: string
+          map_url: string | null
+          name: string
+          plate_cap: number
+          psm_qr_code_id: string | null
+          rsvp_closes_at: string | null
+          rsvp_open: boolean
+          slug: string
+          starts_at: string
+          tagline: string | null
+          timezone: string
+          updated_at: string
+          venue_name: string | null
+          weather_note: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          email_from?: string
+          email_reply_to?: string
+          ends_at: string
+          id?: string
+          map_url?: string | null
+          name: string
+          plate_cap?: number
+          psm_qr_code_id?: string | null
+          rsvp_closes_at?: string | null
+          rsvp_open?: boolean
+          slug: string
+          starts_at: string
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
+          venue_name?: string | null
+          weather_note?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          email_from?: string
+          email_reply_to?: string
+          ends_at?: string
+          id?: string
+          map_url?: string | null
+          name?: string
+          plate_cap?: number
+          psm_qr_code_id?: string | null
+          rsvp_closes_at?: string | null
+          rsvp_open?: boolean
+          slug?: string
+          starts_at?: string
+          tagline?: string | null
+          timezone?: string
+          updated_at?: string
+          venue_name?: string | null
+          weather_note?: string | null
+        }
+        Relationships: []
+      }
       merch_collection_banners: {
         Row: {
           alt: string | null
@@ -900,6 +1249,27 @@ export type Database = {
           },
         ]
       }
+      staff_roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          role?: string
+        }
+        Relationships: []
+      }
       store_locations: {
         Row: {
           address_line1: string | null
@@ -1072,7 +1442,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cancel_rsvp: {
+        Args: { p_ticket_token: string }
+        Returns: Json
+      }
+      claim_due_reminders: {
+        Args: never
+        Returns: Database["public"]["Tables"]["event_reminders"]["Row"][]
+      }
+      claim_rsvp: {
+        Args: {
+          p_dispensary_city: string | null
+          p_dispensary_name: string | null
+          p_dispensary_psm_account_id: string | null
+          p_email: string
+          p_event_id: string
+          p_first_name: string
+          p_is_budtender: boolean
+          p_last_name: string
+          p_marketing_opt_in: boolean
+          p_phone: string | null
+          p_source?: string
+        }
+        Returns: Json
+      }
+      release_waitlisted_plate: {
+        Args: { p_rsvp_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

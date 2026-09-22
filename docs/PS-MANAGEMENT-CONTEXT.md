@@ -1,6 +1,6 @@
 # PS Management — Integration Context for the Privatestock.co Website Project
 
-**Purpose of this document:** You are working in the **Private Stock Website** project — building a new public-facing website for privatestock.co (Next.js, replacing WordPress). This document is your complete reference for **PS Management (PSM)**, the separate internal operations app that the website will integrate with. Everything here was verified against the production database on 2026-08-14. Do not guess at PSM schema, IDs, or conventions — if something you need isn't in this document, ask Ambrose to pull it from the PSM project rather than assuming.
+**Purpose of this document:** You are working in the **Private Stock Website** project — building a new public-facing website for privatestock.co (Next.js, replacing WordPress). This document is your complete reference for **PS Management (PSM)**, the internal operations app that the website integrates with as one ecosystem. Everything here was verified against the production database on 2026-08-14 (§3 rewritten 2026-09-22). Do not guess at PSM schema, IDs, or conventions — if something you need isn't in this document, ask Ambrose to pull it from the PSM project rather than assuming.
 
 ---
 
@@ -36,30 +36,33 @@
 
 ---
 
-## 3. The #1 Integration Rule — Read This Before Writing Any Code
+## 3. The #1 Integration Rule — One Ecosystem, Two Databases, API-Connected
 
-**The website must NEVER connect directly to the PSM production database (`skdhqrjxvhegbufykhyp`) with an anon key.**
+*Rewritten 2026-09-22 by Ambrose's decision (replaces the earlier "siloed / zero cross-connection" framing). Private Stock is one ecosystem: website data (RSVPs, sign-ups, orders, rewards, analytics) SHOULD flow into PSM, and PSM data (store locator, availability, strains) SHOULD flow to the website. What the rule protects is **how** they connect, not **whether** they do.*
 
-That database contains payroll entries, CRM contacts, wholesale pricing, delivery costs, and field-sales data. Known open security items in PSM as of this writing: seven views missing `security_invoker` (bypass RLS), and a `payroll_entries` SELECT policy open to all company members. Exposing this project to anonymous internet traffic turns any RLS gap into a public breach.
+**The rule:** the public website's code (browser OR server) never holds a PSM database key and never reads/writes PSM tables directly. Every connection goes through a purpose-built, authenticated PSM endpoint (Edge Function or SECURITY DEFINER RPC) that does exactly one job.
 
-**Agreed pattern: the website gets its OWN Supabase project.** Data flows between the two projects only through controlled, curated publish jobs:
+**Why (the reasoning, so it can be re-evaluated later rather than obeyed blindly):** the website is internet-facing by design; PSM (`skdhqrjxvhegbufykhyp`) holds payroll entries, CRM contacts, wholesale pricing, delivery costs, and field-sales data, and has known open security items (seven views missing `security_invoker`, a `payroll_entries` SELECT policy open to all company members). Those gaps are tolerable only because PSM is behind staff login. A PSM key in the website — even server-side in Vercel env — means one website bug or leaked env var exposes everything. Options considered 2026-09-22: (A) API-connected two databases — **chosen**; (B) website server holds a PSM service-role key — rejected, breach radius = all of PSM; (C) merge into one database — rejected, large prod migration and exposes PSM RLS gaps to the internet.
+
+**Pattern:**
 
 ```
-PSM prod (skdhqrjxvhegbufykhyp)          Website Supabase project (new)
-─────────────────────────────            ──────────────────────────────
-retail_accounts ─┐
-deliveries ──────┼─► nightly publish ──► store_locations   (public read)
-menu_check_* ────┘   (Edge Function     product_availability (public read)
-strain_names ──────►  or scheduled  ──► strains             (public read)
-                      Cowork task)
-                                    ◄── merch orders, rewards events,
-PSM (new admin pages) ◄── sync ─────    web analytics (website writes,
-                                        PSM reads for admin/reporting)
+PSM prod (skdhqrjxvhegbufykhyp)                  Website Supabase (ihurvtxmcyahvtcydmnf)
+──────────────────────────────                   ──────────────────────────────────────
+retail_accounts / deliveries / menu_check_* ──► publish endpoint ──► store_locations, product_availability, strains
+                                                (PSM → website: /api/psm/publish, PSM_PUBLISH_SECRET)
+
+crm_contacts / crm_signups ◄── PSM Edge Function `ingest-event-rsvp` ◄── event_rsvps
+retail_accounts (inquiries) ◄── PSM Edge Function (retailer inquiry)  ◄── contact form
+PSM admin/reporting views  ◄── scheduled sync or PSM-side reader ◄──── orders, rewards, web_events
+                                (website → PSM: shared-secret per endpoint, e.g. PSM_INGEST_TOKEN)
 ```
 
-- Publish only the columns the public needs (see §6). Never publish delivery volumes, order amounts, costs, tiers, or contact info — a scraper reading the store locator API would otherwise get the entire wholesale account map and reorder cadence.
-- The reverse direction (merch orders, rewards, analytics into PSM admin views) can be a scheduled sync or a PSM page that reads the website project directly with a service-role key stored server-side in PSM's Edge Functions — decide when building the fulfillment module.
-- The website project gets its own auth (consumer accounts). PSM auth (staff accounts) stays completely separate. Do not attempt to share Supabase Auth between them.
+- Each endpoint accepts/returns only the fields its job needs. Publish only public-safe columns (see §6) — never delivery volumes, order amounts, costs, tiers, or contact info.
+- Each endpoint has its own secret, validates input, is idempotent, and is logged. The website keeps a sync status (`psm_synced_at`, `psm_sync_error`) and retries.
+- PSM reading the website project directly with a service-role key stored in PSM's Edge Functions is acceptable (the website DB holds nothing as sensitive as PSM's).
+- The website project keeps its own auth (consumer accounts). PSM auth (staff accounts) stays separate. Do not share Supabase Auth between them.
+- If PSM's RLS gaps are fixed and audited, option B can be revisited — record that as a decision if it happens.
 
 ---
 
@@ -165,15 +168,31 @@ id · company_id · name · notes · created_by · created_at · updated_at
 ```
 16 chains covering 59 of 70 accounts. Useful for grouping locator results ("all Zen Leaf locations").
 
-### 4.7 Tables the website must never touch, publish, or reference
+### 4.7 Tables the website must never access directly
 
-`payroll_entries`, `crm_contacts` / `crm_contact_accounts`, `retail_account_notes`, `field_activities` and all `field_activity_*` tables, `worklist_*`, `production_*`, `retail_sales_hourly`, anything with costs/margins/W-9s, and the Data Registry tables. If a website feature seems to need one of these, stop and redesign — the answer is a curated publish table, not broader access.
+`payroll_entries`, `crm_contacts` / `crm_contact_accounts` / `crm_signups`, `retail_account_notes`, `field_activities` and all `field_activity_*` tables, `worklist_*`, `production_*`, `retail_sales_hourly`, anything with costs/margins/W-9s, and the Data Registry tables. Website code never reads or writes these. Where a website feature legitimately needs to create or update a row (e.g. an event RSVP creating a CRM contact), that write happens **inside a PSM Edge Function** built for that one job (e.g. `ingest-event-rsvp`), per §3. Payroll, costs, margins, and W-9 data never leave PSM in any form.
+
+### 4.8 CRM tables (verified 2026-09-22, read-only) — written only via PSM Edge Functions
+
+```
+crm_contacts: id · company_id · first_name · last_name · email · phone · zip_code
+  audience_type CHECK ∈ {consumer, budtender, dispensary, buyer, owner_manager, vendor_contact, cultivator_contact, other}
+  first_source_qr_code_id FK → crm_qr_codes · is_21_plus bool · account_id FK → retail_accounts (ON DELETE SET NULL)
+  role_title · is_active · source CHECK ∈ {qr_signup, manual, import} · notes · birthday date · home_address
+  created_at · updated_at   (NO unique constraint on email — see v_crm_duplicate_contacts)
+crm_contact_accounts: id · company_id · contact_id FK (cascade) · retail_account_id FK (cascade) · is_primary
+  link_source CHECK ∈ {manual, chain, backfill, import} · UNIQUE(contact_id, retail_account_id) · one primary per contact
+crm_qr_codes: id · company_id · slug · name · description · brand · audience_type · form_headline · form_subtext
+  is_active · display_order · redirect_key · target_type · target_url · use_direct_url · created_by · timestamps
+crm_signups: id · qr_code_id · contact_id · created_at
+```
+As of 2026-09-22: 118 consumer contacts (source qr_signup), 50 dispensary contacts (source manual). Planned additive change (approved 2026-09-22, not yet applied): `crm_contacts.marketing_opt_in boolean` + `marketing_opt_in_at timestamptz`.
 
 ---
 
 ## 5. PSM Database Conventions (follow these for any PSM-side work)
 
-The website project will occasionally need PSM-side changes (the lat/lng migration, publish function, merch admin tables). When Ambrose does that work — in the PSM project or via Supabase MCP from any project — these conventions apply:
+The website project will occasionally need PSM-side changes (the lat/lng migration, publish function, ingest endpoints, merch admin tables). When Ambrose does that work — in the PSM project or via Supabase MCP from any project — these conventions apply:
 
 - **DDL via `apply_migration`** (tracked in migration history); **DML/verification via `execute_sql`**. After migrations: `SELECT pg_notify('pgrst', 'reload schema');`
 - `execute_sql` returns only the **last** statement's result in multi-statement blocks, and each call is a separate connection (no shared transaction state across calls).
@@ -184,7 +203,7 @@ The website project will occasionally need PSM-side changes (the lat/lng migrati
 - Generated/stored columns (`discount_pct`, `discount_bucket`, `needs_manual_check` on `menu_check_findings`) — never write to them.
 - PSM roles: `super_admin` (Ambrose) > `admin` > `director` > `manager` > `user`.
 
-**The website's own Supabase project is NOT bound by PSM's "no dev branch" constraint** — it's greenfield; use branches/preview environments freely there. The constraint applies only to `skdhqrjxvhegbufykhyp`.
+**The website's own Supabase project is NOT bound by PSM's "no dev branch" constraint** — use branches/preview environments freely there. The constraint applies only to `skdhqrjxvhegbufykhyp`.
 
 ---
 
@@ -232,10 +251,11 @@ Publish mechanics: a scheduled Edge Function in the **website** project pulls fr
 
 ---
 
-## 7. Website → PSM Direction (merch, rewards, analytics)
+## 7. Website → PSM Direction (merch, rewards, events, analytics)
 
 - **Merch store:** Stripe Checkout (hosted page; Stripe prohibits THC products — **merch only**, keep the merch entity presentation clean of plant-touching commerce). Webhook `checkout.session.completed` → writes `orders` / `order_items` in the website project. Fulfillment UI is built **in PSM** as a new module (`merch_products`, `merch_variants`, `merch_inventory`, `orders`, `order_items`, `shipments`), reusing PSM's existing RLS pattern, role gating, and shadcn components. Shippo/EasyPost for labels.
 - **Rewards:** consumer auth in the website project. Mechanic: QR on packaging → scan → points (PSM already has a QR Codes feature under Resources — generation side is half built). Redeem for merch/swag only, never cannabis (IL/NV inducement rules — compliance counsel reviews redemption logic before launch).
+- **Event RSVPs (added 2026-09-22):** website `event_rsvps` → PSM Edge Function `ingest-event-rsvp` (shared secret `PSM_INGEST_TOKEN`) → upsert `crm_contacts` by normalized email, log `crm_signups` against the event's `crm_qr_codes` row, link `crm_contact_accounts` when a budtender's dispensary license matches `retail_accounts.license_number`. See `claude/PRD-KICKBACK-RSVP.md`.
 - **Analytics:** first-party `web_events` table in the website project (session_id, path, event_type, element, ts, referrer, UTM). Reporting dashboard built in PSM alongside sales data. Cookie consent = a `ConsentProvider` that gates script injection (nothing non-essential loads pre-consent, choice in a first-party cookie); first-party-only analytics keeps the consent story simple and avoids GA cannabis-ToS friction.
 - **Retailer inquiry form** → writes into PSM `retail_accounts` at the earliest pipeline `stage` (stage history is trigger-populated via `retail_account_stage_history` — just set `stage`, the trigger logs it). Route through a PSM Edge Function, not direct table access.
 
@@ -246,7 +266,7 @@ Publish mechanics: a scheduled Edge Function in the **website** project pulls fr
 - **Next.js (App Router) on Vercel** — not Vite — because the public site needs SSR/SSG for SEO. Tailwind + shadcn/ui carry over from PSM muscle memory.
 - **Age gate (21+)** on entry; required for cannabis marketing and ad platforms.
 - **SEO migration is mandatory pre-launch:** export the full WordPress URL inventory (Search Console / Screaming Frog), build a 301 map into `next.config.js`, carry over titles/metas/sitemap/robots, add LocalBusiness + Product structured data.
-- Planned feature set beyond the basics: strain library (§4.5), COA/batch lookup, events calendar (pop-ups — PSM already tracks these as Brands Sales metrics), budtender education portal (PSM tracks "# Budtender Educations Completed"), email/SMS capture (Surfside is the measured channel in PSM).
+- Planned feature set beyond the basics: strain library (§4.5), COA/batch lookup, events calendar (pop-ups — PSM already tracks these as Brands Sales metrics), budtender education portal (PSM tracks "# Budtender Educations Completed"), email/SMS capture (Surfside is the measured channel in PSM). Note (2026-09-22): US carriers/Twilio reject cannabis SMS traffic; any SMS needs a cannabis-compliant provider.
 - Phasing: (1) marketing site + content + consent + analytics + redirects → (2) store locator + availability feed → (3) auth + merch + Stripe → (4) rewards + PSM fulfillment module.
 
 ---
@@ -273,4 +293,4 @@ Publish mechanics: a scheduled Edge Function in the **website** project pulls fr
 
 ---
 
-*Verified against production `skdhqrjxvhegbufykhyp` on 2026-08-14. If PSM schema changes after this date, re-verify with `information_schema.columns` before building against it.*
+*Verified against production `skdhqrjxvhegbufykhyp` on 2026-08-14 (CRM tables re-verified 2026-09-22). If PSM schema changes after this date, re-verify with `information_schema.columns` before building against it.*

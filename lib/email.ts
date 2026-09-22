@@ -100,3 +100,58 @@ export async function send(message: EmailMessage): Promise<SendResult> {
 export function notifyStaff(subject: string, html: string, opts: { replyTo?: string; idempotencyKey?: string } = {}) {
   return send({ to: notifyTo(), subject, html, ...opts });
 }
+
+export interface BatchResult {
+  ok: boolean;
+  /** Resend ids, in the same order as the messages sent (empty when skipped or failed). */
+  ids: string[];
+  skipped?: boolean;
+  error?: string;
+}
+
+/**
+ * Up to 100 messages in one Resend call (POST /emails/batch). Used by event
+ * reminders so a 1,000-guest list stays well inside Resend's per-second rate
+ * limit. Same no-op behaviour as send() when RESEND_API_KEY is unset.
+ */
+export async function sendBatch(messages: EmailMessage[], idempotencyKey?: string): Promise<BatchResult> {
+  if (messages.length === 0) return { ok: true, ids: [] };
+  if (messages.length > 100) throw new Error("sendBatch: max 100 messages per call");
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn(`[email] RESEND_API_KEY unset — skipped batch of ${messages.length}`);
+    return { ok: true, ids: [], skipped: true };
+  }
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+  try {
+    const res = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(
+        messages.map((m) => ({
+          from: m.from ?? emailFrom(),
+          to: Array.isArray(m.to) ? m.to : [m.to],
+          subject: m.subject,
+          html: m.html,
+          text: m.text ?? htmlToText(m.html),
+          ...(m.replyTo ? { reply_to: m.replyTo } : {}),
+        })),
+      ),
+    });
+    const body = (await res.json().catch(() => ({}))) as { data?: { id: string }[]; message?: string };
+    if (!res.ok) {
+      const error = body.message ?? `Resend HTTP ${res.status}`;
+      console.error(`[email] batch failed: ${error}`);
+      return { ok: false, ids: [], error };
+    }
+    return { ok: true, ids: (body.data ?? []).map((d) => d.id) };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : "network error";
+    console.error(`[email] batch failed: ${error}`);
+    return { ok: false, ids: [], error };
+  }
+}
