@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { KINGS } from "@/lib/terpkings-content";
 import { TKPlaceholder, TKScrews, TKSectionHead } from "./TKBits";
+import { TKKingVideo } from "./TKKingVideo";
 
 /**
  * FILE 03 // CLASSIFIED DOSSIERS — wood-panel console with the five Kings:
@@ -49,8 +50,21 @@ export function TKDossiers() {
                 <br />
                 <span className="text-[#5B6E35]">— {king.title}</span>
               </div>
-              <div className="relative h-[220px] overflow-hidden rounded-[4px] border-2 border-[#2E3A1C]">
-                <TKPlaceholder label={king.placeholder} />
+              <div
+                className={`relative mx-auto w-full max-w-[300px] overflow-hidden rounded-[4px] border-2 border-[#2E3A1C] ${
+                  king.video ? "aspect-[9/16]" : "h-[220px]"
+                }`}
+              >
+                {king.video ? (
+                  <TKKingVideo
+                    key={king.slotId}
+                    src={king.video}
+                    poster={king.poster}
+                    label={`${king.name} — ${king.title}`}
+                  />
+                ) : (
+                  <TKPlaceholder label={king.placeholder} />
+                )}
               </div>
               <div className="flex flex-col gap-2" role="tablist" aria-label="Kings">
                 {KINGS.map((k, i) => {
