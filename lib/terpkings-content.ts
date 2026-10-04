@@ -176,6 +176,9 @@ export interface KingDossier {
   color: string;
   slotId: string;
   placeholder: string;
+  /** Dossier clip (540×960 H.264 + AAC, faststart) and its first-frame poster. */
+  video?: string;
+  poster?: string;
   story: string;
 }
 
@@ -186,6 +189,8 @@ export const KINGS: KingDossier[] = [
     domain: "OGs & GAS",
     color: "#F7931E",
     slotId: "king-gas",
+    video: `${TK_ASSETS}/kings/king-gas.mp4`,
+    poster: `${TK_ASSETS}/kings/king-gas.jpg`,
     placeholder: "Drop Gaz’Rax art",
     story:
       "Forged in the refinery moons of the Diesel Belt, Gaz’Rax is half machine, all menace. His court runs on fuel — pungent, earthy, unmistakable.\n\nWhere he lands, the air changes first. Loyal to nothing but the burn, he commands the OG bloodlines: Kush, Chemdawg, Sour Diesel. Function over beauty. Always.",
@@ -196,6 +201,8 @@ export const KINGS: KingDossier[] = [
     domain: "JACKS & HAZE",
     color: "#FF2E2E",
     slotId: "king-haze",
+    video: `${TK_ASSETS}/kings/king-haze.mp4`,
+    poster: `${TK_ASSETS}/kings/king-haze.jpg`,
     placeholder: "Drop Sur’Haze art",
     story:
       "The Overmind of the outer rim. Sur’Haze speaks in patterns others cannot see — terpinolene running double-hot through his veins, the rarest chemotype in the galaxy.\n\nHis dominion is the daylight side: energy, ideas, the endless cerebral spiral. Trainwreck and Jack Herer fly his colors.",
@@ -206,6 +213,8 @@ export const KINGS: KingDossier[] = [
     domain: "DESSERTS",
     color: "#F473B9",
     slotId: "king-dessert",
+    video: `${TK_ASSETS}/kings/king-dessert.mp4`,
+    poster: `${TK_ASSETS}/kings/king-dessert.jpg`,
     placeholder: "Drop Dulcir art",
     story:
       "The Hooded One. Dulcir rules the dessert moons where the atmosphere itself tastes of cake batter and burnt citrus.\n\nHis power is balance — sweetness and spice, limonene and caryophyllene, held level to a tenth of a percent. Comforting. Racy. Never one without the other.",
@@ -216,6 +225,8 @@ export const KINGS: KingDossier[] = [
     domain: "SWEETS & DREAMS",
     color: "#4A90E2",
     slotId: "king-fruit",
+    video: `${TK_ASSETS}/kings/king-fruit.mp4`,
+    poster: `${TK_ASSETS}/kings/king-fruit.jpg`,
     placeholder: "Drop Fruvian art",
     story:
       "The Drifter. Fruvian crossed the Blueberry Nebula alone and came back changed — heavy-lidded, slow-moving, impossible to shake.\n\nMyrcene is his signature: the base note of the entire genus, the gravity that pulls every other flavor into orbit. Sit down. Stay a while.",
@@ -226,6 +237,8 @@ export const KINGS: KingDossier[] = [
     domain: "TROPICAL & FLORAL",
     color: "#8E5BC0",
     slotId: "king-floral",
+    video: `${TK_ASSETS}/kings/king-floral.mp4`,
+    poster: `${TK_ASSETS}/kings/king-floral.jpg`,
     placeholder: "Drop Floraxa art",
     story:
       "The Monk. Floraxa took a vow of stillness in the garden worlds, where ocimene drifts on the wind like a warning and a welcome at once.\n\nHis calm is not weakness — it is a signal that travels. Lavender, rose, tropical bloom. Royalty at rest.",
