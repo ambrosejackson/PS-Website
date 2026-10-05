@@ -6,7 +6,8 @@ import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
 import { Reveal } from "@/components/brand/Reveal";
 import { OutfittersContactForm } from "@/components/brand/OutfittersContactForm";
 import { brandByName } from "@/lib/brands";
-import { FALLBACK_HERO, getCatalogProducts, getHeroesForPage } from "@/lib/data";
+import { toBrandMerchCards } from "@/lib/brandMerch";
+import { FALLBACK_HERO, getBrandMerch, getCatalogProducts, getHeroesForPage } from "@/lib/data";
 
 /**
  * Outfitters brand page — recreation of docs/reference/outfitters/ under the
@@ -80,10 +81,12 @@ const jsonLd = {
 };
 
 export default async function OutfittersPage() {
-  const [dbHeroes, products] = await Promise.all([
+  const [dbHeroes, products, merchListings] = await Promise.all([
     getHeroesForPage("/outfitters"),
     getCatalogProducts("Outfitters"),
+    getBrandMerch("Outfitters"),
   ]);
+  const merch = toBrandMerchCards(merchListings);
   const heroes =
     dbHeroes.length > 0
       ? dbHeroes
@@ -296,6 +299,57 @@ export default async function OutfittersPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* THE WARDROBE — live Outfitters merch (merch_products.brand); hidden until some exists */}
+      {merch.length > 0 && (
+        <section id="merch" className="border-b border-neutral-200 bg-white py-20 md:py-28">
+          <div className="mx-auto max-w-6xl px-5">
+            <Reveal>
+              <h2 className="text-center font-condensed text-5xl font-semibold uppercase tracking-[0.25em] text-neutral-900">
+                The Wardrobe
+              </h2>
+              <p className="mx-auto mt-5 max-w-xl text-center text-sm text-neutral-600">
+                Outfitters merch &amp; apparel.
+              </p>
+            </Reveal>
+            <div className="mt-14 grid gap-8 md:grid-cols-3">
+              {merch.map((m, i) => (
+                <Reveal key={m.id} delayMs={(i % 3) * 120}>
+                  <div className="bg-white shadow-sm">
+                    <div
+                      className="flex aspect-[4/5] items-center justify-center overflow-hidden border-b bg-[#f1ece1]"
+                      style={{ borderColor: `${GOLD}55` }}
+                    >
+                      {m.image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.image} alt={m.alt} className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-condensed text-lg font-semibold uppercase tracking-[0.08em] text-neutral-900">
+                        {m.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-neutral-500">{m.price ?? "Coming soon"}</p>
+                      {m.href ? (
+                        <Link
+                          href={m.href}
+                          className="mt-5 block border border-neutral-900 py-3 text-center font-condensed text-xs font-semibold uppercase tracking-[0.2em] text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
+                        >
+                          Shop Now
+                        </Link>
+                      ) : (
+                        <span className="mt-5 block border border-neutral-300 py-3 text-center font-condensed text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* THE EXPERIENCE */}
       <section className="bg-white py-20 md:py-28">

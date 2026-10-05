@@ -178,6 +178,24 @@ export async function getMerchListings(): Promise<MerchListing[]> {
   return data as MerchListing[];
 }
 
+/**
+ * Active merch for ONE brand — the brand-page merch sections. `brandName` is the
+ * lib/brands.ts display name, exactly as stored in merch_products.brand.
+ */
+export async function getBrandMerch(brandName: string): Promise<MerchListing[]> {
+  const supabase = createPublicClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("merch_products")
+    .select("*, merch_variants(*)")
+    .eq("is_active", true)
+    .eq("brand", brandName)
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("name", { ascending: true });
+  if (error || !data) return [];
+  return data as MerchListing[];
+}
+
 export async function getMerchListingBySlug(slug: string): Promise<MerchListing | null> {
   const supabase = createPublicClient();
   if (!supabase) return null;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
-import { getCatalogProducts } from "@/lib/data";
+import { getBrandMerch, getCatalogProducts } from "@/lib/data";
+import { toBrandMerchCards } from "@/lib/brandMerch";
 import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
@@ -90,6 +91,7 @@ const jsonLd = {
 
 export default async function HigherSelfPage() {
   const catalog = await getCatalogProducts("Higher Self");
+  const merch = toBrandMerchCards(await getBrandMerch("Higher Self"));
   const [dbHeroes, allStores] = await Promise.all([
     getHeroesForPage("/higherself"),
     getStoreLocations(),
@@ -208,6 +210,44 @@ export default async function HigherSelfPage() {
 
       {/* Live catalog (admin-curated catalog_products) — D-046 */}
       <BrandCatalogGrid brandName="Higher Self" products={catalog} title="Higher Self Products" />
+
+      {/* Higher Self merch — live merch_products.brand rows; hidden until some exists */}
+      {merch.length > 0 && (
+        <section id="merch" className="mx-auto max-w-6xl px-5 pb-16 md:pb-24">
+          <h2 className="text-center text-4xl font-bold text-neutral-800">Higher Self Merch</h2>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {merch.map((m) => (
+              <div
+                key={m.id}
+                className="flex flex-col rounded-2xl border border-[#e8f4fc] bg-[#f7fbfe] p-4 shadow-sm"
+              >
+                <div className="flex h-64 items-center justify-center overflow-hidden rounded-xl bg-white">
+                  {m.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.image} alt={m.alt} className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <h3 className="mt-6 text-center text-2xl font-bold text-neutral-800">{m.name}</h3>
+                <p className="mt-2 flex-1 text-center text-sm text-neutral-500">
+                  {m.price ?? "Coming soon"}
+                </p>
+                {m.href ? (
+                  <Link
+                    href={m.href}
+                    className="mt-5 block rounded-xl bg-[#8fd0f8] py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#6bbdf0]"
+                  >
+                    Shop Now
+                  </Link>
+                ) : (
+                  <span className="mt-5 block rounded-xl bg-neutral-200 py-3 text-center text-sm font-semibold text-neutral-500">
+                    Coming Soon
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Shop Exclusive Merch banner */}
       <section className="mx-auto max-w-6xl px-5 pb-16 md:pb-24">

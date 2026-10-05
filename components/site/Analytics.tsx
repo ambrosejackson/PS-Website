@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useConsent } from "@/components/site/ConsentProvider";
+import { CONSENT_COOKIE, getCookie } from "@/lib/cookies";
 
 /**
  * First-party analytics only (guardrail #6): events go to our own web_events
@@ -51,6 +52,26 @@ function send(event: {
     body,
     keepalive: true,
   }).catch(() => {});
+}
+
+/**
+ * Named first-party event for interactions that are not a plain click
+ * (`data-track` covers those). Same sink and same consent gate as everything
+ * else here: a no-op unless the consent cookie says "accepted". `detail` is
+ * stored as a short JSON string in web_events.element — keep it to a few
+ * low-cardinality fields, never free text or personal data.
+ */
+export function trackEvent(eventType: string, detail?: Record<string, string>) {
+  try {
+    if (getCookie(CONSENT_COOKIE) !== "accepted") return;
+    send({
+      path: window.location.pathname,
+      eventType,
+      element: detail ? JSON.stringify(detail) : null,
+    });
+  } catch {
+    /* storage or cookies unavailable — analytics must never break the page */
+  }
 }
 
 export function Analytics() {
