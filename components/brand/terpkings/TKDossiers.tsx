@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { KINGS } from "@/lib/terpkings-content";
 import { TKPlaceholder, TKScrews, TKSectionHead } from "./TKBits";
 import { TKKingVideo } from "./TKKingVideo";
+
+// Star chart: its own chunk, fetched only once FILE 03 nears the viewport.
+const StarChart = dynamic(() => import("./StarChart").then((m) => m.StarChart), {
+  ssr: false,
+});
 
 /**
  * FILE 03 // CLASSIFIED DOSSIERS — wood-panel console with the five Kings:
@@ -21,6 +27,24 @@ export function TKDossiers() {
   const selectKing = (id: string) => setSelectedId(id);
   const prev = () => selectKing(KINGS[(idx + KINGS.length - 1) % KINGS.length].slotId);
   const next = () => selectKing(KINGS[(idx + 1) % KINGS.length].slotId);
+
+  const chartSlot = useRef<HTMLDivElement>(null);
+  const [chartNear, setChartNear] = useState(false);
+  useEffect(() => {
+    const el = chartSlot.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setChartNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <section id="kings" className="tk-gutter mx-auto max-w-[1160px] py-[100px]">
@@ -48,6 +72,13 @@ export function TKDossiers() {
           corners="all"
         />
         <div className="relative overflow-hidden rounded-lg border-2 border-[#1E2612] bg-[#070A05] p-[26px]">
+          {/* Star chart — bleeds to the screen edge; height reserved so mounting never shifts layout. */}
+          <div
+            ref={chartSlot}
+            className="relative -mx-[26px] -mt-[26px] mb-[26px] h-[260px] border-b-2 border-[#1E2612] md:h-[320px]"
+          >
+            {chartNear && <StarChart selectedId={selectedId} onSelect={selectKing} />}
+          </div>
           <div className="tk-dossier-grid relative">
             {/* Left: name, art, selector */}
             <div className="flex min-w-0 flex-col gap-[14px]">
