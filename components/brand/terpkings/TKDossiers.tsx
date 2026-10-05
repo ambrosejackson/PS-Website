@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { KINGS } from "@/lib/terpkings-content";
+import { kingWorld } from "@/lib/terpkings/kings";
 import { TKPlaceholder, TKScrews, TKSectionHead } from "./TKBits";
 import { TKKingVideo } from "./TKKingVideo";
 
 // Star chart: its own chunk, fetched only once FILE 03 nears the viewport.
 const StarChart = dynamic(() => import("./StarChart").then((m) => m.StarChart), {
+  ssr: false,
+});
+// Beat the Forecast: fetched only when RUN FORECAST TEST is clicked.
+const ForecastGame = dynamic(() => import("./ForecastGame").then((m) => m.ForecastGame), {
   ssr: false,
 });
 
@@ -27,6 +32,11 @@ export function TKDossiers() {
   const selectKing = (id: string) => setSelectedId(id);
   const prev = () => selectKing(KINGS[(idx + KINGS.length - 1) % KINGS.length].slotId);
   const next = () => selectKing(KINGS[(idx + 1) % KINGS.length].slotId);
+
+  // Game trigger shows only in the dossier of a King flagged `hasGame` (kings.ts).
+  const hasGame = kingWorld(king.slotId)?.hasGame ?? false;
+  const [gameOpen, setGameOpen] = useState(false);
+  const closeGame = useCallback(() => setGameOpen(false), []);
 
   const chartSlot = useRef<HTMLDivElement>(null);
   const [chartNear, setChartNear] = useState(false);
@@ -141,6 +151,15 @@ export function TKDossiers() {
                   {king.story}
                 </p>
               </div>
+              {hasGame && (
+                <button
+                  type="button"
+                  onClick={() => setGameOpen(true)}
+                  className="tk-mono tk-btn-edu cursor-pointer rounded-[3px] px-4 py-[10px] text-[20px] tracking-[.14em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFB000]"
+                >
+                  ▶ RUN FORECAST TEST
+                </button>
+              )}
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -163,6 +182,7 @@ export function TKDossiers() {
           </div>
         </div>
       </div>
+      {gameOpen && <ForecastGame onClose={closeGame} />}
     </section>
   );
 }
