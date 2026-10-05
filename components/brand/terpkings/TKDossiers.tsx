@@ -9,12 +9,18 @@ import { TKKingVideo } from "./TKKingVideo";
  * FILE 03 // CLASSIFIED DOSSIERS — wood-panel console with the five Kings:
  * selectable list, prev/next arrows, full dossier stories, per-king accent.
  * Single-column on mobile (tk-dossier-grid).
+ *
+ * The selected King is held by id (`slotId`, same ids as lib/terpkings/kings.ts)
+ * and every selector — ▸ tabs, ←/→ and the star chart — goes through
+ * `selectKing`, so they can never disagree.
  */
 export function TKDossiers() {
-  const [idx, setIdx] = useState(0);
+  const [selectedId, setSelectedId] = useState(KINGS[0].slotId);
+  const idx = Math.max(0, KINGS.findIndex((k) => k.slotId === selectedId));
   const king = KINGS[idx];
-  const prev = () => setIdx((i) => (i + KINGS.length - 1) % KINGS.length);
-  const next = () => setIdx((i) => (i + 1) % KINGS.length);
+  const selectKing = (id: string) => setSelectedId(id);
+  const prev = () => selectKing(KINGS[(idx + KINGS.length - 1) % KINGS.length].slotId);
+  const next = () => selectKing(KINGS[(idx + 1) % KINGS.length].slotId);
 
   return (
     <section id="kings" className="tk-gutter mx-auto max-w-[1160px] py-[100px]">
@@ -75,7 +81,7 @@ export function TKDossiers() {
                       type="button"
                       role="tab"
                       aria-selected={active}
-                      onClick={() => setIdx(i)}
+                      onClick={() => selectKing(k.slotId)}
                       className="tk-mono tk-hover-bright cursor-pointer rounded-[3px] border border-[#3E5222] px-[14px] py-[9px] text-left text-[18px] tracking-[.12em]"
                       style={{
                         background: active ? "rgba(168,198,78,.25)" : "rgba(0,0,0,.4)",
