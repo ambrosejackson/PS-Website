@@ -1043,3 +1043,39 @@ D-063..D-073 and renumbered to D-071..D-081 on 2026-09-13 when the branches merg
 - **D-097 — Dispensary autocomplete fed from PSM, IDFPR as cross-check (Ambrose, 2026-09-22).** `dispensaries` mirrors PSM `retail_accounts` (274 active; public-safe columns only) via `dispensary-directory`, refreshed daily by the cron and on demand in admin. IDFPR's adult-use list (271 active, updated 2026-01-09) matched 187 PSM license numbers; most of the rest are PSM rows holding old 280.x medical numbers or typos — a separate PSM data-cleanup task. Event palette tokens `kb-yellow` #f7d117 / `kb-blue` #2458d6 (from the sponsorship deck) are event-page-only.
 
 - **D-098 — A guest who re-RSVPs as a budtender is upgraded in place (Ambrose, 2026-09-22).** Found in production testing: a confirmed guest who came back and ticked "I'm a budtender" got "already on the list" and silently no plate. `claim_rsvp()` now upgrades that row under the same event-row lock: budtender + dispensary set, plate reserved or waitlisted, CRM re-sync queued, new confirmation email (with the IDFPR badge block); ticket token, name, phone, consent and check-in state are kept. It returns `upgraded: true` and the form says "You're now on the list as a budtender". Every other repeat submit is unchanged. Migration `20260922180000_claim_rsvp_budtender_upgrade` (applied to production 2026-09-22, backward compatible; rollback = re-run the original definition from `20260922160000_events_rsvp.sql`).
+
+## 2026-10-04 — TerpKings King Origins: star chart + Beat the Forecast
+
+PRD: `claude/PRD-TERPKINGS-KING-ORIGINS.md` (Rev 2, signed off "proceed" 2026-10-04). PRD labels in parentheses. How-to: `docs/TERPKINGS-KINGS.md`.
+
+- **D-099 — Floraxa's home world is Mars; the Bermuda seabed garden survives (PRD D1; Ambrose, 2026-10-04).** The time-travel element is dropped. On the chart Floraxa has a line to Mars plus a second Earth marker, "Bermuda seabed garden".
+
+- **D-100 — v1 is the star chart plus one game, Beat the Forecast (PRD D2; Ambrose, 2026-10-04).** The other game concepts (Quadrantid Run, Parity, Root Signal, Lunar Still), live sky, live planet distances, per-King URL deep links, leaderboards and game audio are parked.
+
+- **D-101 — Every world is drawn in the single TerpKings green; Earth is the only off-color node (PRD D3; proposed, accepted with "proceed" 2026-10-04).** Earth uses the page's existing amber `#FFB000`. One constant, `EARTH_COLOR` in `StarChart.tsx`, switches it.
+
+- **D-102 — Two-band scale with a labelled break (PRD D4; proposed, accepted 2026-10-04).** Inner band (Venus, Earth, Moon station, Mars) in light-minutes; outer band (Arcturus, 55 Cancri, Kepler-51) log-scaled in light-years, 10 to 10,000 ly.
+
+- **D-103 — King chart data is a static config, `lib/terpkings/kings.ts` (PRD D5; proposed, accepted 2026-10-04).** Dossier copy, videos and posters stay in `lib/terpkings-content.ts`; the two join on `id` === `slotId`.
+
+- **D-104 — No server state for the game (PRD D6; proposed, accepted 2026-10-04).** No leaderboard, accounts or rewards points. The best result is kept in the visitor's localStorage only (`tk:forecast-best`).
+
+- **D-105 — The chart lives inside FILE 03 as the King selector, not as a new section (PRD D7; proposed, accepted 2026-10-04).** Selecting a world selects that King exactly as a ▸ tab does. The tab list stays as the accessible text selector; chart, tabs and ←/→ share one selection state in `TKDossiers.tsx` (`selectKing`).
+
+- **D-106 — The game opens as a TERPKINGS OS terminal overlay from a RUN FORECAST TEST control in Sur'Haze's dossier (PRD D8; proposed, accepted 2026-10-04).** Its code loads on click only.
+
+- **D-107 — No counsel review before merge (PRD D9; Ambrose, 2026-10-04).**
+
+- **D-108 — The King videos are the character visuals (PRD D10; Ambrose, 2026-10-04).** The chart adds no portraits and no bios; the dossier carries the story.
+
+- **D-109 — Chart selection behaves exactly like a ▸ tab for sound (Ambrose, 2026-10-04).** Today a King change remounts the clip, which plays with sound when the browser allows it and the visitor has not muted. The chart adds no new unmute path and `TKKingVideo` is not changed; forcing clips muted until TAP FOR SOUND was rejected as a change to King-video behaviour.
+
+- **D-110 — Named analytics events go through a consent-gated `trackEvent` (Ambrose, 2026-10-04).** `web_events` has no payload column and no DB change was allowed, so `trackEvent(eventType, detail)` in `components/site/Analytics.tsx` stores `detail` as a short JSON string in `element`. Events: `king_select` `{king, source: chart|tab|arrow}`, `forecast_start`, `forecast_complete` `{accuracy: 0-50|51-60|61-100}` — the bucket only, never the input sequence. It is a no-op unless the consent cookie is `accepted`.
+
+- **D-111 — New TerpKings components sit beside their siblings (Ambrose, 2026-10-04).** `components/brand/terpkings/StarChart.tsx` and `ForecastGame.tsx`, not the PRD's `components/terpkings/`. `lib/terpkings/kings.ts` and `lib/terpkings/forecast.ts` as written.
+
+- **D-112 — The chart reuses the page's hard-coded greens (Ambrose, 2026-10-04).** The TerpKings page has no CSS variables, so the chart uses the same literals (`#A8C64E`, `#D8F26E`, `#5B6E35`) rather than introducing `--tk-green`.
+
+- **D-113 — FILE 03 layout (Ambrose, 2026-10-04).** The chart is a full-width row at the top of the dossier screen, above the unchanged name/video/tabs | dossier grid, with its height reserved (260 px on phones, 320 px from `md`). On phones it bleeds to the screen edge and uses short world labels; the full "world / star" name is in the readout under the chart.
+
+- **D-114 — Predictor tests use Node's built-in runner (Ambrose, 2026-10-04).** `npm test` runs `node --test lib/terpkings/forecast.test.mjs`; no test dependency was added and CI is unchanged.
