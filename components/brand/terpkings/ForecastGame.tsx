@@ -9,6 +9,7 @@ import {
   type ForecastBand,
   type Move,
 } from "@/lib/terpkings/forecast";
+import { trackEvent } from "@/components/site/Analytics";
 
 /**
  * Beat the Forecast — Sur'Haze's mini-game (PRD King Origins §7), a terminal
@@ -105,6 +106,7 @@ export function ForecastGame({ onClose }: { onClose: () => void }) {
 
   const start = () => {
     setCopied(false);
+    trackEvent("forecast_start");
     setGame({ ...INTRO, phase: "play", forecast: predict([]), best: readBest() });
   };
 
@@ -122,6 +124,8 @@ export function ForecastGame({ onClose }: { onClose: () => void }) {
     const finalPct = accuracyPct(calls.filter(Boolean).length);
     const newBest = g.best === null || finalPct < g.best;
     if (newBest) writeBest(finalPct);
+    // Accuracy bucket only — the input sequence never leaves the browser.
+    trackEvent("forecast_complete", { accuracy: bandFor(finalPct).bucket });
     setGame({
       ...g,
       phase: "done",

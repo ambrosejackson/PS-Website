@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { trackEvent } from "@/components/site/Analytics";
 import { KINGS } from "@/lib/terpkings-content";
 import { kingWorld } from "@/lib/terpkings/kings";
 import { TKPlaceholder, TKScrews, TKSectionHead } from "./TKBits";
@@ -29,9 +30,13 @@ export function TKDossiers() {
   const [selectedId, setSelectedId] = useState(KINGS[0].slotId);
   const idx = Math.max(0, KINGS.findIndex((k) => k.slotId === selectedId));
   const king = KINGS[idx];
-  const selectKing = (id: string) => setSelectedId(id);
-  const prev = () => selectKing(KINGS[(idx + KINGS.length - 1) % KINGS.length].slotId);
-  const next = () => selectKing(KINGS[(idx + 1) % KINGS.length].slotId);
+  const selectKing = (id: string, source: "chart" | "tab" | "arrow") => {
+    if (id === selectedId) return;
+    setSelectedId(id);
+    trackEvent("king_select", { king: id, source });
+  };
+  const prev = () => selectKing(KINGS[(idx + KINGS.length - 1) % KINGS.length].slotId, "arrow");
+  const next = () => selectKing(KINGS[(idx + 1) % KINGS.length].slotId, "arrow");
 
   // Game trigger shows only in the dossier of a King flagged `hasGame` (kings.ts).
   const hasGame = kingWorld(king.slotId)?.hasGame ?? false;
@@ -87,7 +92,7 @@ export function TKDossiers() {
             ref={chartSlot}
             className="relative -mx-[26px] -mt-[26px] mb-[26px] h-[260px] border-b-2 border-[#1E2612] md:h-[320px]"
           >
-            {chartNear && <StarChart selectedId={selectedId} onSelect={selectKing} />}
+            {chartNear && <StarChart selectedId={selectedId} onSelect={(id) => selectKing(id, "chart")} />}
           </div>
           <div className="tk-dossier-grid relative">
             {/* Left: name, art, selector */}
@@ -122,7 +127,7 @@ export function TKDossiers() {
                       type="button"
                       role="tab"
                       aria-selected={active}
-                      onClick={() => selectKing(k.slotId)}
+                      onClick={() => selectKing(k.slotId, "tab")}
                       className="tk-mono tk-hover-bright cursor-pointer rounded-[3px] border border-[#3E5222] px-[14px] py-[9px] text-left text-[18px] tracking-[.12em]"
                       style={{
                         background: active ? "rgba(168,198,78,.25)" : "rgba(0,0,0,.4)",
