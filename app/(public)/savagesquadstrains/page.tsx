@@ -4,7 +4,8 @@ import { Footer } from "@/components/site/Footer";
 import { Reveal } from "@/components/brand/Reveal";
 import { SSSHero } from "@/components/brand/SSSHero";
 import { SSSVideos } from "@/components/brand/SSSVideos";
-import { getCatalogProducts, getStoreLocations } from "@/lib/data";
+import { getBrandMerch, getCatalogProducts, getStoreLocations } from "@/lib/data";
+import { toBrandMerchCards } from "@/lib/brandMerch";
 import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
 import { InstagramIcon } from "@/components/site/social-icons";
 
@@ -100,6 +101,8 @@ function GradientWord({ children }: { children: React.ReactNode }) {
 
 export default async function SavageSquadPage() {
   const catalog = await getCatalogProducts("Savage Squad Strains");
+  // Live SSS merch replaces the static tiles as soon as any exists.
+  const merch = toBrandMerchCards(await getBrandMerch("Savage Squad Strains"));
   const allStores = await getStoreLocations();
   const stores = allStores.filter((s) =>
     s.brands.includes("Savage Squad Strains"),
@@ -265,7 +268,36 @@ export default async function SavageSquadPage() {
           </p>
         </Reveal>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {MERCH.map((m, i) => (
+          {merch.map((m, i) => {
+            const tile = (
+              <>
+                <div className="flex h-72 items-center justify-center overflow-hidden bg-neutral-100">
+                  {m.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.image} alt={m.alt} className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <div className="bg-[#161210] p-5">
+                  <p className="font-display text-lg uppercase text-white">{m.name}</p>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.25em] text-white/50">
+                    {m.href && m.price ? m.price : "Coming soon"}
+                  </p>
+                </div>
+              </>
+            );
+            return (
+              <Reveal key={m.id} delayMs={(i % 3) * 120}>
+                {m.href ? (
+                  <Link href={m.href} className="block overflow-hidden rounded-lg bg-white">
+                    {tile}
+                  </Link>
+                ) : (
+                  <div className="overflow-hidden rounded-lg bg-white">{tile}</div>
+                )}
+              </Reveal>
+            );
+          })}
+          {merch.length === 0 && MERCH.map((m, i) => (
             <Reveal key={m.name} delayMs={i * 120}>
               <Link
                 href="/apparel"

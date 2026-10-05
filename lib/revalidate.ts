@@ -54,6 +54,8 @@ export function pathsFor(target: RevalidateTarget): string[] {
       out.add("/apparel");
       out.add("/apparel/shop");
       if (target.slug) out.add(`/apparel/${target.slug}`);
+      // Brand pages render their own brand's merch (getBrandMerch).
+      for (const b of BRANDS) out.add(`/${b.slug}`);
       break;
     case "apparel-home":
       out.add("/apparel");

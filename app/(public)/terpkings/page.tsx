@@ -6,11 +6,12 @@ import { TKComic } from "@/components/brand/terpkings/TKComic";
 import { TKDossiers } from "@/components/brand/terpkings/TKDossiers";
 import { TKScanner } from "@/components/brand/terpkings/TKScanner";
 import { TKMerch } from "@/components/brand/terpkings/TKMerch";
+import { toBrandMerchCards } from "@/lib/brandMerch";
 import { TKLocator } from "@/components/brand/terpkings/TKLocator";
 import { TKSignalFeed } from "@/components/brand/terpkings/TKSignalFeed";
 import { TKSignup } from "@/components/brand/terpkings/TKSignup";
 import { vt323 } from "@/components/brand/terpkings/tk-font";
-import { getHeroesForPage, getSocialImages, pickHeroVideo } from "@/lib/data";
+import { getBrandMerch, getHeroesForPage, getSocialImages, pickHeroVideo } from "@/lib/data";
 import { PRODUCTS, TERPS, TK_HERO } from "@/lib/terpkings-content";
 import { assetAvailability } from "@/lib/terpkings-assets";
 import "@/components/brand/terpkings/terpkings.css";
@@ -51,9 +52,10 @@ const jsonLd = {
 };
 
 export default async function TerpKingsPage() {
-  const [heroes, social] = await Promise.all([
+  const [heroes, social, merch] = await Promise.all([
     getHeroesForPage("/terpkings"),
     getSocialImages("terpkings"),
+    getBrandMerch("TerpKings"),
   ]);
   const heroVideo = pickHeroVideo(heroes);
   // Optional renders: real file if present, brand placeholder if not.
@@ -74,7 +76,7 @@ export default async function TerpKingsPage() {
       <TKScanner available={available} />
       <TKComic />
       <TKDossiers />
-      <TKMerch />
+      <TKMerch items={toBrandMerchCards(merch)} />
       <TKLocator />
       <TKSignalFeed images={social} />
       <TKSignup />
