@@ -45,7 +45,7 @@ const KICKBACK: EventContent = {
     { q: "Do I need to be 21?", a: "Yes, 21+ only. Bring a valid government photo ID; wristbands are handed out at entry." },
     { q: "Who gets a free BBQ plate?", a: "Budtenders at licensed Illinois dispensaries. Tick the budtender box when you RSVP, then bring your valid IDFPR dispensary agent badge. We verify it at check-in and release your plate. Plates are limited; once they're gone you can join the plate waitlist." },
     { q: "Can I buy weed there?", a: "No cannabis is sold on site. Vendors can do giveaways, discount cards, merch, paraphernalia and raffles." },
-    { q: "Where do I park?", a: "There's a free parking lot on site, behind Liberty Bank at 2929 W Fullerton Ave." },
+    { q: "Where do I park?", a: "There's street parking available around the event site (near to 2928 W Medill Ave, Chicago IL 60647)." },
     { q: "Plans changed?", a: "Use the cancel link in your confirmation email so someone else can take your spot (and plate)." },
     { q: "Will I be on camera?", a: "Probably. There's a photo and video crew on site all day, plus a DJ live stream." },
   ],

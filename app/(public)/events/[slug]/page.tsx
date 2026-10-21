@@ -127,7 +127,7 @@ export default async function EventPage({ params }: Params) {
               <><br /><a href={ev.map_url} target="_blank" rel="noopener noreferrer" className="text-base underline underline-offset-4">Open map</a></>
             )}
           </Fact>
-          <Fact label="Entry">Free with RSVP<br />Free parking lot<br />Age 21+</Fact>
+          <Fact label="Entry">Free with RSVP<br />Street parking<br />Age 21+</Fact>
           <Fact label="Hosts">{content ? content.hosts.map((h) => h.name).join(" & ") : "Private Stock"}</Fact>
         </div>
       </section>
