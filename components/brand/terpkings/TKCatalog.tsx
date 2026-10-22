@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProductImage } from "@/components/site/ProductImage";
 import type { CatalogProduct } from "@/lib/data";
 import { TKScrews } from "./TKBits";
 
@@ -62,11 +63,10 @@ export function TKCatalog({ products }: { products: CatalogProduct[] }) {
                       "radial-gradient(ellipse 80% 70% at 50% 45%, #3E4A26 0%, #1F2614 60%, #0B0F07 100%)",
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image_url ?? "/placeholders/product.png"}
-                    alt={p.name}
-                    loading="lazy"
+                  <ProductImage
+                    product={p}
+                    tone="dark"
+                    sizes="(min-width: 768px) 180px, 45vw"
                     className="max-h-[80%] max-w-[80%] object-contain"
                     style={{ filter: "drop-shadow(0 10px 18px rgba(0,0,0,.6))" }}
                   />

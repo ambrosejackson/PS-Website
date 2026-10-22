@@ -50,7 +50,7 @@ export function BrandCatalogGrid({
               <ProductCard
                 key={p.id}
                 href={brand ? `/products/${brand.slug}/${p.slug}` : undefined}
-                imageUrl={p.image_url ?? "/placeholders/product.png"}
+                product={p}
                 caption={p.name}
                 track={`brand-catalog:${p.slug}`}
                 hoverHint="Click for more info"

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { ProductAvailability } from "@/components/site/ProductAvailability";
 import { ProductCard } from "@/components/site/ProductCard";
+import { ProductImage } from "@/components/site/ProductImage";
+import { PRODUCT_IMAGE_SIZES_DETAIL, productImageIsMissing, productImageUrls } from "@/lib/catalog/product-image-urls";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
@@ -53,9 +55,15 @@ export async function generateMetadata({
     openGraph: {
       title: `${product.name} — ${product.brand}`,
       description: product.description ?? undefined,
-      images: product.image_url ? [product.image_url] : undefined,
+      images: shareImage(product) ? [shareImage(product)!] : undefined,
     },
   };
+}
+
+/** Largest real image for OG / structured data: the 1600 rendition, else a legacy link, else nothing. */
+function shareImage(p: { image_url: string | null; image_storage_path: string | null; image_missing: boolean }): string | null {
+  if (p.image_storage_path) return productImageUrls(p.image_storage_path)[1600];
+  return productImageIsMissing(p) ? null : p.image_url;
 }
 
 interface TerpeneEntry {
@@ -99,7 +107,7 @@ export default async function ProductPage({
     name: product.name,
     brand: { "@type": "Brand", name: product.brand },
     description: product.description ?? undefined,
-    image: product.image_url ?? undefined,
+    image: shareImage(product) ?? undefined,
     category: product.category ?? undefined,
   };
 
@@ -114,11 +122,12 @@ export default async function ProductPage({
       <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-2 md:gap-16 md:py-24">
         {/* docx Jeeter reference: name/details LEFT, large product image RIGHT */}
         <div className="group flex items-center justify-center overflow-hidden bg-white md:order-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.image_url ?? "/placeholders/product.png"}
-            alt={product.name}
+          <ProductImage
+            product={product}
+            sizes={PRODUCT_IMAGE_SIZES_DETAIL}
+            eager
             className="aspect-square w-full object-contain transition-transform duration-700 group-hover:scale-110"
+            placeholderClassName="aspect-square w-full"
           />
         </div>
 
@@ -226,7 +235,7 @@ export default async function ProductPage({
                 <ProductCard
                   key={p.id}
                   href={`/products/${brand.slug}/${p.slug}`}
-                  imageUrl={p.image_url ?? "/placeholders/product.png"}
+                  product={p}
                   caption={p.name}
                 />
               ))}
