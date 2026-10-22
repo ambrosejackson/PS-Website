@@ -82,7 +82,10 @@ export type Database = {
           description: string | null
           format: string | null
           id: string
+          image_error: string | null
           image_missing: boolean
+          image_source_url: string | null
+          image_storage_path: string | null
           image_url: string | null
           is_active: boolean
           name: string
@@ -107,7 +110,10 @@ export type Database = {
           description?: string | null
           format?: string | null
           id?: string
+          image_error?: string | null
           image_missing?: boolean
+          image_source_url?: string | null
+          image_storage_path?: string | null
           image_url?: string | null
           is_active?: boolean
           name: string
@@ -132,7 +138,10 @@ export type Database = {
           description?: string | null
           format?: string | null
           id?: string
+          image_error?: string | null
           image_missing?: boolean
+          image_source_url?: string | null
+          image_storage_path?: string | null
           image_url?: string | null
           is_active?: boolean
           name?: string

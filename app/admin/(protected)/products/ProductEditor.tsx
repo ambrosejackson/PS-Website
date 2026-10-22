@@ -4,18 +4,18 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BRANDS } from "@/lib/brands";
 import { slugify } from "@/lib/sheet-sync/map";
-import { AdminUploader } from "@/lib/admin/upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { checkSlugAvailable, saveProduct, type ProductInput, type ProductRow, type TerpeneEntry } from "./actions";
+import { ProductImageField } from "./ProductImageField";
 
 const TERP_CATEGORIES = ["fruit", "haze", "gas", "dessert", "floral"] as const;
 const CATEGORIES = ["Flower", "Pre-Rolls", "Vapes", "Edibles", "Extracts", "Tinctures", "Topicals", "Gear"];
 
+/** Every field, every product (D-130). The image is managed by ProductImageField via the P1 routes. */
 export function ProductEditor({ product }: { product: ProductRow | null }) {
   const router = useRouter();
-  const synced = product?.source === "sheet";
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,6 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   const [thc, setThc] = useState(product?.thc_range ?? "");
   const [strain, setStrain] = useState<string>(product?.strain_type ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
-  const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
   const [terps, setTerps] = useState<TerpeneEntry[]>(
     (Array.isArray(product?.terpene_profile) ? (product!.terpene_profile as unknown as Partial<TerpeneEntry>[]) : []).map((t) => ({
       name: t.name ?? "",
@@ -40,12 +39,18 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   const [terpCategory, setTerpCategory] = useState(product?.terp_category ?? "");
   const [isActive, setIsActive] = useState(product?.is_active ?? false);
   const [sortOrder, setSortOrder] = useState<string>(product?.sort_order?.toString() ?? "");
+  const [image, setImage] = useState({
+    image_url: product?.image_url ?? null,
+    image_storage_path: product?.image_storage_path ?? null,
+    image_missing: product?.image_missing ?? true,
+    image_error: product?.image_error ?? null,
+  });
 
   // Debounced slug uniqueness check, driven from the change handlers (no
   // setState-in-effect — see nextjs16 gotchas).
   const slugTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   function scheduleSlugCheck(s: string) {
-    if (synced || !s) return;
+    if (!s) return;
     if (s === product?.slug) {
       setSlugState("ok");
       return;
@@ -57,10 +62,10 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
       setSlugState(free ? "ok" : "taken");
     }, 400);
   }
-  // Slug auto-follows the name until edited by hand (manual products only).
+  // Slug auto-follows the name until edited by hand.
   function onNameChange(v: string) {
     setName(v);
-    if (!slugTouched && !synced) {
+    if (!slugTouched) {
       const s = slugify(v);
       setSlug(s);
       scheduleSlugCheck(s);
@@ -74,11 +79,12 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   }
 
   const isTerpKings = brand === "TerpKings";
+  const brandSlug = BRANDS.find((b) => b.name === brand)?.slug;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!synced && slugState === "taken") {
+    if (slugState === "taken") {
       setError("Slug is already in use.");
       return;
     }
@@ -93,7 +99,6 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
       thc_range: thc || null,
       strain_type: (strain || null) as ProductInput["strain_type"],
       description: description || null,
-      image_url: imageUrl || null,
       terpene_profile: terps,
       terp_category: isTerpKings ? terpCategory || null : null,
       is_active: isActive,
@@ -105,26 +110,27 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
         setError(res.error);
         return;
       }
-      router.push(`/admin/products?saved=${encodeURIComponent(res.data.slug)}`);
+      if (product) {
+        router.push(`/admin/products?saved=${encodeURIComponent(res.data.slug)}`);
+      } else {
+        // New row: land on its editor so the image can be uploaded right away.
+        router.push(`/admin/products/${res.data.id}?created=1`);
+      }
       router.refresh();
     });
   }
-
-  const lockCls = synced ? "bg-neutral-100 text-neutral-500" : "";
-  const fieldHint = synced ? " — managed by iHeartJane sheet" : "";
 
   return (
     <form onSubmit={submit} className="grid gap-6 md:grid-cols-[1fr_320px]">
       <div className="space-y-5 rounded border bg-white p-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="p-brand">Brand{fieldHint}</Label>
+            <Label htmlFor="p-brand">Brand</Label>
             <select
               id="p-brand"
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
-              disabled={synced}
-              className={`h-9 w-full rounded-md border px-3 text-sm ${lockCls}`}
+              className="h-9 w-full rounded-md border px-3 text-sm"
             >
               {BRANDS.map((b) => (
                 <option key={b.slug} value={b.name}>
@@ -134,32 +140,29 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="p-name">Name{fieldHint}</Label>
-            <Input id="p-name" value={name} onChange={(e) => onNameChange(e.target.value)} disabled={synced} required className={lockCls} />
+            <Label htmlFor="p-name">Name</Label>
+            <Input id="p-name" value={name} onChange={(e) => onNameChange(e.target.value)} required />
           </div>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="p-slug">
-            Slug{synced ? " — fixed on synced products" : ""}{" "}
-            {!synced && slugState === "checking" && <span className="text-xs text-neutral-500">checking…</span>}
-            {!synced && slugState === "ok" && slug && <span className="text-xs text-green-700">available</span>}
-            {!synced && slugState === "taken" && <span className="text-xs text-red-600">already in use</span>}
+            Slug{" "}
+            {slugState === "checking" && <span className="text-xs text-neutral-500">checking…</span>}
+            {slugState === "ok" && slug && <span className="text-xs text-green-700">available</span>}
+            {slugState === "taken" && <span className="text-xs text-red-600">already in use</span>}
           </Label>
-          <Input
-            id="p-slug"
-            value={slug}
-            onChange={(e) => onSlugChange(e.target.value)}
-            disabled={synced}
-            className={`font-mono ${lockCls}`}
-          />
-          <p className="text-xs text-neutral-500">/products/{BRANDS.find((b) => b.name === brand)?.slug}/{slug || "…"}</p>
+          <Input id="p-slug" value={slug} onChange={(e) => onSlugChange(e.target.value)} className="font-mono" />
+          <p className="text-xs text-neutral-500">
+            /products/{brandSlug}/{slug || "…"}
+            {product && slug !== product.slug ? " — changing the slug changes the public URL" : ""}
+          </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
-            <Label htmlFor="p-cat">Category{fieldHint}</Label>
-            <Input id="p-cat" list="p-cat-list" value={category} onChange={(e) => setCategory(e.target.value)} disabled={synced} className={lockCls} />
+            <Label htmlFor="p-cat">Category</Label>
+            <Input id="p-cat" list="p-cat-list" value={category} onChange={(e) => setCategory(e.target.value)} />
             <datalist id="p-cat-list">
               {CATEGORIES.map((c) => (
                 <option key={c} value={c} />
@@ -167,23 +170,23 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
             </datalist>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="p-format">Format / type{fieldHint}</Label>
-            <Input id="p-format" value={format} onChange={(e) => setFormat(e.target.value)} disabled={synced} className={lockCls} placeholder="Top Shelf, 5-Pack, All-In-One…" />
+            <Label htmlFor="p-format">Format / type</Label>
+            <Input id="p-format" value={format} onChange={(e) => setFormat(e.target.value)} placeholder="Top Shelf, 5-Pack, All-In-One…" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="p-weight">Weight{fieldHint}</Label>
-            <Input id="p-weight" value={weight} onChange={(e) => setWeight(e.target.value)} disabled={synced} className={lockCls} placeholder="3.5g" />
+            <Label htmlFor="p-weight">Weight</Label>
+            <Input id="p-weight" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="3.5g" />
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="p-thc">THC range (not in the sheet — always editable)</Label>
+            <Label htmlFor="p-thc">THC range</Label>
             <Input id="p-thc" value={thc} onChange={(e) => setThc(e.target.value)} placeholder="24–28%" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="p-strain">Strain type{fieldHint}</Label>
-            <select id="p-strain" value={strain} onChange={(e) => setStrain(e.target.value)} disabled={synced} className={`h-9 w-full rounded-md border px-3 text-sm ${lockCls}`}>
+            <Label htmlFor="p-strain">Strain type</Label>
+            <select id="p-strain" value={strain} onChange={(e) => setStrain(e.target.value)} className="h-9 w-full rounded-md border px-3 text-sm">
               <option value="">—</option>
               <option value="indica">Indica</option>
               <option value="sativa">Sativa</option>
@@ -271,23 +274,11 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           </div>
         </div>
 
-        <div className="space-y-3 rounded border bg-white p-4">
-          <Label>Main image{fieldHint}</Label>
-          {imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="" className="aspect-square w-full rounded bg-neutral-50 object-contain" />
-          ) : (
-            <div className="flex aspect-square w-full items-center justify-center rounded bg-neutral-100 text-xs text-neutral-400">
-              no image
-            </div>
-          )}
-          {!synced && (
-            <>
-              <AdminUploader bucket="products" folder={BRANDS.find((b) => b.name === brand)?.slug} onUploaded={(m) => setImageUrl(m.url)} label="Drop product image" />
-              <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="…or paste an image URL" className="font-mono text-xs" />
-            </>
-          )}
-        </div>
+        <ProductImageField
+          productId={product?.id ?? null}
+          image={image}
+          onChange={(next) => setImage(next)}
+        />
       </aside>
     </form>
   );

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
 import { BrandCatalogGrid } from "@/components/site/BrandCatalogGrid";
+import { ProductImage } from "@/components/site/ProductImage";
 import { Reveal } from "@/components/brand/Reveal";
 import { OutfittersContactForm } from "@/components/brand/OutfittersContactForm";
 import { brandByName } from "@/lib/brands";
@@ -264,10 +265,9 @@ export default async function OutfittersPage() {
                     >
                       {COLLECTION_BADGES[i] ?? "PREMIUM"}
                     </span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={p.image_url ?? "/placeholders/product.png"}
-                      alt={p.name}
+                    <ProductImage
+                      product={p}
+                      sizes="(min-width: 768px) 360px, 90vw"
                       className="max-h-full max-w-full object-contain"
                     />
                   </div>

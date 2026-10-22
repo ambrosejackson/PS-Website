@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test lib/terpkings/forecast.test.mjs lib/strainKey.test.mjs lib/shipping/shipping.test.mjs"
+    "test": "node --test lib/terpkings/forecast.test.mjs lib/strainKey.test.mjs lib/shipping/shipping.test.mjs lib/catalog/product-image.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -35,6 +35,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.3",
     "shadcn": "^4.18.0",
     "sonner": "^2.0.8",
     "stripe": "^22.5.0",
@@ -51,7 +52,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "pdfjs-dist": "^6.2.108",
-    "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
