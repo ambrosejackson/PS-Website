@@ -93,6 +93,10 @@ export function TKComicActions({ printIssue }: { printIssue: MerchListing | null
         altPrefix={COMIC.preview.altPrefix}
         label={COMIC.preview.label}
         theme="terpkings"
+        leadingSrc={`${COMIC.preview.basePath}/lead.jpg`}
+        pageOffset={manifest.sourcePages[0]}
+        pageTotal={manifest.bookPages}
+        numberPages
         onTrailingReached={onPitch}
         trailing={
           <div className="tk-page flex h-full flex-col justify-center gap-6 bg-[#0B0B0B] px-8 py-10 text-center md:px-12">

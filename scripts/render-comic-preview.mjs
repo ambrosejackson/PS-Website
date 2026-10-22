@@ -1,7 +1,8 @@
 /**
  * Pre-renders the FREE PREVIEW pages of the Lumen War Saga Part 1 PDF
- * (pages 10–17 of the 60-page book, D-124) for the TerpKings flip-book.
- * Only these pages are ever rendered; the PDF itself stays out of the repo.
+ * (pages 10–17 of the 60-page book, D-124) for the TerpKings flip-book, plus
+ * page 9 as `lead.jpg`, shown veiled in black on the opening spread so the
+ * excerpt reads as mid-book. Nothing else is rendered; the PDF stays out of the repo.
  * Output is committed so Vercel builds stay fast.
  *
  * Uses poppler's `pdftoppm` (not pdf.js like the Brand Book script): the
@@ -35,7 +36,7 @@ const [wPt, hPt] = [Number(size[1]), Number(size[2])];
 const dpi = Math.round((TARGET_WIDTH / wPt) * 72);
 
 execFileSync("pdftoppm", [
-  "-f", String(FIRST_PAGE), "-l", String(LAST_PAGE),
+  "-f", String(FIRST_PAGE - 1), "-l", String(LAST_PAGE),
   "-r", String(dpi),
   "-jpeg", "-jpegopt", `quality=${JPEG_QUALITY}`,
   PDF_PATH, path.join(OUT_DIR, "tmp"),
@@ -45,10 +46,10 @@ execFileSync("pdftoppm", [
 let n = 0;
 for (const f of (await readdir(OUT_DIR)).filter((f) => f.startsWith("tmp-")).sort()) {
   const src = Number(/tmp-0*(\d+)\.jpg/.exec(f)[1]);
-  const dest = `page-${String(src - FIRST_PAGE + 1).padStart(2, "0")}.jpg`;
+  const dest = src < FIRST_PAGE ? "lead.jpg" : `page-${String(src - FIRST_PAGE + 1).padStart(2, "0")}.jpg`;
   await rename(path.join(OUT_DIR, f), path.join(OUT_DIR, dest));
   console.log(`rendered ${dest} (from PDF page ${src})`);
-  n++;
+  if (src >= FIRST_PAGE) n++;
 }
 
 await writeFile(
@@ -57,6 +58,7 @@ await writeFile(
     {
       pageCount: n,
       sourcePages: [FIRST_PAGE, LAST_PAGE],
+      leadPage: FIRST_PAGE - 1,
       bookPages: Number(pages[1]),
       aspectRatio: Number((wPt / hPt).toFixed(4)),
       source: path.basename(PDF_PATH),

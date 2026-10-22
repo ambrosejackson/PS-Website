@@ -53,6 +53,10 @@ export function FlipBook({
   altPrefix = "Brand book page",
   trailing,
   onTrailingReached,
+  leadingSrc,
+  pageOffset = 1,
+  pageTotal,
+  numberPages = false,
   fitViewport = false,
   autoFocus = false,
   globalKeys = false,
@@ -74,6 +78,18 @@ export function FlipBook({
   trailing?: React.ReactNode;
   /** Fires once each time the trailing page comes into view. */
   onTrailingReached?: () => void;
+  /**
+   * Image shown, darkened, in the empty left slot of the opening spread — the
+   * page BEFORE the first rendered one, so an excerpt reads as mid-book (D-124).
+   * Desktop only; mobile is single-page.
+   */
+  leadingSrc?: string;
+  /** Number printed for the first rendered page (10 for an excerpt starting at page 10). */
+  pageOffset?: number;
+  /** Total pages of the whole work, for "PAGE 12 OF 60". Defaults to pageCount. */
+  pageTotal?: number;
+  /** Print each page's number at its foot (excerpts); the Brand Book leaves this off. */
+  numberPages?: boolean;
   /** Cap the book's width so a full spread fits the viewport height (modal). */
   fitViewport?: boolean;
   /** Focus the book on mount so keyboard arrows work immediately. */
@@ -245,13 +261,28 @@ export function FlipBook({
 
   const pageStyle = { aspectRatio: String(aspectRatio) };
 
+  const total = pageTotal ?? pageCount;
+  const pageNo = (pageIndex: number) => pageIndex + pageOffset;
+
+  function renderPageNumber(pageIndex: number) {
+    if (!numberPages) return null;
+    return (
+      <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] tracking-[0.2em] text-white/85">
+        PAGE {pageNo(pageIndex)}
+      </span>
+    );
+  }
+
   function renderFace(pageIndex: number) {
     if (pageIndex === trailingIndex) {
       return <div className="absolute inset-0 overflow-auto">{trailing}</div>;
     }
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={pageSrc(pageIndex)} alt="" draggable={false} className="h-full w-full object-contain" />
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pageSrc(pageIndex)} alt="" draggable={false} className="h-full w-full object-contain" />
+        {renderPageNumber(pageIndex)}
+      </>
     );
   }
 
@@ -263,6 +294,25 @@ export function FlipBook({
         }`}
         style={pageStyle}
       >
+        {pageIndex === null && side === "left" && leadingSrc && spreadIndex === 0 && (
+          <>
+            {/* The page before the excerpt, under a near-opaque black veil. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={leadingSrc}
+              alt=""
+              loading="lazy"
+              draggable={false}
+              className="absolute inset-0 h-full w-full rounded-l-sm object-contain"
+            />
+            <div className="absolute inset-0 rounded-l-sm bg-black/85" />
+            {numberPages && (
+              <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.2em] text-white/40">
+                PAGE {pageOffset - 1}
+              </span>
+            )}
+          </>
+        )}
         {pageIndex === trailingIndex && pageIndex !== null && (
           <div className={`absolute inset-0 overflow-auto ${side === "left" ? "rounded-l-sm" : "rounded-r-sm"}`}>{trailing}</div>
         )}
@@ -278,6 +328,7 @@ export function FlipBook({
             }`}
           />
         )}
+        {pageIndex !== null && pageIndex !== trailingIndex && renderPageNumber(pageIndex)}
       </div>
     );
   }
@@ -374,8 +425,8 @@ export function FlipBook({
         {trailingVisible && (current.left === trailingIndex || !isDesktop)
           ? "END OF PREVIEW"
           : isDesktop && current.left !== null
-            ? `PAGES ${current.left + 1}–${current.right !== null && current.right !== trailingIndex ? current.right + 1 : current.left + 1} OF ${pageCount}`
-            : `PAGE ${(current.right ?? 0) + 1} OF ${pageCount}`}{" "}
+            ? `PAGES ${pageNo(current.left)}–${current.right !== null && current.right !== trailingIndex ? pageNo(current.right) : pageNo(current.left)} OF ${total}`
+            : `PAGE ${pageNo(current.right ?? 0)} OF ${total}`}{" "}
         · DRAG OR USE ARROWS
       </p>
 

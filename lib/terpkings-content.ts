@@ -315,7 +315,7 @@ export const COMIC = {
   pitch: {
     heading: "END OF FREE PREVIEW.",
     body:
-      "The Lumen War Saga is drawn by hand, printed in one limited run, and sold only through Private Stock and select dispensaries. {price} puts the full 60-page print issue in your hands and keeps independent cannabis art funded.",
+      "The Lumen War Saga is illustrated by the renowned artist Rebel G Society, printed in one limited run, and sold only through Private Stock and select dispensaries. {price} puts the full 60-page print issue in your hands and keeps independent art funded.",
     cta: "GET THE PRINT ISSUE — {price}",
     added: "► ADDED TO YOUR CART",
     footnote: "USPS shipping calculated at checkout",

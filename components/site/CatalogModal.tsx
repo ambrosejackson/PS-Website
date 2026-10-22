@@ -20,6 +20,10 @@ export function CatalogModal({
   altPrefix,
   trailing,
   onTrailingReached,
+  leadingSrc,
+  pageOffset,
+  pageTotal,
+  numberPages,
   label = "Private Stock catalog",
   theme = "default",
 }: {
@@ -31,6 +35,10 @@ export function CatalogModal({
   altPrefix?: string;
   trailing?: React.ReactNode;
   onTrailingReached?: () => void;
+  leadingSrc?: string;
+  pageOffset?: number;
+  pageTotal?: number;
+  numberPages?: boolean;
   label?: string;
   theme?: "default" | "terpkings";
 }) {
@@ -89,6 +97,10 @@ export function CatalogModal({
             altPrefix={altPrefix}
             trailing={trailing}
             onTrailingReached={onTrailingReached}
+            leadingSrc={leadingSrc}
+            pageOffset={pageOffset}
+            pageTotal={pageTotal}
+            numberPages={numberPages}
             fitViewport
             autoFocus
             globalKeys
