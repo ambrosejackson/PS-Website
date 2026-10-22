@@ -299,7 +299,7 @@ export const COMIC = {
   titleLine1: "The Lumen War Saga",
   titleLine2: "Part 1",
   blurb:
-    "> THE TERPIVERSE IS AT WAR. Follow the five Kings across gas giants and dessert moons in an original 60-page graphic novel. Read the first chapter free, then get the limited print issue — made with independent artists, sold only here and at select dispensaries.",
+    "> From a basement grow room to the neon of Shibuya, from the shadow of the Sphinx to the deep green of the Amazon, they hunt the scattered pieces of who they used to be — pursued by an enemy who has stood behind every throne in history in a battle over the greatest resource the universe has ever known. Get the limited print issue — made by independent artists, sold only here and at select dispensaries.",
   readCta: "► FREE PREVIEW",
   /** `{price}` is replaced with the live variant price, e.g. $5.99. */
   printCta: "GET PRINT ISSUE FOR {price}",
