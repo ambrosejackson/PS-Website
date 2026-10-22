@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useCart } from "@/lib/cart/context";
+import type { ShippingService } from "@/lib/commerce/config";
 import type { ShippingAddress } from "@/components/site/CheckoutClient";
 
 /**
@@ -16,11 +17,14 @@ export function PayPalSection({
   email,
   address,
   promoCode,
+  shipService,
 }: {
   clientId: string | null;
   email: string;
   address: ShippingAddress;
   promoCode: string | null;
+  /** USPS service chosen in the cart (D-120); the route re-quotes from the address ZIP. */
+  shipService: ShippingService;
 }) {
   const cart = useCart();
   const router = useRouter();
@@ -53,7 +57,7 @@ export function PayPalSection({
           <PayPalButtons
             style={{ layout: "vertical", shape: "rect", label: "paypal", height: 44 }}
             disabled={!ready}
-            forceReRender={[cart.lines, email, address, promoCode]}
+            forceReRender={[cart.lines, email, address, promoCode, shipService]}
             createOrder={async () => {
               setError(null);
               const res = await fetch("/api/paypal/create-order", {
@@ -64,6 +68,7 @@ export function PayPalSection({
                   email,
                   address,
                   promoCode,
+                  shipService,
                 }),
               });
               const body = await res.json().catch(() => ({}));

@@ -22,7 +22,7 @@ export default async function AdminApparelPage({
     const [p, c] = await Promise.all([
       db
         .from("merch_products")
-        .select("*, merch_collections(name), merch_variants(id, size, color, price_cents, stock_qty, is_active)")
+        .select("*, merch_collections(name), merch_variants(id, size, color, price_cents, stock_qty, is_active, weight_oz)")
         .order("sort_order", { ascending: true, nullsFirst: false })
         .order("name", { ascending: true }),
       db.from("merch_collections").select("id, name, slug").order("sort_order", { ascending: true }),
@@ -40,6 +40,7 @@ export default async function AdminApparelPage({
           activeVariantCount: active.length,
           fromCents: prices.length ? Math.min(...prices) : null,
           badge: stockBadge(variants ?? [], product.low_stock_threshold),
+          missingWeight: active.some((v) => v.weight_oz == null),
         };
       });
     collections = (c.data ?? []).filter((x) => x.slug !== "all").map((x) => ({ id: x.id, name: x.name }));

@@ -291,15 +291,35 @@ export const PRODUCTS: ArsenalProduct[] = [
 ];
 
 /** FILE 02 // ORIGINAL GRAPHIC NOVEL */
+/** merch_products.slug of the print issue (TK-COMIC-01); the TerpKings page looks it up by this. */
+export const COMIC_PRINT_SLUG = "the-lumen-war-saga-part-1-print-issue";
+
 export const COMIC = {
   eyebrow: "FILE 02 // ORIGINAL GRAPHIC NOVEL",
   titleLine1: "The Lumen War Saga",
   titleLine2: "Part 1",
   blurb:
-    "> THE TERPIVERSE IS AT WAR. Follow the five Kings across gas giants and dessert moons in an original comic saga — free to read digitally, in print exclusively with select drops at licensed dispensaries.",
-  readCta: "► READ PART 1 FREE",
-  printCta: "GET THE PRINT ISSUE",
+    "> From a basement grow room to the neon of Shibuya, from the shadow of the Sphinx to the deep green of the Amazon, they hunt the scattered pieces of who they used to be — pursued by an enemy who has stood behind every throne in history in a battle over the greatest resource the universe has ever known. Get the limited print issue — made by independent artists, sold only here and at select dispensaries.",
+  readCta: "► FREE PREVIEW",
+  /** `{price}` is replaced with the live variant price, e.g. $5.99. */
+  printCta: "GET PRINT ISSUE FOR {price}",
+  printCtaUnavailable: "PRINT ISSUE — COMING SOON",
   coverAlt: "TerpKings: The Lumen War Saga Part 1 — original graphic novel cover",
+  /** Preview flip-book (D-124): pages 10–17 rendered by scripts/render-comic-preview.mjs. */
+  preview: {
+    basePath: "/terpkings/comic-preview",
+    label: "The Lumen War Saga Part 1 — free preview",
+    altPrefix: "Preview page",
+  },
+  /** The pitch shown as the page after the preview. */
+  pitch: {
+    heading: "END OF FREE PREVIEW.",
+    body:
+      "The Lumen War Saga is illustrated by the renowned artist Rebel G Society, printed in one limited run, and sold only through Private Stock and select dispensaries. {price} puts the full 60-page print issue in your hands and keeps independent art funded.",
+    cta: "GET THE PRINT ISSUE — {price}",
+    added: "► ADDED TO YOUR CART",
+    footnote: "USPS shipping calculated at checkout",
+  },
 } as const;
 
 /** FILE 04 // TERP-SCANNER — the expandable education panel. */

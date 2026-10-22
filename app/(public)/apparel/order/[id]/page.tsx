@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { getOrderWithItems, type OrderWithItems, type ShippingAddressJson } from "@/lib/commerce/orders";
+import { SERVICE_LABEL, isShippingService } from "@/lib/commerce/config";
+import { preorderLine } from "@/lib/commerce/preorder";
 import { getStripe, stripeConfigured } from "@/lib/commerce/stripe";
 import {
   addressLines,
@@ -158,6 +160,17 @@ function OrderView({ order, justPaid }: { order: OrderWithItems; justPaid: boole
               <div>
                 <h2 className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">Shipping to</h2>
                 <p className="mt-1 whitespace-pre-line text-ink">{addressLines(addr).join("\n")}</p>
+              </div>
+            )}
+            {(order.shipping_service || order.ships_after) && (
+              <div>
+                <h2 className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">Shipping</h2>
+                {order.shipping_service && isShippingService(order.shipping_service) && (
+                  <p className="mt-1 text-ink">
+                    {SERVICE_LABEL[order.shipping_service].name} · {SERVICE_LABEL[order.shipping_service].carrier}
+                  </p>
+                )}
+                {preorderLine(order.ships_after) && <p className="mt-1 font-medium text-ink">{preorderLine(order.ships_after)}</p>}
               </div>
             )}
             <div>

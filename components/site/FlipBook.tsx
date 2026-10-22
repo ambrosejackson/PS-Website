@@ -39,8 +39,8 @@ function subscribeToViewport(callback: () => void) {
   return () => mq.removeEventListener("change", callback);
 }
 
-function pageSrc(pageIndex: number) {
-  return `/brand-book/page-${String(pageIndex + 1).padStart(2, "0")}.jpg`;
+function pageSrcFor(basePath: string, pageIndex: number) {
+  return `${basePath}/page-${String(pageIndex + 1).padStart(2, "0")}.jpg`;
 }
 
 type Spread = { left: number | null; right: number | null };
@@ -49,15 +49,47 @@ type Drag = { id: number; x: number; y: number; axis: "none" | "x" | "y" };
 export function FlipBook({
   pageCount,
   aspectRatio,
+  basePath = "/brand-book",
+  altPrefix = "Brand book page",
+  trailing,
+  onTrailingReached,
+  leadingSrc,
+  pageOffset = 1,
+  pageTotal,
+  numberPages = false,
   fitViewport = false,
   autoFocus = false,
   globalKeys = false,
   captionClassName = "text-neutral-400",
   rootRef,
 }: {
+  /** Number of rendered page images under `basePath`. */
   pageCount: number;
   /** Single-page width / height ratio from the render manifest. */
   aspectRatio: number;
+  /** Folder holding page-01.jpg … (default: the Brand Book). */
+  basePath?: string;
+  altPrefix?: string;
+  /**
+   * An extra final "page" rendered as React content instead of an image —
+   * the comic preview's pitch (D-124). Counted in the spreads, never in
+   * the page caption.
+   */
+  trailing?: React.ReactNode;
+  /** Fires once each time the trailing page comes into view. */
+  onTrailingReached?: () => void;
+  /**
+   * Image shown, darkened, in the empty left slot of the opening spread — the
+   * page BEFORE the first rendered one, so an excerpt reads as mid-book (D-124).
+   * Desktop only; mobile is single-page.
+   */
+  leadingSrc?: string;
+  /** Number printed for the first rendered page (10 for an excerpt starting at page 10). */
+  pageOffset?: number;
+  /** Total pages of the whole work, for "PAGE 12 OF 60". Defaults to pageCount. */
+  pageTotal?: number;
+  /** Print each page's number at its foot (excerpts); the Brand Book leaves this off. */
+  numberPages?: boolean;
   /** Cap the book's width so a full spread fits the viewport height (modal). */
   fitViewport?: boolean;
   /** Focus the book on mount so keyboard arrows work immediately. */
@@ -73,19 +105,24 @@ export function FlipBook({
     () => true,
   );
 
+  // The trailing page, when present, is index pageCount (one past the images).
+  const totalPages = pageCount + (trailing ? 1 : 0);
+  const trailingIndex = trailing ? pageCount : -1;
+  const pageSrc = useCallback((pageIndex: number) => pageSrcFor(basePath, pageIndex), [basePath]);
+
   const spreads = useMemo<Spread[]>(() => {
     if (!isDesktop) {
-      return Array.from({ length: pageCount }, (_, i) => ({
+      return Array.from({ length: totalPages }, (_, i) => ({
         left: null,
         right: i,
       }));
     }
     const result: Spread[] = [{ left: null, right: 0 }]; // cover
-    for (let i = 1; i < pageCount; i += 2) {
-      result.push({ left: i, right: i + 1 < pageCount ? i + 1 : null });
+    for (let i = 1; i < totalPages; i += 2) {
+      result.push({ left: i, right: i + 1 < totalPages ? i + 1 : null });
     }
     return result;
-  }, [pageCount, isDesktop]);
+  }, [totalPages, isDesktop]);
 
   const [spread, setSpread] = useState(0);
   const [turning, setTurning] = useState<"next" | "prev" | null>(null);
@@ -97,6 +134,16 @@ export function FlipBook({
   // Viewport swap (desktop ⇄ mobile) re-buckets pages into different spreads.
   const spreadIndex = Math.min(spread, spreads.length - 1);
   const current = spreads[spreadIndex];
+
+  const trailingVisible = trailingIndex >= 0 && (current.left === trailingIndex || current.right === trailingIndex);
+  const reachedRef = useRef(false);
+  useEffect(() => {
+    if (trailingVisible && !reachedRef.current) {
+      reachedRef.current = true;
+      onTrailingReached?.();
+    }
+    if (!trailingVisible) reachedRef.current = false;
+  }, [trailingVisible, onTrailingReached]);
 
   const canNext = spreadIndex < spreads.length - 1 && turning === null;
   const canPrev = spreadIndex > 0 && turning === null;
@@ -214,6 +261,31 @@ export function FlipBook({
 
   const pageStyle = { aspectRatio: String(aspectRatio) };
 
+  const total = pageTotal ?? pageCount;
+  const pageNo = (pageIndex: number) => pageIndex + pageOffset;
+
+  function renderPageNumber(pageIndex: number) {
+    if (!numberPages) return null;
+    return (
+      <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] tracking-[0.2em] text-white/85">
+        PAGE {pageNo(pageIndex)}
+      </span>
+    );
+  }
+
+  function renderFace(pageIndex: number) {
+    if (pageIndex === trailingIndex) {
+      return <div className="absolute inset-0 overflow-auto">{trailing}</div>;
+    }
+    return (
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pageSrc(pageIndex)} alt="" draggable={false} className="h-full w-full object-contain" />
+        {renderPageNumber(pageIndex)}
+      </>
+    );
+  }
+
   function renderPage(pageIndex: number | null, side: "left" | "right") {
     return (
       <div
@@ -222,11 +294,33 @@ export function FlipBook({
         }`}
         style={pageStyle}
       >
-        {pageIndex !== null && (
+        {pageIndex === null && side === "left" && leadingSrc && spreadIndex === 0 && (
+          <>
+            {/* The page before the excerpt, under a near-opaque black veil. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={leadingSrc}
+              alt=""
+              loading="lazy"
+              draggable={false}
+              className="absolute inset-0 h-full w-full rounded-l-sm object-contain"
+            />
+            <div className="absolute inset-0 rounded-l-sm bg-black/85" />
+            {numberPages && (
+              <span className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] tracking-[0.2em] text-white/40">
+                PAGE {pageOffset - 1}
+              </span>
+            )}
+          </>
+        )}
+        {pageIndex === trailingIndex && pageIndex !== null && (
+          <div className={`absolute inset-0 overflow-auto ${side === "left" ? "rounded-l-sm" : "rounded-r-sm"}`}>{trailing}</div>
+        )}
+        {pageIndex !== null && pageIndex !== trailingIndex && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={pageSrc(pageIndex)}
-            alt={`Brand book page ${pageIndex + 1}`}
+            alt={`${altPrefix} ${pageIndex + 1}`}
             loading="lazy"
             draggable={false}
             className={`absolute inset-0 h-full w-full object-contain ${
@@ -234,6 +328,7 @@ export function FlipBook({
             }`}
           />
         )}
+        {pageIndex !== null && pageIndex !== trailingIndex && renderPageNumber(pageIndex)}
       </div>
     );
   }
@@ -296,25 +391,9 @@ export function FlipBook({
               animation: `${turning === "next" ? "ps-flip-next" : "ps-flip-prev"} ${TURN_MS}ms ease-in-out forwards`,
             }}
           >
-            <div className="absolute inset-0 bg-white [backface-visibility:hidden]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={pageSrc(flapFront)}
-                alt=""
-                draggable={false}
-                className="h-full w-full object-contain"
-              />
-            </div>
+            <div className="absolute inset-0 bg-white [backface-visibility:hidden]">{renderFace(flapFront)}</div>
             <div className="absolute inset-0 bg-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
-              {flapBack !== null && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={pageSrc(flapBack)}
-                  alt=""
-                  draggable={false}
-                  className="h-full w-full object-contain"
-                />
-              )}
+              {flapBack !== null && renderFace(flapBack)}
             </div>
           </div>
         )}
@@ -343,10 +422,12 @@ export function FlipBook({
       <p
         className={`mt-4 text-center text-xs tracking-widest ${captionClassName}`}
       >
-        {isDesktop && current.left !== null
-          ? `PAGES ${current.left + 1}–${current.right !== null ? current.right + 1 : current.left + 1}`
-          : `PAGE ${(current.right ?? 0) + 1}`}{" "}
-        OF {pageCount} · DRAG OR USE ARROWS
+        {trailingVisible && (current.left === trailingIndex || !isDesktop)
+          ? "END OF PREVIEW"
+          : isDesktop && current.left !== null
+            ? `PAGES ${pageNo(current.left)}–${current.right !== null && current.right !== trailingIndex ? pageNo(current.right) : pageNo(current.left)} OF ${total}`
+            : `PAGE ${pageNo(current.right ?? 0)} OF ${total}`}{" "}
+        · DRAG OR USE ARROWS
       </p>
 
       {/* Preload neighbours so turns don't flash */}
@@ -354,7 +435,7 @@ export function FlipBook({
         {[spreadIndex - 1, spreadIndex + 1]
           .filter((i) => i >= 0 && i < spreads.length)
           .flatMap((i) => [spreads[i].left, spreads[i].right])
-          .filter((p): p is number => p !== null)
+          .filter((p): p is number => p !== null && p !== trailingIndex)
           .map((p) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img key={p} src={pageSrc(p)} alt="" />

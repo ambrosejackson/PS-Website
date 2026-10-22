@@ -16,6 +16,8 @@ export type ApparelListRow = MerchRow & {
   activeVariantCount: number;
   fromCents: number | null;
   badge: "sold_out" | "low_stock" | null;
+  /** An active variant has no packed weight → USPS quotes use the store default (D-120). */
+  missingWeight: boolean;
 };
 
 export type CollectionFilterOption = { id: string; name: string };
@@ -144,6 +146,14 @@ export function ApparelTable({ rows, collections }: { rows: ApparelListRow[]; co
                   <Link href={`/admin/apparel/${r.id}`} className="font-medium hover:underline">
                     {r.name}
                   </Link>
+                  {r.is_active && r.missingWeight && (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800" title="Shipping is quoted with the store default parcel until a packed weight is entered">
+                      no weight
+                    </span>
+                  )}
+                  {r.ships_after && (
+                    <span className="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-700">pre-order</span>
+                  )}
                   {r.badge && (
                     <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{STOCK_BADGE_LABEL[r.badge]}</span>
                   )}

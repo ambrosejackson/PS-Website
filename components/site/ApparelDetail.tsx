@@ -6,6 +6,7 @@ import type { MerchListing } from "@/lib/data";
 import { useCart } from "@/lib/cart/context";
 import { galleryImages, normalizeImages } from "@/lib/merchImages";
 import { isProductSoldOut, STOCK_BADGE_LABEL, stockBadge } from "@/lib/merchStock";
+import { preorderLine } from "@/lib/commerce/preorder";
 import { colorsOf, sizeOptions, variantLabel } from "@/components/shop/product-utils";
 
 /**
@@ -75,6 +76,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
       {
         variantId: effectiveSelected.id,
         productId: product.id,
+        shipsAfter: product.ships_after ?? null,
         slug: product.slug,
         name: product.name,
         variantLabel: variantLabel(effectiveSelected),
@@ -138,6 +140,11 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
           {product.name}
         </h1>
         <p className="mt-3 text-xl text-ink">{priceLabel}</p>
+        {preorderLine(product.ships_after) && (
+          <p className="mt-3 inline-block border border-ink px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.14em] text-ink">
+            {preorderLine(product.ships_after)}
+          </p>
+        )}
         {product.description && <p className="mt-6 leading-relaxed text-neutral-600">{product.description}</p>}
 
         {variants.length === 0 ? (

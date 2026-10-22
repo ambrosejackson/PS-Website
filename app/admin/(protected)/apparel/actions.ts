@@ -86,6 +86,11 @@ export interface VariantInput {
   /** "" = made to order (null); a number = tracked stock (D-074). */
   stock_qty: string;
   is_active: boolean;
+  /** Packed parcel for USPS rating (D-120); "" = store default. Ounces / inches as typed. */
+  weight_oz?: string;
+  length_in?: string;
+  width_in?: string;
+  height_in?: string;
 }
 
 export interface MerchInput {
@@ -105,7 +110,18 @@ export interface MerchInput {
   low_stock_threshold: number;
   /** datetime-local value; "" = keep (existing) / now (new). */
   released_at: string;
+  /** Pre-order: date input value (YYYY-MM-DD); "" = ships now (D-123). */
+  ships_after: string;
   variants: VariantInput[];
+}
+
+/** Positive decimal or null for blank; false when unparseable. */
+function parseMeasure(v: string | undefined): number | null | false {
+  const s = (v ?? "").trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (!Number.isFinite(n) || n <= 0 || n > 999) return false;
+  return Math.round(n * 100) / 100;
 }
 
 function dollarsToCents(v: string): number | null {
@@ -147,6 +163,11 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     if (Number.isNaN(d.getTime())) return { ok: false, error: "Enter a valid Released at date." };
     releasedAt = d.toISOString();
   }
+  let shipsAfter: string | null = null;
+  if (input.ships_after?.trim()) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.ships_after.trim())) return { ok: false, error: "Enter the ships-by date as YYYY-MM-DD." };
+    shipsAfter = input.ships_after.trim();
+  }
   if (input.collection_id) {
     const { data } = await db.from("merch_collections").select("id").eq("id", input.collection_id).maybeSingle();
     if (!data) return { ok: false, error: "Collection not found." };
@@ -170,6 +191,10 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     price_cents: number;
     stock_qty: number | null;
     is_active: boolean;
+    weight_oz: number | null;
+    length_in: number | null;
+    width_in: number | null;
+    height_in: number | null;
   }[] = [];
   const skus = new Set<string>();
   for (const v of input.variants ?? []) {
@@ -181,6 +206,15 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     if (cents === null) return { ok: false, error: `Variant ${sku}: enter a valid price in dollars.` };
     const stock = parseStock(v.stock_qty);
     if (stock === false) return { ok: false, error: `Variant ${sku}: stock must be a whole number (blank = made to order).` };
+    const measures = {
+      weight_oz: parseMeasure(v.weight_oz),
+      length_in: parseMeasure(v.length_in),
+      width_in: parseMeasure(v.width_in),
+      height_in: parseMeasure(v.height_in),
+    };
+    if (Object.values(measures).includes(false)) {
+      return { ok: false, error: `Variant ${sku}: packed weight (oz) and size (in) must be positive numbers, or blank.` };
+    }
     variants.push({
       id: v.id,
       sku,
@@ -189,6 +223,10 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
       price_cents: cents,
       stock_qty: stock,
       is_active: !!v.is_active,
+      weight_oz: measures.weight_oz as number | null,
+      length_in: measures.length_in as number | null,
+      width_in: measures.width_in as number | null,
+      height_in: measures.height_in as number | null,
     });
   }
 
@@ -204,6 +242,7 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     collection_id: input.collection_id || null,
     category: input.category || null,
     low_stock_threshold: threshold,
+    ships_after: shipsAfter,
     ...(releasedAt ? { released_at: releasedAt } : {}),
   };
 
@@ -244,7 +283,18 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     if (error) await db.from("merch_variants").update({ is_active: false }).eq("id", ev.id);
   }
   for (const v of variants) {
-    const row = { sku: v.sku, size: v.size, color: v.color, price_cents: v.price_cents, stock_qty: v.stock_qty, is_active: v.is_active };
+    const row = {
+      sku: v.sku,
+      size: v.size,
+      color: v.color,
+      price_cents: v.price_cents,
+      stock_qty: v.stock_qty,
+      is_active: v.is_active,
+      weight_oz: v.weight_oz,
+      length_in: v.length_in,
+      width_in: v.width_in,
+      height_in: v.height_in,
+    };
     if (v.id) {
       const { error } = await db.from("merch_variants").update(row).eq("id", v.id).eq("product_id", productId);
       if (error) return { ok: false, error: `Variant ${v.sku}: ${error.message}` };

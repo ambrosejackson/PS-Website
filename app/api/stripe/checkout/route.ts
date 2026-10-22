@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { CURRENCY, SHIP_COUNTRIES, TAX_CODE_GOODS, TAX_CODE_SHIPPING } from "@/lib/commerce/config";
+import { CURRENCY, SERVICE_LABEL, SHIP_COUNTRIES, TAX_CODE_GOODS, TAX_CODE_SHIPPING, isShippingService } from "@/lib/commerce/config";
 import { createPendingOrder, updateOrder } from "@/lib/commerce/orders";
-import { applyDiscount, priceCart, PricingError, validatePromo } from "@/lib/commerce/pricing";
+import { applyDiscount, priceCart, PricingError, shipCart, validatePromo } from "@/lib/commerce/pricing";
+import { formatShipsAfter } from "@/lib/commerce/preorder";
 import { getStripe, stripeConfigured } from "@/lib/commerce/stripe";
 
 /**
  * Stripe rail (D-039): Checkout Session, mode=payment, built ONLY from
- * server-verified variant prices. Stripe Tax (automatic_tax), flat $6.99 /
- * free-over-$75 shipping as an ad-hoc shipping_rate, wallets via Stripe's
+ * server-verified variant prices. Stripe Tax (automatic_tax), the USPS service
+ * the buyer picked on the cart page RE-QUOTED here from their ZIP (D-120) as
+ * the session's single ad-hoc shipping_rate, wallets via Stripe's
  * automatic payment methods (Apple Pay / Google Pay / Link / Cash App Pay are
  * enabled in the Dashboard), shipping address collected by Stripe, newsletter
  * promo codes honoured (entered here → pre-applied; otherwise
@@ -30,7 +32,13 @@ export async function POST(request: Request) {
   if (!stripeConfigured()) {
     return NextResponse.json({ error: "Card checkout isn't configured yet." }, { status: 503 });
   }
-  let body: { lines?: { variantId: string; qty: number }[]; promoCode?: string | null; email?: string | null };
+  let body: {
+    lines?: { variantId: string; qty: number }[];
+    promoCode?: string | null;
+    email?: string | null;
+    shipZip?: string;
+    shipService?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -38,10 +46,17 @@ export async function POST(request: Request) {
   }
   const email = body.email?.trim().toLowerCase() || null;
 
+  if (!isShippingService(body.shipService)) {
+    return NextResponse.json({ error: "Pick a shipping option on the cart page first." }, { status: 400 });
+  }
+
   try {
-    const cart = await priceCart(body.lines ?? []);
+    const priced = await priceCart(body.lines ?? []);
+    const cart = await shipCart(priced, body.shipZip ?? "", body.shipService);
     const promo = await validatePromo(body.promoCode, email);
     const { discountCents } = promo ? applyDiscount(cart, promo.pct) : { discountCents: 0 };
+    const service = SERVICE_LABEL[cart.shippingService];
+    const shipsAfterText = formatShipsAfter(cart.shipsAfter);
 
     const orderId = await createPendingOrder({
       provider: "stripe",
@@ -56,6 +71,10 @@ export async function POST(request: Request) {
       promoCode: promo?.code ?? null,
       discountCodeId: promo?.id ?? null,
       shippingAddress: null,
+      shippingService: cart.shippingService,
+      shippingQuoteId: cart.shippingQuoteId,
+      shippingQuoteFallback: cart.shippingQuoteFallback,
+      shipsAfter: cart.shipsAfter,
     });
 
     const origin = siteOrigin(request);
@@ -74,6 +93,7 @@ export async function POST(request: Request) {
           tax_behavior: "exclusive",
           product_data: {
             name: l.variantLabel ? `${l.title} — ${l.variantLabel}` : l.title,
+            ...(l.shipsAfter ? { description: `Pre-order · ships by ${formatShipsAfter(l.shipsAfter)}` } : {}),
             tax_code: TAX_CODE_GOODS,
             metadata: { variant_id: l.variantId, sku: l.sku, fulfillment_provider: l.fulfillmentProvider },
             ...(l.imageUrl && /^https?:\/\//.test(l.imageUrl) ? { images: [l.imageUrl] } : {}),
@@ -86,17 +106,32 @@ export async function POST(request: Request) {
         {
           shipping_rate_data: {
             type: "fixed_amount",
-            display_name: cart.shippingCents === 0 ? "Free shipping" : "Flat-rate shipping",
+            display_name:
+              cart.shippingCents === 0 ? `Free ${service.name} shipping (${service.carrier})` : `${service.name} — ${service.carrier}`,
             fixed_amount: { amount: cart.shippingCents, currency: CURRENCY },
             tax_behavior: "exclusive",
             tax_code: TAX_CODE_SHIPPING,
-            delivery_estimate: {
-              minimum: { unit: "business_day", value: 3 },
-              maximum: { unit: "business_day", value: 8 },
-            },
+            ...(cart.shippingOption.days
+              ? {
+                  delivery_estimate: {
+                    minimum: { unit: "business_day", value: Math.max(1, cart.shippingOption.days - 1) },
+                    maximum: { unit: "business_day", value: cart.shippingOption.days + 2 },
+                  },
+                }
+              : {}),
           },
         },
       ],
+      ...(shipsAfterText
+        ? {
+            custom_text: {
+              shipping_address: { message: `Pre-order: this order ships by ${shipsAfterText}.` },
+              submit: { message: `Pre-order — ships by ${shipsAfterText}. Shipping was quoted for ZIP ${body.shipZip}; use the same ZIP here.` },
+            },
+          }
+        : {
+            custom_text: { submit: { message: `Shipping was quoted for ZIP ${body.shipZip}. Use the same ZIP here.` } },
+          }),
       ...(promo
         ? { discounts: [{ promotion_code: promo.stripePromotionCodeId }] }
         : { allow_promotion_codes: true }),

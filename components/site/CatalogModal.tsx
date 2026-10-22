@@ -8,17 +8,39 @@ import { FlipBook } from "@/components/site/FlipBook";
  * The Catalog: the Brand Book flip-book in a full-screen overlay (D-021).
  * Dark backdrop, close X, ESC and backdrop-click to close, page scroll locked
  * while open. The book itself owns arrows / drag / keyboard page turns.
+ * Also hosts the TerpKings comic preview (D-124) via `basePath`, `trailing`
+ * and `theme="terpkings"` — same mechanics, amber chrome.
  */
 export function CatalogModal({
   open,
   onClose,
   pageCount,
   aspectRatio,
+  basePath,
+  altPrefix,
+  trailing,
+  onTrailingReached,
+  leadingSrc,
+  pageOffset,
+  pageTotal,
+  numberPages,
+  label = "Private Stock catalog",
+  theme = "default",
 }: {
   open: boolean;
   onClose: () => void;
   pageCount: number;
   aspectRatio: number;
+  basePath?: string;
+  altPrefix?: string;
+  trailing?: React.ReactNode;
+  onTrailingReached?: () => void;
+  leadingSrc?: string;
+  pageOffset?: number;
+  pageTotal?: number;
+  numberPages?: boolean;
+  label?: string;
+  theme?: "default" | "terpkings";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -51,15 +73,15 @@ export function CatalogModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Private Stock catalog"
+        aria-label={label}
         className="flex h-full flex-col"
       >
         <div className="flex shrink-0 justify-end p-4">
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close catalog"
-            className="p-2 text-white transition-opacity hover:opacity-60"
+            aria-label="Close"
+            className={`p-2 transition-opacity hover:opacity-60 ${theme === "terpkings" ? "text-[#FFB000]" : "text-white"}`}
           >
             <X className="h-7 w-7" strokeWidth={1.25} />
           </button>
@@ -71,10 +93,18 @@ export function CatalogModal({
             rootRef={panelRef}
             pageCount={pageCount}
             aspectRatio={aspectRatio}
+            basePath={basePath}
+            altPrefix={altPrefix}
+            trailing={trailing}
+            onTrailingReached={onTrailingReached}
+            leadingSrc={leadingSrc}
+            pageOffset={pageOffset}
+            pageTotal={pageTotal}
+            numberPages={numberPages}
             fitViewport
             autoFocus
             globalKeys
-            captionClassName="text-white/50"
+            captionClassName={theme === "terpkings" ? "tk-mono text-[#8A9E5C]" : "text-white/50"}
           />
         </div>
       </div>

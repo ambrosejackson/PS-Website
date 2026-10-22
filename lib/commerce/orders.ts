@@ -37,6 +37,12 @@ export async function createPendingOrder(input: {
   discountCodeId: string | null;
   shippingAddress: ShippingAddressJson | null;
   stripeTaxCalculationId?: string | null;
+  /** USPS service and Shippo rate id the buyer chose (D-120); null for legacy callers. */
+  shippingService?: string | null;
+  shippingQuoteId?: string | null;
+  shippingQuoteFallback?: boolean;
+  /** Pre-order promise frozen at order time (D-123). */
+  shipsAfter?: string | null;
 }): Promise<string> {
   const db = createAdminClient();
   const { data: order, error } = await db
@@ -56,6 +62,10 @@ export async function createPendingOrder(input: {
       discount_code_id: input.discountCodeId,
       shipping_address: (input.shippingAddress ?? null) as Json,
       stripe_tax_calculation_id: input.stripeTaxCalculationId ?? null,
+      shipping_service: input.shippingService ?? null,
+      shipping_quote_id: input.shippingQuoteId ?? null,
+      shipping_quote_fallback: input.shippingQuoteFallback ?? false,
+      ships_after: input.shipsAfter ?? null,
     })
     .select("id")
     .single();

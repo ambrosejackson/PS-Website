@@ -17,7 +17,7 @@ export default async function AdminOrdersPage({
   const db = createAdminClient();
   let query = db
     .from("orders")
-    .select("id, created_at, email, customer_name, payment_provider, status, fulfillment_status, total_cents, promo_code")
+    .select("id, created_at, email, customer_name, payment_provider, status, fulfillment_status, total_cents, promo_code, shipping_service, shipping_quote_fallback, ships_after")
     .order("created_at", { ascending: false })
     .limit(200);
   // Default view hides abandoned pending/failed checkouts; ?all=1 shows them.
@@ -114,6 +114,11 @@ export default async function AdminOrdersPage({
                     <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${FULFILLMENT_TONE[o.fulfillment_status] ?? ""}`}>
                       {FULFILLMENT_LABEL[o.fulfillment_status] ?? o.fulfillment_status}
                     </span>
+                    <div className="mt-1 text-[11px] text-neutral-500">
+                      {o.shipping_service === "priority" ? "USPS Priority" : o.shipping_service === "standard" ? "USPS Ground" : ""}
+                      {o.shipping_quote_fallback && <span className="ml-1 rounded bg-amber-100 px-1 text-amber-800" title="Shippo was unavailable; the flat fallback rate was charged">flat rate</span>}
+                      {o.ships_after && <span className="ml-1 rounded bg-neutral-100 px-1 text-neutral-700">pre-order</span>}
+                    </div>
                   </td>
                   <td className="px-4 py-2 text-right">{money(o.total_cents ?? 0)}</td>
                 </tr>

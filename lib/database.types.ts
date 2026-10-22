@@ -854,6 +854,7 @@ export type Database = {
           name: string
           provider_product_id: string | null
           released_at: string
+          ships_after: string | null
           slug: string
           sort_order: number | null
           updated_at: string
@@ -872,6 +873,7 @@ export type Database = {
           name: string
           provider_product_id?: string | null
           released_at?: string
+          ships_after?: string | null
           slug: string
           sort_order?: number | null
           updated_at?: string
@@ -890,6 +892,7 @@ export type Database = {
           name?: string
           provider_product_id?: string | null
           released_at?: string
+          ships_after?: string | null
           slug?: string
           sort_order?: number | null
           updated_at?: string
@@ -984,6 +987,10 @@ export type Database = {
           sku: string
           stock_qty: number | null
           stripe_price_id: string | null
+          weight_oz: number | null
+          length_in: number | null
+          width_in: number | null
+          height_in: number | null
         }
         Insert: {
           color?: string | null
@@ -996,6 +1003,10 @@ export type Database = {
           sku: string
           stock_qty?: number | null
           stripe_price_id?: string | null
+          weight_oz?: number | null
+          length_in?: number | null
+          width_in?: number | null
+          height_in?: number | null
         }
         Update: {
           color?: string | null
@@ -1008,6 +1019,10 @@ export type Database = {
           sku?: string
           stock_qty?: number | null
           stripe_price_id?: string | null
+          weight_oz?: number | null
+          length_in?: number | null
+          width_in?: number | null
+          height_in?: number | null
         }
         Relationships: [
           {
@@ -1140,6 +1155,10 @@ export type Database = {
           shipped_at: string | null
           shipping_address: Json | null
           shipping_cents: number | null
+          shipping_quote_fallback: boolean
+          shipping_quote_id: string | null
+          shipping_service: string | null
+          ships_after: string | null
           status: string
           stripe_payment_intent: string | null
           stripe_session_id: string | null
@@ -1167,6 +1186,10 @@ export type Database = {
           shipped_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
+          shipping_quote_fallback?: boolean
+          shipping_quote_id?: string | null
+          shipping_service?: string | null
+          ships_after?: string | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
@@ -1194,6 +1217,10 @@ export type Database = {
           shipped_at?: string | null
           shipping_address?: Json | null
           shipping_cents?: number | null
+          shipping_quote_fallback?: boolean
+          shipping_quote_id?: string | null
+          shipping_service?: string | null
+          ships_after?: string | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
