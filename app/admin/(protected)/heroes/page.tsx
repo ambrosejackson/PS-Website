@@ -7,6 +7,18 @@ import { heroAnchorId, heroPagesWith, navTargetLabel, type HeroPageOption } from
 export const dynamic = "force-dynamic";
 
 /**
+ * Landing-page nav hovers that render a coded component instead of the admin
+ * row (HeroSwitcher `navTargetNodes` in app/(public)/page.tsx). Keep in step
+ * with that map so the row shows a "not shown" warning rather than an image
+ * that silently never appears.
+ */
+const CODED_LANDING_SWAPS: Record<string, string> = {
+  BRANDS: "Brand Gallery Hero (D-082)",
+  "STORE LOCATOR": "Store Locator Hero",
+  "YOUR REWARDS": "Rewards hero (shared with /rewards)",
+};
+
+/**
  * /admin/heroes — hero media per public page (D-044). Grouped in the spec's
  * page order; exactly one default per page; landing rows carry the nav hover
  * target. Public pages read their default via getHeroesForPage() and fall back
@@ -54,8 +66,9 @@ export default async function AdminHeroesPage() {
         <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Heroes</h1>
         <p className="mt-2 max-w-prose text-sm text-neutral-600">
           One default hero per page (image or MP4). Theme is auto-computed from the asset&apos;s top band and can be
-          overridden; it drives the header text color on brand pages. Landing heroes can additionally be assigned to a
-          nav hover target (BRANDS / STORE LOCATOR / YOUR REWARDS). Pages with no active hero show a styled static
+          overridden; it drives the header text color on brand pages. On the landing page the three nav hover targets
+          (BRANDS / STORE LOCATOR / YOUR REWARDS) are coded components — rows assigned to them are kept but not rendered;
+          only the landing default is managed here. Pages with no active hero show a styled static
           fallback. TerpKings keeps its CRT layering with the video underneath.
         </p>
       </div>
@@ -103,8 +116,10 @@ export default async function AdminHeroesPage() {
                             {h.nav_target && (
                               <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-800">hover: {navTargetLabel(h.nav_target)}</span>
                             )}
-                            {h.page === "/" && h.nav_target?.toUpperCase() === "BRANDS" && (
-                              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">⚠ not shown — the landing BRANDS hover is the coded Brand Gallery Hero (D-082)</span>
+                            {h.page === "/" && h.nav_target && CODED_LANDING_SWAPS[h.nav_target.toUpperCase()] && (
+                              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                                ⚠ not shown — the landing {h.nav_target.toUpperCase()} hover is the coded {CODED_LANDING_SWAPS[h.nav_target.toUpperCase()]}
+                              </span>
                             )}
                             {!h.is_active && <span className="rounded bg-neutral-200 px-2 py-0.5 text-xs text-neutral-600">inactive</span>}
                             {h.media_type === "video" &&

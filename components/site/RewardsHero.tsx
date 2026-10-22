@@ -17,6 +17,13 @@ import { Zap } from "lucide-react";
  *
  * Colours come from the hero-scoped tokens (--gold*, --ps-blue*, --ps-navy).
  * The site's global shadcn --accent / --secondary are deliberately untouched.
+ *
+ * `fill` renders the same hero as the landing page's YOUR REWARDS hover-swap
+ * (HeroSwitcher `navTargetNodes`, like BRANDS and STORE LOCATOR): it fills the
+ * hero box instead of sizing itself, uses tighter vertical padding so a short
+ * laptop hero still holds the cards, and its headline is an h2 — the swap
+ * layers are not the landing page's title. Under 900px wide the card column
+ * is dropped in this mode (an iPad-portrait hero would otherwise clip it).
  */
 
 const SIGNUP_HREF = "/signup";
@@ -25,11 +32,18 @@ const HOW_IT_WORKS_HREF = "#how-it-works";
 
 const cardShadow = "shadow-[0_30px_60px_-20px_hsl(0_0%_0%/0.8)]";
 
-export function RewardsHero() {
+export function RewardsHero({ fill = false }: { fill?: boolean }) {
+  const Heading = fill ? "h2" : "h1";
+  // On the landing page the anchor has to cross to /rewards first.
+  const howItWorksHref = fill ? `/rewards${HOW_IT_WORKS_HREF}` : HOW_IT_WORKS_HREF;
   return (
     <section
       aria-labelledby="rewards-hero-title"
-      className="relative grid min-h-[640px] grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-12 overflow-hidden bg-black px-[clamp(24px,6vw,96px)] py-[clamp(56px,8vw,112px)] font-poppins text-white"
+      className={`grid grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-12 overflow-hidden bg-black px-[clamp(24px,6vw,96px)] font-poppins text-white ${
+        fill
+          ? "absolute inset-0 py-[clamp(32px,5vh,96px)]"
+          : "relative min-h-[640px] py-[clamp(56px,8vw,112px)]"
+      }`}
     >
       {/* Decorative layers: blue glow, then masked 64px grid lines. */}
       <div
@@ -48,14 +62,14 @@ export function RewardsHero() {
           Private Stock Rewards
         </div>
 
-        <h1
+        <Heading
           id="rewards-hero-title"
           className="text-balance text-[clamp(40px,5.2vw,72px)] font-semibold leading-[1.02] tracking-[-0.03em]"
         >
           Every order
           <br />
           earns you more.
-        </h1>
+        </Heading>
 
         <p className="max-w-[480px] text-pretty text-[clamp(16px,1.3vw,19px)] font-light leading-[1.55] text-[hsl(215_20%_72%)]">
           Earn points on every dollar, climb the tiers, and get first access to new drops before anyone else.
@@ -69,7 +83,7 @@ export function RewardsHero() {
             Sign up free
           </Link>
           <a
-            href={HOW_IT_WORKS_HREF}
+            href={howItWorksHref}
             className="inline-flex h-[52px] items-center px-2 text-[15px] font-medium text-ps-blue transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ps-blue"
           >
             See how it works →
@@ -86,7 +100,12 @@ export function RewardsHero() {
       {/* Right column — illustrative cards, hidden from assistive tech. */}
       {/* Under 460px the stage is narrower than the design's, so the toast would
           sit on the gold card's footer text; 36px of extra height drops it clear. */}
-      <div aria-hidden="true" className="relative grid min-h-[440px] place-items-center max-[459px]:min-h-[476px]">
+      <div
+        aria-hidden="true"
+        className={`relative grid min-h-[440px] place-items-center max-[459px]:min-h-[476px] ${
+          fill ? "max-[899px]:hidden" : ""
+        }`}
+      >
         <div className="relative h-[440px] w-[min(100%,460px)] max-[459px]:h-[476px]">
           {/* B. Points card (front, Gold) */}
           <div
