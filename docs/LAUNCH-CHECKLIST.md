@@ -7,11 +7,11 @@ cutover. Sections A–C gate the cutover; D is the cutover itself.
 - [x] Landing, brand pages (Outfitters, TerpKings, Higher Self, SSS), products + SEO
       product pages, apparel storefront + cart + checkout, news, about/contact/rewards,
       store locator (coming-soon state on production), age gate, consent, analytics.
-- [x] /admin: Products (sheet sync), Apparel, Orders, Heroes, Banners, Blog,
+- [x] /admin: Products (source of truth, D-130), Apparel, Orders, Heroes, Banners, Blog,
       Subscribers, Messages.
 - [x] Production safety gate: mock PSM availability never renders on production
       (`lib/showRealAvailability.ts`).
-- [x] Daily sheet sync cron (`vercel.json` → `/api/cron/sync-sheet`, 09:00 UTC).
+- [x] ~~Daily sheet sync cron~~ — retired: the sheet sync engine and cron were removed (D-130, D-135); products are managed in /admin/products.
 
 ## B. Commerce go-live (TEST mode today — must flip before announcing the shop)
 - [ ] Stripe: swap to LIVE keys in Vercel Production (`STRIPE_SECRET_KEY`,

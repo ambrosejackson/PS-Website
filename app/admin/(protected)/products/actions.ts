@@ -7,16 +7,16 @@ import { isAdminEmail } from "@/lib/admin/allowlist";
 import { brandByName, isAllowlistedBrand } from "@/lib/brands";
 import { revalidateFor, type RevalidateTarget } from "@/lib/revalidate";
 import { markPlaceholderRowsMissing, type PlaceholderCounts } from "@/lib/catalog/import-legacy-images";
-import { runSheetSync, type SyncSummary } from "@/lib/sheet-sync/run";
-import { slugify } from "@/lib/sheet-sync/map";
+import { slugify } from "@/lib/slug";
 import type { Database } from "@/lib/database.types";
 
 /**
- * /admin/products server actions. Since D-130 the admin is the source of truth
- * for every field on every product (the sheet sync is frozen; P4 removes it):
- * no "sheet-owned" locks, no hard delete (hide/restore only), duplicate, bulk
- * hide/show. Images are managed by the P1 routes (/api/admin/products/[id]/
- * image, apply-image) — never written here.
+ * /admin/products server actions. The admin is the source of truth for every
+ * field on every product (D-130; the sheet sync engine was removed in D-135):
+ * no hard delete (hide/restore only), duplicate, bulk hide/show. Public
+ * visibility is `is_active` alone. Images are managed by the image routes
+ * (/api/admin/products/[id]/image, apply-image) — never written here.
+ * `strain_key` is a GENERATED column (public.strain_key(name)) — never written.
  */
 
 type ProductRow = Database["public"]["Tables"]["catalog_products"]["Row"];
@@ -34,39 +34,8 @@ function admin() {
   return createAdminClient();
 }
 
-/**
- * Frozen (D-130): no longer wired to any UI or cron. Kept until P4 deletes the
- * sync engine. Still gated so a stray call can't run it unauthenticated.
- */
-export async function syncFromSheet(opts: { dryRun?: boolean } = {}): Promise<SyncSummary> {
-  if (!(await requireAdmin())) {
-    const now = new Date().toISOString();
-    return {
-      ok: false,
-      startedAt: now,
-      finishedAt: now,
-      dryRun: !!opts.dryRun,
-      tabs: [],
-      added: 0,
-      updated: 0,
-      quarantined: 0,
-      missing: 0,
-      invalid: [],
-      quarantineDetails: [],
-      revalidated: [],
-      error: "Unauthorized.",
-    };
-  }
-  return runSheetSync(opts);
-}
-
-/**
- * Showing a product also clears any sync verdict (quarantined / missing from
- * sheet) — lib/data.ts only lists rows with sync_status null|ok, and the admin
- * decision to show it is final (D-130).
- */
 function visibilityPatch(active: boolean) {
-  return active ? { is_active: true, sync_status: null, quarantine_reason: null } : { is_active: false };
+  return { is_active: active };
 }
 
 /** Inline SHOW/HIDE (is_active). */
@@ -192,9 +161,10 @@ export interface ProductInput {
 
 /**
  * Create / update — every field, every product (D-130). Creates are
- * source='manual' with sync_status null so they list publicly as soon as
- * is_active is true. sheet_row_ref is never written. Image fields are owned by
- * the image routes and left untouched here.
+ * source='manual' and list publicly as soon as is_active is true. The legacy
+ * sync columns (sync_status, quarantine_reason, sheet_row_ref, synced_at) are
+ * no longer written; they stay until a later cleanup migration (D-135). Image
+ * fields are owned by the image routes and left untouched here.
  */
 export async function saveProduct(input: ProductInput): Promise<ActionResult<{ id: string; slug: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
@@ -245,11 +215,7 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     if (slug !== existing.slug && !(await slugFree(slug, input.id))) {
       return { ok: false, error: `Slug "${slug}" is already in use.` };
     }
-    // An admin save is the admin's verdict: any sync quarantine / missing mark is cleared.
-    const { error } = await db
-      .from("catalog_products")
-      .update({ ...fields, sync_status: null, quarantine_reason: null })
-      .eq("id", input.id);
+    const { error } = await db.from("catalog_products").update(fields).eq("id", input.id);
     if (error) return { ok: false, error: error.message };
 
     revalidateFor(
@@ -265,7 +231,6 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     .insert({
       ...fields,
       source: "manual",
-      sync_status: null,
       image_url: null,
       image_storage_path: null,
       image_missing: true,
@@ -314,9 +279,6 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
       sort_order: src.sort_order == null ? await nextSortOrder(src.brand) : src.sort_order + 1,
       is_active: false,
       source: "manual",
-      sync_status: null,
-      quarantine_reason: null,
-      sheet_row_ref: null,
       image_url: null,
       image_storage_path: null,
       image_missing: true,

@@ -277,7 +277,7 @@ Publish mechanics: a scheduled Edge Function in the **website** project pulls fr
 |---|---|---|
 | **Distru** | Wholesale order system → `brand_sales_order_items` | Feed currently broken (0-row emailed reports); manual backfill through Jul 30, 2026 |
 | **Sweed** | POS at Parkway Tilton; menu platform at 38 accounts | Hourly retail sales feed into PSM `retail_sales_hourly` |
-| **iHeartJane master product sheet** | Google Sheet `1vYYvhaWUPfqAe1NmKihdxNeBs-AizutQG0Bbnoyffao`, owned by Pierce at iHeartJane | 220 product rows across Higher Self, Outfitters, Savage Squad, TerpKings; 85 rows (39%) missing image links; sharing is "Anyone with link — Editor" (known risk). This is the reference source for product names/images — relevant when building website product pages. |
+| **iHeartJane master product sheet** | Google Sheet `1vYYvhaWUPfqAe1NmKihdxNeBs-AizutQG0Bbnoyffao`, owned by Pierce at iHeartJane | 220 product rows across Higher Self, Outfitters, Savage Squad, TerpKings; 85 rows (39%) missing image links; sharing is "Anyone with link — Editor" (known risk). Historical reference only for the website: its catalog was imported from this sheet once, then the sync engine was removed (website DECISIONS D-130 / D-135); product data and images now live in the website's /admin/products. |
 | **GoDaddy** | privatestock.co registrar | DNS cutover to Vercel at launch; keep WordPress live until 301 map is verified |
 | **Cowork** | Scheduled automation platform | Runs menu-accuracy-check (Sat/Wed 1AM CT) and sweed-hourly-tracker |
 | **Vercel** | Hosts PSM; will host the website as a separate project | Never edit PSM's Vercel env vars from the website project |
