@@ -1,5 +1,10 @@
 import { revalidateFor, type RevalidateTarget } from "@/lib/revalidate";
-import { cleanupStagingObjects, copyProductImage, deleteProductImage } from "@/lib/catalog/product-image";
+import {
+  APPLY_IMAGE_MAX_TARGETS,
+  cleanupStagingObjects,
+  copyProductImage,
+  deleteProductImage,
+} from "@/lib/catalog/product-image";
 import { adminContext, errorResponse, json, readJson, UUID_RE, type ProductRow } from "@/lib/catalog/product-image-routes";
 
 /**
@@ -14,7 +19,7 @@ import { adminContext, errorResponse, json, readJson, UUID_RE, type ProductRow }
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const MAX_TARGETS = 100;
+const MAX_TARGETS = APPLY_IMAGE_MAX_TARGETS;
 
 export async function POST(request: Request) {
   const ctx = await adminContext();

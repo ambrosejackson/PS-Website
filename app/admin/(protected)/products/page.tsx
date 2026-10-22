@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
-import { SyncButton } from "./SyncButton";
 import { ProductsTable } from "./ProductsTable";
 import type { ProductRow } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 /**
- * /admin/products — hybrid catalog (D-038): sheet-synced + manual rows.
- * List with brand / source / visibility filters, "Hidden — awaiting review"
- * preset, drag-to-reorder within a brand, inline SHOW/HIDE, sync badges.
+ * /admin/products — the source of truth for the catalog (D-130). Filters by
+ * brand / category / visibility / image, bulk hide-show-apply-image,
+ * drag-to-reorder within a brand, inline hide/restore, duplicate.
  */
 export default async function AdminProductsPage({
   searchParams,
@@ -55,13 +54,11 @@ export default async function AdminProductsPage({
         <div>
           <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Products</h1>
           <p className="mt-2 max-w-prose text-sm text-neutral-600">
-            Hybrid catalog: synced from the iHeartJane sheet plus manual products. The
-            sheet owns name/brand/category/format/weight/image on synced rows; you own
-            visibility, description, terpenes, terp category and order (D-038). No prices
-            here — ever (guardrail #2).
+            This list is the catalog. Every field and image is edited here; hiding a product
+            takes it off the site without deleting it. No prices here — ever (guardrail #2).
           </p>
         </div>
-        <Button render={<Link href="/admin/products/new">New manual product</Link>} />
+        <Button render={<Link href="/admin/products/new">New product</Link>} />
       </div>
 
       {saved && (
@@ -69,8 +66,6 @@ export default async function AdminProductsPage({
           Saved <code>{saved}</code>. Public pages revalidated.
         </p>
       )}
-
-      <SyncButton />
 
       {loadError ? (
         <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p>

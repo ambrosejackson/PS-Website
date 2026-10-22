@@ -2,6 +2,24 @@ import { createHash } from "node:crypto";
 import sharp from "sharp";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import {
+  PRODUCT_IMAGE_BUCKET,
+  PRODUCT_IMAGE_MAX_BYTES,
+  PRODUCT_IMAGE_STAGING_PREFIX,
+  PRODUCT_IMAGE_WIDTHS,
+  isProductImageMime,
+  productImageKey,
+  productImageKeys,
+  productImageStoragePath,
+  productImageUrls,
+  type ProductImageMime,
+  type ProductImageWidth,
+} from "./product-image-urls.ts";
+
+// Keys, URLs, srcSet, staging helpers and constants live in product-image-urls.ts
+// (importable from client components); re-exported here so the P1 API is unchanged.
+// The explicit .ts extension lets Node's test runner resolve it without a bundler.
+export * from "./product-image-urls.ts";
 
 /**
  * Catalog product image pipeline (2026-10, replaces sheet-fed image URLs).
@@ -22,21 +40,9 @@ import type { Database } from "@/lib/database.types";
  * must export the photo as JPEG first — the error message says so.
  */
 
-export const PRODUCT_IMAGE_BUCKET = "products";
-export const PRODUCT_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 export const PRODUCT_IMAGE_MAX_EDGE = 1600;
-export const PRODUCT_IMAGE_WIDTHS = [400, 800, 1600] as const;
 export const PRODUCT_IMAGE_WEBP_QUALITY = 82;
 export const PRODUCT_IMAGE_CACHE_CONTROL = "31536000";
-export const PRODUCT_IMAGE_MIME = ["image/jpeg", "image/png", "image/webp"] as const;
-export const PRODUCT_IMAGE_EXTENSIONS: Record<(typeof PRODUCT_IMAGE_MIME)[number], string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-
-export type ProductImageWidth = (typeof PRODUCT_IMAGE_WIDTHS)[number];
-export type ProductImageMime = (typeof PRODUCT_IMAGE_MIME)[number];
 
 export type ProductImageErrorCode =
   | "unsupported_type" // not jpeg/png/webp (incl. HEIC/HEIF)
@@ -55,18 +61,15 @@ export class ProductImageError extends Error {
   }
 }
 
-export function isProductImageMime(mime: string): mime is ProductImageMime {
-  return (PRODUCT_IMAGE_MIME as readonly string[]).includes(mime);
-}
+/** The message shown for HEIC/HEIF, server-side and in the admin uploader. */
+export const HEIC_MESSAGE =
+  "HEIC photos can't be processed here. On your phone, export or share the photo as JPEG, then upload that file.";
 
 /** Validate (mime, size) before touching the bytes. Throws ProductImageError. */
 export function assertProductImageInput(mime: string, bytes: number): asserts mime is ProductImageMime {
   const m = (mime ?? "").toLowerCase().split(";")[0].trim();
   if (m === "image/heic" || m === "image/heif" || m === "image/heic-sequence" || m === "image/heif-sequence") {
-    throw new ProductImageError(
-      "unsupported_type",
-      "HEIC photos can't be processed here. On your phone, export or share the photo as JPEG, then upload that file.",
-    );
+    throw new ProductImageError("unsupported_type", HEIC_MESSAGE);
   }
   if (!isProductImageMime(m)) {
     throw new ProductImageError(
@@ -87,39 +90,6 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export function sourceHash(buffer: Buffer): string {
   return createHash("sha1").update(buffer).digest("hex").slice(0, 8);
-}
-
-/** `catalog/{productId}/{hash}` — the value stored in catalog_products.image_storage_path. */
-export function productImageStoragePath(productId: string, hash: string): string {
-  return `catalog/${productId}/${hash}`;
-}
-
-/** Object key for one rendition inside the bucket. */
-export function productImageKey(storagePath: string, width: ProductImageWidth): string {
-  return `${storagePath}/${width}.webp`;
-}
-
-export function productImageKeys(storagePath: string): Record<ProductImageWidth, string> {
-  return {
-    400: productImageKey(storagePath, 400),
-    800: productImageKey(storagePath, 800),
-    1600: productImageKey(storagePath, 1600),
-  };
-}
-
-/** Public URL of one object in the products bucket (same shape as Storage's getPublicUrl). */
-export function productImagePublicUrl(key: string): string {
-  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "");
-  return `${base}/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/${key}`;
-}
-
-export function productImageUrls(storagePath: string): Record<ProductImageWidth, string> {
-  const keys = productImageKeys(storagePath);
-  return {
-    400: productImagePublicUrl(keys[400]),
-    800: productImagePublicUrl(keys[800]),
-    1600: productImagePublicUrl(keys[1600]),
-  };
 }
 
 export interface ProductImageRendition {
@@ -271,24 +241,6 @@ export async function downloadObject(admin: Admin, key: string): Promise<Buffer>
   return Buffer.from(await data.arrayBuffer());
 }
 
-/* ---------- staging (originals uploaded by the browser before processing) ---------- */
-
-export const PRODUCT_IMAGE_STAGING_PREFIX = "_staging";
-/** `_staging/{uuid}.{ext}` as specced; a timestamped name from createSignedUpload also passes. */
-const STAGING_KEY_RE = /^_staging\/[A-Za-z0-9][A-Za-z0-9._-]{0,119}\.(jpe?g|png|webp)$/i;
-
-export function isStagingKey(key: string): boolean {
-  return STAGING_KEY_RE.test(key);
-}
-
-/** Mime for a staging key from its extension (the browser named it from the file's type). */
-export function stagingMime(key: string): ProductImageMime {
-  const ext = key.toLowerCase().split(".").pop();
-  if (ext === "png") return "image/png";
-  if (ext === "webp") return "image/webp";
-  return "image/jpeg";
-}
-
 /**
  * Delete `_staging/*` objects older than `maxAgeMs` (default 1 h) so abandoned
  * browser uploads don't accumulate. Called at the start of each image route;
@@ -309,19 +261,4 @@ export async function cleanupStagingObjects(admin: Admin, maxAgeMs = 60 * 60 * 1
   } catch {
     return 0;
   }
-}
-
-/* ---------- rendering helpers (public components, later prompts) ---------- */
-
-/** Default `sizes` for a product image: full width on phones, half on tablets, a third on desktop. */
-export const PRODUCT_IMAGE_SIZES_DEFAULT = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw";
-
-/** `src` (800), `srcSet` for the three widths and a default `sizes` for an <img>. */
-export function productImageSrcSet(storagePath: string): { src: string; srcSet: string; sizes: string } {
-  const urls = productImageUrls(storagePath);
-  return {
-    src: urls[800],
-    srcSet: PRODUCT_IMAGE_WIDTHS.map((w) => `${urls[w]} ${w}w`).join(", "),
-    sizes: PRODUCT_IMAGE_SIZES_DEFAULT,
-  };
 }
