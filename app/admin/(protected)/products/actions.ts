@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { brandByName, isAllowlistedBrand } from "@/lib/brands";
 import { revalidateFor, type RevalidateTarget } from "@/lib/revalidate";
+import { markPlaceholderRowsMissing, type PlaceholderCounts } from "@/lib/catalog/import-legacy-images";
 import { runSheetSync, type SyncSummary } from "@/lib/sheet-sync/run";
 import { slugify } from "@/lib/sheet-sync/map";
 import type { Database } from "@/lib/database.types";
@@ -327,6 +328,21 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
   if (error || !data) return { ok: false, error: error?.message ?? "Duplicate failed." };
   // Hidden on creation — nothing public changes until it is shown.
   return { ok: true, data: { id: data.id, slug: data.slug } };
+}
+
+/**
+ * One-time cutover (D-133): the legacy '/placeholders/product.png' rows lose
+ * that URL and get image_missing = true; empty-URL rows get the flag too.
+ * Rows with a processed image are never touched. Counts come from
+ * countPlaceholderRows() in page.tsx.
+ */
+export async function markPlaceholderRowsMissingAction(): Promise<ActionResult<PlaceholderCounts>> {
+  if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
+  try {
+    return { ok: true, data: await markPlaceholderRowsMissing(admin()) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Update failed." };
+  }
 }
 
 export type { ProductRow };

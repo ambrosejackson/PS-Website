@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Button } from "@/components/ui/button";
+import {
+  countLegacyImportCandidates,
+  countPlaceholderRows,
+  type LegacyImportCounts,
+  type PlaceholderCounts,
+} from "@/lib/catalog/import-legacy-images";
 import { ProductsTable } from "./ProductsTable";
+import { LegacyImportPanel } from "./LegacyImportPanel";
 import type { ProductRow } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +28,13 @@ export default async function AdminProductsPage({
   // Distinct stores per (brand, strain_key) from the published menu data (D-118),
   // so a product that matches nothing stands out here before it does on the site.
   const storeCounts: Record<string, number> = {};
+  // One-time cutover panels (D-132/D-133) render only while these are non-zero.
+  let legacy: LegacyImportCounts = { candidates: 0, previouslyFailed: 0, distinctFiles: 0 };
+  let placeholders: PlaceholderCounts = { placeholder: 0, emptyUnflagged: 0 };
   let loadError: string | null = null;
   try {
     const db = createAdminClient();
-    const [{ data, error }, { data: avail }] = await Promise.all([
+    const [{ data, error }, { data: avail }, legacyCounts, placeholderCounts] = await Promise.all([
       db
         .from("catalog_products")
         .select("*")
@@ -32,7 +42,11 @@ export default async function AdminProductsPage({
         .order("sort_order", { ascending: true, nullsFirst: false })
         .order("name", { ascending: true }),
       db.from("product_availability").select("brand, strain_key, store_id"),
+      countLegacyImportCandidates(db).catch(() => legacy),
+      countPlaceholderRows(db).catch(() => placeholders),
     ]);
+    legacy = legacyCounts;
+    placeholders = placeholderCounts;
     if (error) loadError = error.message;
     else rows = data ?? [];
     const seen = new Set<string>();
@@ -70,7 +84,10 @@ export default async function AdminProductsPage({
       {loadError ? (
         <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p>
       ) : (
-        <ProductsTable rows={rows} storeCounts={storeCounts} />
+        <>
+          <LegacyImportPanel counts={legacy} placeholders={placeholders} />
+          <ProductsTable rows={rows} storeCounts={storeCounts} />
+        </>
       )}
     </div>
   );
