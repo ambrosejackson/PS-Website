@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { CURRENCY } from "@/lib/commerce/config";
+import { CURRENCY, isShippingService } from "@/lib/commerce/config";
 import { createPendingOrder, updateOrder, type ShippingAddressJson } from "@/lib/commerce/orders";
 import { cents, createPayPalOrder, paypalConfigured } from "@/lib/commerce/paypal";
-import { applyDiscount, priceCart, PricingError, validatePromo } from "@/lib/commerce/pricing";
+import { applyDiscount, priceCart, PricingError, shipCart, validatePromo } from "@/lib/commerce/pricing";
 import { stripeConfigured } from "@/lib/commerce/stripe";
 import { calculateTax } from "@/lib/commerce/tax";
 
 /**
- * PayPal rail, step 1 (D-039): same server-side pricing, same shipping rule,
+ * PayPal rail, step 1 (D-039): same server-side pricing, same USPS quote from
+ * the buyer's ZIP (D-120 — here the address ZIP, which is the one that ships),
  * same promo rules, and Stripe Tax calculated on the same (discounted) line
  * items + shipping address → totals identical to the Stripe rail. Writes the
  * PENDING order, creates the PayPal order and returns its id for the buttons.
@@ -19,6 +20,7 @@ interface Body {
   email?: string;
   promoCode?: string | null;
   address?: ShippingAddressJson;
+  shipService?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -48,8 +50,13 @@ export async function POST(request: Request) {
     country: (a.country ?? "US").toUpperCase(),
   };
 
+  if (!isShippingService(body.shipService)) {
+    return NextResponse.json({ error: "Pick a shipping option on the cart page first." }, { status: 400 });
+  }
+
   try {
-    const cart = await priceCart(body.lines ?? []);
+    const priced = await priceCart(body.lines ?? []);
+    const cart = await shipCart(priced, address.postal_code!, body.shipService);
     const promo = await validatePromo(body.promoCode, email);
     const { discountCents, lines } = promo ? applyDiscount(cart, promo.pct) : { discountCents: 0, lines: cart.lines };
     const { taxCents, calculationId } = await calculateTax({ lines, shippingCents: cart.shippingCents, address });
@@ -69,6 +76,10 @@ export async function POST(request: Request) {
       discountCodeId: promo?.id ?? null,
       shippingAddress: address,
       stripeTaxCalculationId: calculationId,
+      shippingService: cart.shippingService,
+      shippingQuoteId: cart.shippingQuoteId,
+      shippingQuoteFallback: cart.shippingQuoteFallback,
+      shipsAfter: cart.shipsAfter,
     });
 
     const pp = await createPayPalOrder({
@@ -100,7 +111,12 @@ export async function POST(request: Request) {
     });
 
     await updateOrder(orderId, { paypal_order_id: pp.id });
-    return NextResponse.json({ id: pp.id, orderId, totals: { subtotalCents: cart.subtotalCents, discountCents, shippingCents: cart.shippingCents, taxCents, totalCents } });
+    return NextResponse.json({
+      id: pp.id,
+      orderId,
+      totals: { subtotalCents: cart.subtotalCents, discountCents, shippingCents: cart.shippingCents, taxCents, totalCents },
+      shipping: { service: cart.shippingService, fallback: cart.shippingQuoteFallback },
+    });
   } catch (e) {
     if (e instanceof PricingError) return NextResponse.json({ error: e.message }, { status: 400 });
     console.error("[paypal/create-order]", e instanceof Error ? e.message : e);

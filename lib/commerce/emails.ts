@@ -1,7 +1,8 @@
 import "server-only";
 import { EMAIL_NOTIFY_TO, notifyStaff, send } from "@/lib/email";
-import { money } from "@/lib/commerce/config";
+import { SERVICE_LABEL, isShippingService, money } from "@/lib/commerce/config";
 import type { OrderItemRow, OrderWithItems, ShippingAddressJson } from "@/lib/commerce/orders";
+import { preorderLine } from "@/lib/commerce/preorder";
 
 /**
  * On-brand, simple HTML emails (D-042, Resend):
@@ -75,13 +76,26 @@ function itemsTable(items: OrderItemRow[], withProvider: boolean): string {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">${rows}</table>`;
 }
 
+function shippingLabel(o: OrderWithItems): string {
+  const svc = isShippingService(o.shipping_service) ? SERVICE_LABEL[o.shipping_service] : null;
+  return svc ? `Shipping — ${svc.name} (${svc.carrier})` : "Shipping";
+}
+
+/** Pre-order notice block (D-123), empty when the order ships now. */
+function preorderHtml(o: OrderWithItems): string {
+  const line = preorderLine(o.ships_after);
+  return line
+    ? `<p style="margin:16px 0 0;padding:10px 12px;border-left:3px solid ${BLACK};font-weight:700">${esc(line)}.</p><p style="margin:4px 0 0;color:${MUTED};font-size:13px">Your whole order ships together once the pre-order item arrives. We'll email tracking the day it goes out.</p>`
+    : "";
+}
+
 function totalsTable(o: OrderWithItems): string {
   const row = (label: string, value: string, bold = false) =>
     `<tr><td style="padding:4px 0;color:${bold ? BLACK : MUTED};font-weight:${bold ? 700 : 400}">${label}</td><td style="padding:4px 0;text-align:right;color:${BLACK};font-weight:${bold ? 700 : 400}">${value}</td></tr>`;
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px">
     ${row("Subtotal", money(o.subtotal_cents ?? 0))}
     ${o.discount_cents ? row(`Discount${o.promo_code ? ` (${esc(o.promo_code)})` : ""}`, `− ${money(o.discount_cents)}`) : ""}
-    ${row("Shipping", o.shipping_cents ? money(o.shipping_cents) : "FREE")}
+    ${row(shippingLabel(o), o.shipping_cents ? money(o.shipping_cents) : "FREE")}
     ${row("Tax", money(o.tax_cents ?? 0))}
     ${row("Total", money(o.total_cents ?? 0), true)}
   </table>`;
@@ -111,6 +125,7 @@ export function orderConfirmationEmail(o: OrderWithItems) {
     `<p>Thanks${o.customer_name ? `, ${esc(o.customer_name.split(" ")[0])}` : ""} — we've got your order <strong>#${shortId(o.id)}</strong>.</p>
      ${itemsTable(o.order_items, false)}
      ${totalsTable(o)}
+     ${preorderHtml(o)}
      <h3 style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:${MUTED};margin:24px 0 6px">Shipping to</h3>
      <p style="margin:0">${addressHtml(o.shipping_address as ShippingAddressJson | null)}</p>
      <p style="margin-top:24px">You'll get a second email with tracking as soon as it ships. Check your order anytime:

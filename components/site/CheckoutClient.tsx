@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart/context";
-import { centsToFreeShipping, money, SHIP_COUNTRIES } from "@/lib/commerce/config";
+import { SERVICE_LABEL, SHIP_COUNTRIES, ZIP_RE, money } from "@/lib/commerce/config";
+import { preorderLine } from "@/lib/commerce/preorder";
+import { ShippingPicker } from "@/components/shop/ShippingPicker";
 import { PayPalSection } from "@/components/site/PayPalSection";
 
 /**
@@ -13,6 +15,10 @@ import { PayPalSection } from "@/components/site/PayPalSection";
  *  - PayPal: we collect email + shipping address here (needed for the Stripe
  *    Tax calculation that keeps both rails identical), then the PayPal buttons
  *    create/capture via our server routes.
+ * Shipping (D-120): the ZIP + USPS service chosen in the cart ride along to
+ * both rails, which RE-QUOTE server-side; the PayPal rail quotes from the
+ * address ZIP typed here (the one that ships) — the picker is shown so the
+ * buyer can change the service.
  * Prices shown are the cart snapshot; every server route re-prices from the DB.
  */
 
@@ -49,7 +55,9 @@ export function CheckoutClient({
   const [address, setAddress] = useState<ShippingAddress>(EMPTY_ADDRESS);
   const [stripeBusy, setStripeBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const toFree = centsToFreeShipping(cart.subtotalCents);
+  const shipOpt = cart.shipping.option;
+  const shipReady = ZIP_RE.test(cart.shipping.zip) && shipOpt != null;
+  const preorder = preorderLine(cart.shipsAfter);
 
   async function payWithStripe() {
     setError(null);
@@ -62,6 +70,8 @@ export function CheckoutClient({
           lines: cart.lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
           promoCode: promo.trim() || null,
           email: email.trim() || null,
+          shipZip: cart.shipping.zip,
+          shipService: cart.shipping.service,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -112,6 +122,7 @@ export function CheckoutClient({
                 <p className="text-xs text-neutral-500">
                   {l.variantLabel || l.sku} · qty {l.qty}
                 </p>
+                {preorderLine(l.shipsAfter) && <p className="text-xs font-medium text-ink">{preorderLine(l.shipsAfter)}</p>}
                 <div className="mt-1 flex items-center gap-2 text-xs">
                   <button type="button" onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="border border-hairline px-2">−</button>
                   <button type="button" onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="border border-hairline px-2">+</button>
@@ -122,16 +133,18 @@ export function CheckoutClient({
             </li>
           ))}
         </ul>
+        <div className="mt-5 border border-hairline p-4">
+          <ShippingPicker compact />
+        </div>
         <div className="mt-4 space-y-1.5 text-sm">
           <div className="flex justify-between"><span className="text-neutral-500">Subtotal</span><span>{money(cart.subtotalCents)}</span></div>
-          <div className="flex justify-between"><span className="text-neutral-500">Shipping</span><span>{cart.shippingCents === 0 ? "FREE" : money(cart.shippingCents)}</span></div>
-          {toFree > 0 ? (
-            <p className="text-xs text-neutral-500">You&apos;re <span className="font-semibold text-ink">{money(toFree)}</span> from free shipping.</p>
-          ) : (
-            <p className="text-xs text-green-700">Free shipping applied.</p>
-          )}
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Shipping{shipOpt ? ` · ${SERVICE_LABEL[shipOpt.service].name}` : ""}</span>
+            <span>{cart.shippingCents == null ? "Enter ZIP above" : cart.shippingCents === 0 ? "FREE" : money(cart.shippingCents)}</span>
+          </div>
           <div className="flex justify-between"><span className="text-neutral-500">Tax</span><span className="text-neutral-500">Calculated at checkout</span></div>
-          <div className="flex justify-between border-t pt-2 font-semibold"><span>Before tax</span><span>{money(cart.subtotalCents + cart.shippingCents)}</span></div>
+          <div className="flex justify-between border-t pt-2 font-semibold"><span>Before tax</span><span>{money(cart.subtotalCents + (cart.shippingCents ?? 0))}</span></div>
+          {preorder && <p className="pt-1 text-xs text-ink">{preorder}. Your whole order ships together.</p>}
         </div>
         <div className="mt-6">
           <label className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400" htmlFor="promo">
@@ -153,18 +166,19 @@ export function CheckoutClient({
         <div className="border border-hairline p-5">
           <h2 className="font-condensed text-sm font-semibold uppercase tracking-wide text-ink">Pay with card / wallet</h2>
           <p className="mt-1 text-xs text-neutral-500">
-            Apple Pay, Google Pay, Link, Cash App Pay or any card. Shipping address and tax are collected on the next
-            screen.
+            Apple Pay, Google Pay, Link, Cash App Pay or any card. Your full address and tax are collected on the next
+            screen — use the same ZIP you entered here.
           </p>
           <button
             type="button"
             onClick={payWithStripe}
-            disabled={!stripeReady || stripeBusy}
+            disabled={!stripeReady || stripeBusy || !shipReady}
             className="mt-5 w-full bg-ink py-3.5 font-condensed text-sm font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {stripeBusy ? "Redirecting…" : "Continue to secure checkout"}
           </button>
           {!stripeReady && <p className="mt-2 text-xs text-amber-700">Card checkout isn&apos;t configured on this deployment yet.</p>}
+          {stripeReady && !shipReady && <p className="mt-2 text-xs text-neutral-500">Enter your ZIP and pick a shipping option first.</p>}
         </div>
 
         <div className="border border-hairline p-5">
@@ -182,7 +196,13 @@ export function CheckoutClient({
             </div>
           </div>
           <div className="mt-4">
-            <PayPalSection clientId={paypalClientId} email={email} address={address} promoCode={promo.trim() || null} />
+            <PayPalSection
+              clientId={paypalClientId}
+              email={email}
+              address={address}
+              promoCode={promo.trim() || null}
+              shipService={cart.shipping.service}
+            />
           </div>
         </div>
         {error && <p className="md:col-span-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}

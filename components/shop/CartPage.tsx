@@ -22,13 +22,19 @@ export function CartPage() {
     <div className="grid gap-10 md:grid-cols-[1fr_320px] md:gap-16">
       <CartLines lines={cart.lines} />
       <aside className="h-fit border border-hairline p-5 md:sticky md:top-6">
-        <CartSummary />
-        <Link
-          href="/apparel/checkout"
-          className="mt-5 block bg-ink py-3.5 text-center font-condensed text-sm font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85"
-        >
-          Check out — {money(cart.subtotalCents)}
-        </Link>
+        <CartSummary withPicker />
+        {cart.shippingCents == null ? (
+          <p className="mt-5 block border border-dashed border-hairline py-3.5 text-center font-condensed text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">
+            Enter your ZIP to continue
+          </p>
+        ) : (
+          <Link
+            href="/apparel/checkout"
+            className="mt-5 block bg-ink py-3.5 text-center font-condensed text-sm font-semibold uppercase tracking-[0.16em] text-white hover:bg-ink/85"
+          >
+            Check out — {money(cart.subtotalCents + cart.shippingCents)}
+          </Link>
+        )}
         <Link href="/apparel/shop" className="nav-underline mx-auto mt-3 block w-fit font-condensed text-xs font-semibold uppercase tracking-wide text-ink">
           Continue shopping
         </Link>

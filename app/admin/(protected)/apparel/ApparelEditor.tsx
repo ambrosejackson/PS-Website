@@ -74,6 +74,8 @@ export function ApparelEditor({
   const [category, setCategory] = useState<string>(product?.category ?? "");
   const [threshold, setThreshold] = useState<string>(String(product?.low_stock_threshold ?? 3));
   const [releasedAt, setReleasedAt] = useState<string>(toLocalInput(product?.released_at));
+  const [shipsAfter, setShipsAfter] = useState<string>(product?.ships_after ?? "");
+  const m = (n: number | null | undefined) => (n == null ? "" : String(n));
   const [rows, setRows] = useState<VariantDraft[]>(
     variants.map((v) => ({
       key: v.id,
@@ -84,6 +86,10 @@ export function ApparelEditor({
       price: (v.price_cents / 100).toFixed(2),
       stock_qty: v.stock_qty === null ? "" : String(v.stock_qty),
       is_active: v.is_active,
+      weight_oz: m(v.weight_oz),
+      length_in: m(v.length_in),
+      width_in: m(v.width_in),
+      height_in: m(v.height_in),
       skuTouched: true,
     })),
   );
@@ -159,7 +165,20 @@ export function ApparelEditor({
     const key = `new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setRows((rs) => [
       ...rs,
-      { key, sku: suggestSku(brandValue, slug, null, null), size: "", color: "", price: "", stock_qty: "", is_active: true, skuTouched: false },
+      {
+        key,
+        sku: suggestSku(brandValue, slug, null, null),
+        size: "",
+        color: "",
+        price: "",
+        stock_qty: "",
+        is_active: true,
+        weight_oz: "",
+        length_in: "",
+        width_in: "",
+        height_in: "",
+        skuTouched: false,
+      },
     ]);
   }
 
@@ -213,7 +232,20 @@ export function ApparelEditor({
       category: category || null,
       low_stock_threshold: Number(threshold),
       released_at: releasedAt,
-      variants: rows.map((r) => ({ id: r.id, sku: r.sku, size: r.size, color: r.color, price: r.price, stock_qty: r.stock_qty, is_active: r.is_active })),
+      ships_after: shipsAfter,
+      variants: rows.map((r) => ({
+        id: r.id,
+        sku: r.sku,
+        size: r.size,
+        color: r.color,
+        price: r.price,
+        stock_qty: r.stock_qty,
+        is_active: r.is_active,
+        weight_oz: r.weight_oz,
+        length_in: r.length_in,
+        width_in: r.width_in,
+        height_in: r.height_in,
+      })),
     };
     start(async () => {
       const res = await saveMerch(input);
@@ -307,6 +339,15 @@ export function ApparelEditor({
             <div className="space-y-1.5">
               <Label htmlFor="m-released">Released at (New Releases order)</Label>
               <Input id="m-released" type="datetime-local" value={releasedAt} onChange={(e) => setReleasedAt(e.target.value)} />
+              <Label htmlFor="m-ships-after" className="mt-3 block">
+                Pre-order — ships by (blank = ships now)
+              </Label>
+              <Input id="m-ships-after" type="date" value={shipsAfter} onChange={(e) => setShipsAfter(e.target.value)} />
+              {shipsAfter && (
+                <p className="mt-1 text-xs text-neutral-500">
+                  Shown as “Pre-order · ships by …” on the product page, cart, checkout, order page and emails.
+                </p>
+              )}
               {!product && <p className="text-xs text-neutral-500">Blank = now.</p>}
             </div>
             <div className="space-y-1.5">
@@ -346,6 +387,9 @@ export function ApparelEditor({
                       Stock
                     </th>
                     <th className="py-1 pr-2">SKU</th>
+                    <th className="py-1 pr-2" title="Packed weight in ounces and box size in inches — used for USPS rates. Blank = store default (12 oz, 10×8×2).">
+                      Packed oz · L×W×H in
+                    </th>
                     <th className="py-1 pr-2">Active</th>
                     <th />
                   </tr>
@@ -378,6 +422,14 @@ export function ApparelEditor({
                           onChange={(e) => updateRow(r.key, { sku: e.target.value.toUpperCase(), skuTouched: true })}
                           className="h-8 min-w-44 font-mono text-xs"
                         />
+                      </td>
+                      <td className="py-1 pr-2">
+                        <div className="flex items-center gap-1">
+                          <Input value={r.weight_oz ?? ""} onChange={(e) => updateRow(r.key, { weight_oz: e.target.value })} placeholder="oz" inputMode="decimal" className={`h-8 w-14 ${!(r.weight_oz ?? "").trim() ? "border-amber-400" : ""}`} title="Packed weight, ounces" />
+                          <Input value={r.length_in ?? ""} onChange={(e) => updateRow(r.key, { length_in: e.target.value })} placeholder="L" inputMode="decimal" className="h-8 w-12" title="Box length, inches" />
+                          <Input value={r.width_in ?? ""} onChange={(e) => updateRow(r.key, { width_in: e.target.value })} placeholder="W" inputMode="decimal" className="h-8 w-12" title="Box width, inches" />
+                          <Input value={r.height_in ?? ""} onChange={(e) => updateRow(r.key, { height_in: e.target.value })} placeholder="H" inputMode="decimal" className="h-8 w-12" title="Box height, inches" />
+                        </div>
                       </td>
                       <td className="py-1 pr-2">
                         <button

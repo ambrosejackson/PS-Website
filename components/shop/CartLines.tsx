@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useCart, type CartLine } from "@/lib/cart/context";
-import { FREE_SHIPPING_THRESHOLD_CENTS, money } from "@/lib/commerce/config";
+import { FREE_SHIPPING_THRESHOLD_CENTS, SERVICE_LABEL, money } from "@/lib/commerce/config";
+import { preorderLine } from "@/lib/commerce/preorder";
+import { ShippingPicker } from "./ShippingPicker";
 
 /**
  * Cart line items shared by the drawer and /apparel/cart: thumbnail, name,
@@ -25,6 +27,7 @@ export function CartLines({ lines, onNavigate, compact = false }: { lines: CartL
               {l.name}
             </Link>
             <p className="mt-0.5 text-xs text-neutral-500">{l.variantLabel || l.sku}</p>
+            {preorderLine(l.shipsAfter) && <p className="mt-0.5 text-xs font-medium text-ink">{preorderLine(l.shipsAfter)}</p>}
             <p className="mt-1 text-sm text-ink">{money(l.priceCents)}</p>
             <div className="mt-2 flex items-center gap-3">
               <div className="inline-flex items-center border border-hairline">
@@ -50,9 +53,14 @@ export function CartLines({ lines, onNavigate, compact = false }: { lines: CartL
   );
 }
 
-/** Items / Subtotal / free-shipping progress / disclaimer — shared footer numbers. */
-export function CartSummary({ className = "" }: { className?: string }) {
+/**
+ * Items / Subtotal / free-shipping progress / disclaimer — shared footer
+ * numbers. `withPicker` (cart page) adds the ZIP + USPS service chooser and a
+ * live shipping line; the drawer keeps the short form.
+ */
+export function CartSummary({ className = "", withPicker = false }: { className?: string; withPicker?: boolean }) {
   const cart = useCart();
+  const opt = cart.shipping.option;
   return (
     <div className={`space-y-2 text-sm ${className}`}>
       <div className="flex justify-between">
@@ -64,7 +72,22 @@ export function CartSummary({ className = "" }: { className?: string }) {
         <span className="font-semibold text-ink">{money(cart.subtotalCents)}</span>
       </div>
       <FreeShippingProgress />
-      <p className="text-xs text-neutral-400">Shipping, taxes, and discount codes are calculated at checkout.</p>
+      {withPicker ? (
+        <>
+          <div className="border-t border-hairline pt-3">
+            <ShippingPicker />
+          </div>
+          <div className="flex justify-between border-t border-hairline pt-2">
+            <span className="text-neutral-500">
+              Shipping{opt ? ` · ${SERVICE_LABEL[opt.service].name}` : ""}
+            </span>
+            <span>{cart.shippingCents == null ? "Enter ZIP" : cart.shippingCents === 0 ? "FREE" : money(cart.shippingCents)}</span>
+          </div>
+          <p className="text-xs text-neutral-400">Taxes and discount codes are calculated at checkout.</p>
+        </>
+      ) : (
+        <p className="text-xs text-neutral-400">USPS shipping is calculated by ZIP in the cart; taxes and discount codes at checkout.</p>
+      )}
     </div>
   );
 }
@@ -80,10 +103,10 @@ export function FreeShippingProgress() {
       </div>
       {remaining > 0 ? (
         <p className="text-xs text-neutral-500">
-          <span className="font-semibold text-ink">{money(remaining)}</span> away from free shipping.
+          <span className="font-semibold text-ink">{money(remaining)}</span> away from free standard shipping.
         </p>
       ) : (
-        <p className="text-xs text-green-700">You&apos;ve unlocked free shipping.</p>
+        <p className="text-xs text-green-700">You&apos;ve unlocked free standard shipping.</p>
       )}
     </div>
   );

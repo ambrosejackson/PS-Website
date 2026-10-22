@@ -59,6 +59,7 @@ export function ProductCard({
     cart.add({
       variantId: o.variant.id,
       productId: product.id,
+      shipsAfter: product.ships_after ?? null,
       slug: product.slug,
       name: product.name,
       variantLabel: variantLabel(o.variant),
