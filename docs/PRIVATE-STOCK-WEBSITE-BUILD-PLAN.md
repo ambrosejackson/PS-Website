@@ -142,7 +142,7 @@ create table strains (
   our_type text, lineage text, slug text unique, is_active bool default true
 );
 
--- ===== Product catalog (content-managed, synced from iHeartJane sheet) =====
+-- ===== Product catalog (content-managed in /admin/products — the iHeartJane sheet sync was removed, see DECISIONS D-130 / D-135) =====
 create table catalog_products (
   id uuid primary key default gen_random_uuid(),
   brand text not null, name text not null, slug text unique not null,
@@ -150,7 +150,7 @@ create table catalog_products (
   description text, image_url text, image_missing bool default false,
   terpene_profile jsonb,                  -- [{name, note}] 2-3 dominant
   terp_category text,                     -- TerpKings: fruit/haze/gas/dessert/floral
-  sheet_row_ref text,                     -- provenance to iHeartJane sheet
+  sheet_row_ref text,                     -- legacy provenance to the iHeartJane sheet (no longer written; dropped in a later cleanup migration)
   is_active bool default true, sort_order int,
   updated_at timestamptz default now()
 );
