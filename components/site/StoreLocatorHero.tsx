@@ -271,9 +271,9 @@ export function StoreLocatorHero() {
         {glow}
         <div className="relative flex flex-col items-start gap-5 px-6 pt-8">
           <Eyebrow k={0.8} />
-          <h1 className="m-0 max-w-[12ch] text-balance text-[48px] font-bold leading-[.94] tracking-[-.04em]">
+          <h2 className="m-0 max-w-[12ch] text-balance text-[48px] font-bold leading-[.94] tracking-[-.04em]">
             Find Private Stock Near You
-          </h1>
+          </h2>
           <Cta
             k={0.8}
             fontSize={18}
@@ -317,8 +317,9 @@ export function StoreLocatorHero() {
   const stageH = CANVAS_H * k;
   const stageLeft = (box.width - stageW) / 2;
 
+  // h2, not h1: this is a hover-swap layer, not the landing page's title.
   const headline = (
-    <h1
+    <h2
       className="m-0 text-balance font-bold text-white"
       style={{
         fontSize: 120 * k,
@@ -328,7 +329,7 @@ export function StoreLocatorHero() {
       }}
     >
       Find Private Stock Near You
-    </h1>
+    </h2>
   );
   const cta = (
     <Cta

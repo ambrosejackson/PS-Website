@@ -1,6 +1,7 @@
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { BrandGalleryHero } from "@/components/site/BrandGalleryHero";
 import { StoreLocatorHero } from "@/components/site/StoreLocatorHero";
+import { RewardsHero } from "@/components/site/RewardsHero";
 import { RotatingBanner } from "@/components/site/RotatingBanner";
 import { IntroSection } from "@/components/site/IntroSection";
 import { BrandsShowcase } from "@/components/site/BrandsShowcase";
@@ -33,13 +34,15 @@ export default async function LandingPage() {
 
   return (
     <main className="bg-white">
-      {/* BRANDS hover-swap is the interactive Brand Gallery Hero (D-082) and
-          STORE LOCATOR is the built Store Locator Hero — neither is the admin image */}
+      {/* All three nav hover-swaps are built components, not admin images:
+          BRANDS → Brand Gallery Hero (D-082), STORE LOCATOR → Store Locator Hero,
+          YOUR REWARDS → the /rewards hero in fill mode. Only the default stays admin-managed. */}
       <HeroSwitcher
         heroes={heroes}
         navTargetNodes={{
           BRANDS: <BrandGalleryHero />,
           "STORE LOCATOR": <StoreLocatorHero />,
+          "YOUR REWARDS": <RewardsHero fill />,
         }}
       />
       {/* Banners live BELOW the hero — never above or over it (guardrail #4) */}
