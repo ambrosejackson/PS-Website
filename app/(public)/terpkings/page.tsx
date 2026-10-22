@@ -3,6 +3,7 @@ import { Footer } from "@/components/site/Footer";
 import { TKHero } from "@/components/brand/terpkings/TKHero";
 import { TKArsenal } from "@/components/brand/terpkings/TKArsenal";
 import { TKComic } from "@/components/brand/terpkings/TKComic";
+import { COMIC_PRINT_SLUG } from "@/lib/terpkings-content";
 import { TKDossiers } from "@/components/brand/terpkings/TKDossiers";
 import { TKScanner } from "@/components/brand/terpkings/TKScanner";
 import { TKMerch } from "@/components/brand/terpkings/TKMerch";
@@ -74,7 +75,7 @@ export default async function TerpKingsPage() {
       <TKHero hero={heroVideo} />
       <TKArsenal available={available} />
       <TKScanner available={available} />
-      <TKComic />
+      <TKComic printIssue={merch.find((m) => m.slug === COMIC_PRINT_SLUG) ?? null} />
       <TKDossiers />
       <TKMerch items={toBrandMerchCards(merch)} />
       <TKLocator />

@@ -1,7 +1,14 @@
+import { TKComicActions } from "@/components/brand/terpkings/TKComicActions";
+import type { MerchListing } from "@/lib/data";
 import { COMIC } from "@/lib/terpkings-content";
 
-/** FILE 02 // ORIGINAL GRAPHIC NOVEL — tilted cover frame + copy. */
-export function TKComic() {
+/**
+ * FILE 02 // ORIGINAL GRAPHIC NOVEL — tilted cover frame + copy. The buttons
+ * (free preview flip-book, add the print issue to the cart) live in the
+ * client child; `printIssue` is the TK-COMIC-01 merch row, or null before
+ * it is published (D-124).
+ */
+export function TKComic({ printIssue }: { printIssue: MerchListing | null }) {
   return (
     <section id="comic" className="tk-gutter mx-auto max-w-[1140px] py-[100px]">
       <div className="tk-comic-grid">
@@ -26,20 +33,7 @@ export function TKComic() {
             <span className="text-[#FFB000]">{COMIC.titleLine2}</span>
           </h2>
           <p className="tk-mono m-0 text-[21px] leading-[1.55] text-[#8A9E5C]">{COMIC.blurb}</p>
-          <div className="flex flex-wrap gap-[14px]">
-            <a
-              href="#locator"
-              className="tk-mono tk-btn-amber rounded-[4px] px-7 py-[13px] text-[21px] tracking-[.1em]"
-            >
-              {COMIC.readCta}
-            </a>
-            <a
-              href="#locator"
-              className="tk-mono tk-btn-outline rounded-[4px] px-7 py-[11px] text-[21px] tracking-[.1em]"
-            >
-              {COMIC.printCta}
-            </a>
-          </div>
+          <TKComicActions printIssue={printIssue} />
         </div>
       </div>
     </section>
