@@ -91,6 +91,7 @@ export type Database = {
           slug: string
           sort_order: number | null
           source: string
+          strain_key: string | null
           strain_type: string | null
           sync_status: string | null
           synced_at: string | null
@@ -115,6 +116,7 @@ export type Database = {
           slug: string
           sort_order?: number | null
           source?: string
+          strain_key?: string | null
           strain_type?: string | null
           sync_status?: string | null
           synced_at?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           slug?: string
           sort_order?: number | null
           source?: string
+          strain_key?: string | null
           strain_type?: string | null
           sync_status?: string | null
           synced_at?: string | null
@@ -1219,6 +1222,7 @@ export type Database = {
           menu_product_url: string | null
           product_name: string
           store_id: string
+          strain_key: string | null
           variant: string
         }
         Insert: {
@@ -1228,6 +1232,7 @@ export type Database = {
           menu_product_url?: string | null
           product_name: string
           store_id: string
+          strain_key?: string | null
           variant?: string
         }
         Update: {
@@ -1237,6 +1242,7 @@ export type Database = {
           menu_product_url?: string | null
           product_name?: string
           store_id?: string
+          strain_key?: string | null
           variant?: string
         }
         Relationships: [
@@ -1470,6 +1476,7 @@ export type Database = {
         Args: { p_rsvp_id: string }
         Returns: Json
       }
+      strain_key: { Args: { p_name: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
