@@ -323,7 +323,6 @@ export function ProductsTable({
           <ul className="divide-y">
             {items.map((r) => {
               const thumb = thumbUrl(r);
-              const excluded = r.sync_status === "quarantined" || r.sync_status === "missing_from_sheet";
               const n = r.strain_key ? (storeCounts[`${r.brand}|${r.strain_key}`] ?? 0) : 0;
               return (
                 <li
@@ -369,7 +368,6 @@ export function ProductsTable({
                       {!r.is_active && badge("hidden", "grey")}
                       {productImageIsMissing(r) && badge("no image", "amber")}
                       {r.image_storage_path && badge("processed", "green")}
-                      {excluded && badge("excluded until shown", "amber")}
                       {r.is_active &&
                         badge(
                           n === 0 ? "0 stores on menu" : `${n} ${n === 1 ? "store" : "stores"} on menu`,

@@ -117,8 +117,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   return data ?? null;
 }
 
-/** Public visibility: active, not quarantined (D-038), and on the brand allowlist. */
-const PUBLIC_SYNC_FILTER = "sync_status.is.null,sync_status.eq.ok";
+/* Public visibility: is_active and on the brand allowlist — nothing else (D-130, D-135). */
 
 export async function getCatalogProducts(brand?: string): Promise<CatalogProduct[]> {
   const supabase = createPublicClient();
@@ -127,7 +126,6 @@ export async function getCatalogProducts(brand?: string): Promise<CatalogProduct
     .from("catalog_products")
     .select("*")
     .eq("is_active", true)
-    .or(PUBLIC_SYNC_FILTER)
     .order("brand", { ascending: true })
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("name", { ascending: true });
@@ -147,7 +145,6 @@ export async function getCatalogProductBySlug(
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
-    .or(PUBLIC_SYNC_FILTER)
     .maybeSingle();
   if (!data || !isAllowlistedBrand(data.brand)) return null;
   return data;

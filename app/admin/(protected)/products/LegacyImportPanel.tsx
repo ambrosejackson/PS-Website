@@ -28,9 +28,9 @@ export function LegacyImportPanel({
   placeholders: PlaceholderCounts;
 }) {
   const router = useRouter();
-  // Shown only while there is something importable (spec): rows that failed keep their
-  // inline image_error in the table and are fixed from the editor once this is gone.
-  const showImport = counts.candidates > 0;
+  // Shown while anything is importable OR anything failed earlier (D-136): the
+  // failed rows get a "Retry failed" path instead of only an inline image_error.
+  const showImport = counts.candidates > 0 || counts.previouslyFailed > 0;
   const showPlaceholders = placeholders.placeholder > 0 || placeholders.emptyUnflagged > 0;
   if (!showImport && !showPlaceholders) return null;
   return (
@@ -44,7 +44,9 @@ export function LegacyImportPanel({
 function ImportSection({ counts, onChanged }: { counts: LegacyImportCounts; onChanged: () => void }) {
   const [busy, setBusy] = useState<"dry" | "import" | null>(null);
   const [dryRunDone, setDryRunDone] = useState(false);
-  const [retryFailed, setRetryFailed] = useState(false);
+  // Only failed rows left → the panel is in retry mode from the start.
+  const retryOnly = counts.candidates === 0 && counts.previouslyFailed > 0;
+  const [retryFailed, setRetryFailed] = useState(retryOnly);
   const [result, setResult] = useState<LegacyImportBatchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Live counts after each real batch (the server props refresh on router.refresh()).
@@ -77,14 +79,19 @@ function ImportSection({ counts, onChanged }: { counts: LegacyImportCounts; onCh
     }
   }
 
-  const left = remaining ?? counts.candidates;
-  const done = left === 0 && !retryFailed;
+  const left = remaining ?? (retryFailed ? counts.candidates + counts.previouslyFailed : counts.candidates);
+  const done = left === 0;
+  const verb = retryFailed ? "Retry" : "Import";
 
   return (
     <details className="rounded border border-amber-300 bg-amber-50" open>
       <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-amber-900">
-        Legacy image import — {left} product{left === 1 ? "" : "s"} still on Google Drive
-        {counts.previouslyFailed > 0 ? ` · ${counts.previouslyFailed} failed earlier` : ""}
+        Legacy image import —{" "}
+        {retryOnly
+          ? `${counts.previouslyFailed} product${counts.previouslyFailed === 1 ? "" : "s"} failed earlier`
+          : `${counts.candidates} product${counts.candidates === 1 ? "" : "s"} still on Google Drive${
+              counts.previouslyFailed > 0 ? ` · ${counts.previouslyFailed} failed earlier` : ""
+            }`}
       </summary>
       <div className="space-y-3 border-t border-amber-200 px-4 py-3 text-sm">
         <p className="max-w-prose text-neutral-700">
@@ -93,6 +100,9 @@ function ImportSection({ counts, onChanged }: { counts: LegacyImportCounts; onCh
           get an <code>image_error</code> and keep their old link. Start with a dry run, then import in
           batches of {25} until nothing remains.
           {counts.distinctFiles > 0 ? ` ${counts.distinctFiles} distinct files behind the ${counts.candidates} products.` : ""}
+          {retryOnly
+            ? " Only rows that failed earlier remain: fix the file's sharing on Drive (or re-upload it in the editor), then dry-run and retry here."
+            : ""}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" disabled={busy !== null || done} onClick={() => run(true)}>
@@ -104,9 +114,9 @@ function ImportSection({ counts, onChanged }: { counts: LegacyImportCounts; onCh
             title={dryRunDone ? "" : "Run a dry run first"}
             onClick={() => run(false)}
           >
-            {busy === "import" ? "Importing…" : "Import next 25"}
+            {busy === "import" ? `${verb}ing…` : retryFailed ? "Retry failed (next 25)" : "Import next 25"}
           </Button>
-          {counts.previouslyFailed > 0 && (
+          {counts.previouslyFailed > 0 && !retryOnly && (
             <label className="flex items-center gap-2 text-xs text-neutral-700">
               <input
                 type="checkbox"
@@ -121,7 +131,7 @@ function ImportSection({ counts, onChanged }: { counts: LegacyImportCounts; onCh
           )}
           {busy && <span className="text-xs text-neutral-500">Up to 25 files, 20 s each — this can take a few minutes.</span>}
         </div>
-        {!dryRunDone && !done && <p className="text-xs text-neutral-500">Import is enabled after a dry run in this session.</p>}
+        {!dryRunDone && !done && <p className="text-xs text-neutral-500">{verb} is enabled after a dry run in this session.</p>}
         {done && <p className="text-xs text-green-800">Nothing left to import. This panel disappears on the next page load.</p>}
         {error && <p className="rounded border border-red-200 bg-red-50 p-2 text-red-700">{error}</p>}
         {result && <BatchResult result={result} />}

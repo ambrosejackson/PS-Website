@@ -5,7 +5,7 @@ import { TKScrews } from "./TKBits";
 
 /**
  * Live catalog for the TerpKings page — the admin-curated catalog_products rows
- * for TerpKings (active, not quarantined), rendered in the page's console
+ * for TerpKings (active), rendered in the page's console
  * language so the export design stays intact. Sits under FILE 01 (the
  * marketing arsenal) as "ACTIVE UNITS IN CATALOG"; each card links to the SEO
  * product page. Not part of the export — added for the products wiring (D-046).
