@@ -71,19 +71,25 @@ export function ProductsTable({
     [rows],
   );
 
-  const filtered = useMemo(() => {
+  // Every filter except "Image missing" — its count is taken from this set so the
+  // number reflects the brand / category / show / search in effect (P2 review).
+  const scoped = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((r) => {
       if (brand !== "all" && r.brand !== brand) return false;
       if (category !== "all" && r.category !== category) return false;
       if (show === "visible" && !r.is_active) return false;
       if (show === "hidden" && r.is_active) return false;
-      if (imageMissing && !productImageIsMissing(r)) return false;
       if (needle && !`${r.name} ${r.slug} ${r.category ?? ""} ${r.format ?? ""}`.toLowerCase().includes(needle))
         return false;
       return true;
     });
-  }, [rows, brand, category, show, imageMissing, q]);
+  }, [rows, brand, category, show, q]);
+
+  const filtered = useMemo(
+    () => (imageMissing ? scoped.filter(productImageIsMissing) : scoped),
+    [scoped, imageMissing],
+  );
 
   // Group by brand (showcase order = allowlist order), applying any optimistic order.
   const groups = useMemo(() => {
@@ -104,10 +110,11 @@ export function ProductsTable({
   const counts = useMemo(
     () => ({
       hidden: rows.filter((r) => !r.is_active).length,
-      noImage: rows.filter(productImageIsMissing).length,
+      // Within the other active filters, not the whole catalog.
+      noImage: scoped.filter(productImageIsMissing).length,
       errors: rows.filter((r) => !!r.image_error).length,
     }),
-    [rows],
+    [rows, scoped],
   );
 
   /** Products that can be an "Apply image from…" source: processed renditions only. */
