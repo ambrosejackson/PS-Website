@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { AvailabilityMap } from "@/components/site/AvailabilityMap";
+import { useZipDistance } from "@/components/site/useZipDistance";
 import type { StoreWithProducts } from "@/lib/data";
-import { ZIP_RE, formatMiles, lookupIlZip, milesBetween } from "@/lib/geo";
+import { formatMiles } from "@/lib/geo";
 
 /**
  * Interactive half of the store locator (D-059/D-061). Brand filtering stays in
@@ -18,11 +19,6 @@ import { ZIP_RE, formatMiles, lookupIlZip, milesBetween } from "@/lib/geo";
  */
 
 const NEAREST_COUNT = 5;
-
-type ZipState =
-  | { kind: "none" }
-  | { kind: "found"; zip: string; lat: number; lng: number }
-  | { kind: "unknown"; zip: string };
 
 type RankedStore = StoreWithProducts & { miles?: number };
 
@@ -52,32 +48,14 @@ function checkedAgo(iso: string | null): string | null {
 }
 
 export function StoreLocatorList({ stores }: { stores: StoreWithProducts[] }) {
-  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  // Last resolved ZIP lookup. Only applies while the input still holds that
-  // ZIP, so stale async results and edits never leak into each other.
-  const [zipState, setZipState] = useState<ZipState>({ kind: "none" });
-
-  const trimmed = query.trim();
-  const typedZip = ZIP_RE.test(trimmed) ? trimmed : null;
-
-  function onQueryChange(next: string) {
-    setQuery(next);
-    const zip = next.trim();
-    if (!ZIP_RE.test(zip)) return;
-    // Resolve the ZIP to coordinates; the centroid table loads on first use.
-    lookupIlZip(zip).then((hit) => {
-      setZipState(hit ? { kind: "found", zip, lat: hit[0], lng: hit[1] } : { kind: "unknown", zip });
-    });
-  }
-
-  const zipMode = zipState.kind === "found" && zipState.zip === typedZip;
+  const { query, trimmed, onQueryChange, zipMode, zipUnknown, zip, milesTo } = useZipDistance();
 
   const visible = useMemo<RankedStore[]>(() => {
     if (zipMode) {
       return stores
-        .filter((s) => s.latitude != null && s.longitude != null)
-        .map((s) => ({ ...s, miles: milesBetween(zipState.lat, zipState.lng, s.latitude as number, s.longitude as number) }))
+        .map((s) => ({ ...s, miles: milesTo(s) ?? undefined }))
+        .filter((s) => s.miles != null)
         .sort((a, b) => (a.miles as number) - (b.miles as number))
         .slice(0, NEAREST_COUNT);
     }
@@ -88,10 +66,9 @@ export function StoreLocatorList({ stores }: { stores: StoreWithProducts[] }) {
         .filter(Boolean)
         .some((f) => String(f).toLowerCase().includes(q)),
     );
-  }, [stores, trimmed, zipMode, zipState]);
+  }, [stores, trimmed, zipMode, milesTo]);
 
   const liveCount = visible.filter((s) => s.availability_tier === "live").length;
-  const zipUnknown = zipState.kind === "unknown" && zipState.zip === typedZip;
 
   return (
     <>
@@ -109,7 +86,7 @@ export function StoreLocatorList({ stores }: { stores: StoreWithProducts[] }) {
         <p className="font-condensed text-[11px] uppercase tracking-[0.16em] text-neutral-500">
           {zipMode ? (
             <>
-              {visible.length} nearest to {zipState.zip}
+              {visible.length} nearest to {zip}
             </>
           ) : (
             <>
@@ -123,7 +100,7 @@ export function StoreLocatorList({ stores }: { stores: StoreWithProducts[] }) {
       {visible.length === 0 ? (
         <p className="mt-10 border border-dashed border-hairline p-10 text-center text-sm text-neutral-400">
           {zipUnknown
-            ? `${zipState.zip} isn’t an Illinois ZIP code we recognize. Try a nearby ZIP or a city name.`
+            ? `${zip} isn’t an Illinois ZIP code we recognize. Try a nearby ZIP or a city name.`
             : `Nothing matches “${query}”. Try a city or ZIP code.`}
         </p>
       ) : (

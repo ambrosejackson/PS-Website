@@ -23,7 +23,14 @@ function badge(text: string, tone: "grey" | "amber" | "red" | "green" | "blue") 
   return <span className={`rounded px-2 py-0.5 text-[11px] font-medium ${cls}`}>{text}</span>;
 }
 
-export function ProductsTable({ rows }: { rows: ProductRow[] }) {
+export function ProductsTable({
+  rows,
+  storeCounts = {},
+}: {
+  rows: ProductRow[];
+  /** Distinct stores whose menus list each (brand, strain_key) — see page.tsx. */
+  storeCounts?: Record<string, number>;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [brand, setBrand] = useState<string>("all");
@@ -236,11 +243,20 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                       {missingRow && badge("MISSING FROM SHEET", "amber")}
                       {r.source === "sheet" && !r.is_active && !missingRow && badge("awaiting review", "amber")}
                       {r.image_missing && badge("no image", "grey")}
+                      {r.is_active &&
+                        (() => {
+                          const n = r.strain_key ? (storeCounts[`${r.brand}|${r.strain_key}`] ?? 0) : 0;
+                          return badge(
+                            n === 0 ? "0 stores on menu" : `${n} ${n === 1 ? "store" : "stores"} on menu`,
+                            n === 0 ? "amber" : "grey",
+                          );
+                        })()}
                     </div>
                     <p className="mt-0.5 truncate text-xs text-neutral-500">
                       {[r.category, r.format, r.weight, r.strain_type].filter(Boolean).join(" · ")}
                       {r.terp_category ? ` · ${r.terp_category}` : ""} · <code>{r.slug}</code>
                       {r.sort_order != null ? ` · #${r.sort_order}` : ""}
+                      {r.strain_key ? ` · key ${r.strain_key}` : ""}
                     </p>
                     {quarantined && r.quarantine_reason && (
                       <p className="mt-0.5 text-xs text-red-700">{r.quarantine_reason}</p>

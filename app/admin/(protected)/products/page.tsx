@@ -19,17 +19,32 @@ export default async function AdminProductsPage({
 }) {
   const { saved } = await searchParams;
   let rows: ProductRow[] = [];
+  // Distinct stores per (brand, strain_key) from the published menu data (D-118),
+  // so a product that matches nothing stands out here before it does on the site.
+  const storeCounts: Record<string, number> = {};
   let loadError: string | null = null;
   try {
     const db = createAdminClient();
-    const { data, error } = await db
-      .from("catalog_products")
-      .select("*")
-      .order("brand", { ascending: true })
-      .order("sort_order", { ascending: true, nullsFirst: false })
-      .order("name", { ascending: true });
+    const [{ data, error }, { data: avail }] = await Promise.all([
+      db
+        .from("catalog_products")
+        .select("*")
+        .order("brand", { ascending: true })
+        .order("sort_order", { ascending: true, nullsFirst: false })
+        .order("name", { ascending: true }),
+      db.from("product_availability").select("brand, strain_key, store_id"),
+    ]);
     if (error) loadError = error.message;
     else rows = data ?? [];
+    const seen = new Set<string>();
+    for (const a of avail ?? []) {
+      if (!a.strain_key) continue;
+      const k = `${a.brand}|${a.strain_key}`;
+      const pair = `${k}|${a.store_id}`;
+      if (seen.has(pair)) continue;
+      seen.add(pair);
+      storeCounts[k] = (storeCounts[k] ?? 0) + 1;
+    }
   } catch (e) {
     loadError = e instanceof Error ? e.message : "Could not load products.";
   }
@@ -60,7 +75,7 @@ export default async function AdminProductsPage({
       {loadError ? (
         <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p>
       ) : (
-        <ProductsTable rows={rows} />
+        <ProductsTable rows={rows} storeCounts={storeCounts} />
       )}
     </div>
   );

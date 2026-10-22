@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HeroSwitcher } from "@/components/site/HeroSwitcher";
-import { AvailabilityMap } from "@/components/site/AvailabilityMap";
+import { ProductAvailability } from "@/components/site/ProductAvailability";
 import { ProductCard } from "@/components/site/ProductCard";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { Footer } from "@/components/site/Footer";
@@ -14,12 +14,16 @@ import {
   getCatalogProductBySlug,
   getCatalogProducts,
   getHeroesForPage,
+  getStoresForBrand,
 } from "@/lib/data";
+import { strainDisplayName } from "@/lib/strainKey";
 
 /**
  * SEO product page (decision 11 + docx reference layout): image zoom, terpene
  * profile, description, More from {Brand}, and "Buy Now at the Below
- * Locations" from availability data. Presence + menu links + images only —
+ * Locations" from availability data, matched at the STRAIN level via the
+ * generated strain_key columns (D-118) and rendered by ProductAvailability
+ * with the shared ZIP → distance search. Presence + menu links + images only —
  * NEVER prices (guardrail #2).
  */
 
@@ -77,17 +81,17 @@ export default async function ProductPage({
     notFound();
   }
 
-  const [heroes, availability, moreFromBrand] = await Promise.all([
+  const [heroes, availability, moreFromBrand, brandStores] = await Promise.all([
     getHeroesForPage(`/${brand.slug}`),
-    getAvailabilityForProduct(product.brand, product.name),
+    getAvailabilityForProduct(product),
     getCatalogProducts(product.brand),
+    getStoresForBrand(product.brand),
   ]);
 
   const terps = (
     Array.isArray(product.terpene_profile) ? product.terpene_profile : []
   ) as TerpeneEntry[];
   const others = moreFromBrand.filter((p) => p.id !== product.id).slice(0, 4);
-  const stores = availability.map((a) => a.store);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -195,74 +199,17 @@ export default async function ProductPage({
           <h2 className="font-condensed text-[24px] font-bold uppercase tracking-tight text-ink md:text-[30px]">
             Buy Now at the Below Locations
           </h2>
-          {availability.length > 0 ? (
-            <div className="mt-10 grid gap-10 md:grid-cols-2">
-              <ul className="divide-y">
-                {availability.map(({ availability: a, store }) => {
-                  const live = store.availability_tier === "live";
-                  const menuHref = a.menu_product_url ?? store.menu_url;
-                  return (
-                    <li
-                      key={store.id}
-                      className="flex items-center justify-between gap-4 py-4"
-                    >
-                      <div>
-                        {menuHref ? (
-                          <a
-                            href={menuHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="nav-underline text-sm font-medium text-neutral-900"
-                          >
-                            {store.name}
-                          </a>
-                        ) : (
-                          <span className="text-sm font-medium text-neutral-900">
-                            {store.name}
-                          </span>
-                        )}
-                        <p className="text-xs text-neutral-500">
-                          {[store.address_line1, store.city, store.state]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </p>
-                        <p className="mt-1 text-[11px] text-neutral-400">
-                          {live
-                            ? `On the menu as of ${new Date(a.checked_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                            : "Carried here recently"}
-                        </p>
-                      </div>
-                      {menuHref && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          render={
-                            <a
-                              href={menuHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              See Menu
-                            </a>
-                          }
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              <AvailabilityMap stores={stores} />
-            </div>
-          ) : (
-            <p className="mt-8 rounded border border-dashed p-10 text-center text-sm text-neutral-400">
-              Live availability connects with the store data feed — meanwhile,
-              find a store on the{" "}
-              <Link href="/store-locator" className="underline">
-                store locator
-              </Link>
-              .
-            </p>
-          )}
+          <p className="mt-3 max-w-2xl text-sm text-neutral-500">
+            Dispensaries whose menus list {strainDisplayName(product.name)} by {product.brand}, in any size.
+            Your size is marked; others are shown so you can call ahead.
+          </p>
+          <ProductAvailability
+            strainName={strainDisplayName(product.name)}
+            brand={product.brand}
+            brandSlug={brand.slug}
+            stores={availability}
+            brandStores={brandStores}
+          />
         </div>
       </section>
       )}
