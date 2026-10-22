@@ -115,6 +115,13 @@ export async function toWebp(file: File): Promise<{ blob: Blob; converted: boole
   return { blob: r.blob, converted: r.converted };
 }
 
+const HEIC_MESSAGE =
+  "HEIC photos can't be processed here. On your phone, export or share the photo as JPEG, then upload that file.";
+
+function looksHeic(file: File): boolean {
+  return /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+}
+
 export function AdminUploader({
   bucket,
   folder,
@@ -122,6 +129,9 @@ export function AdminUploader({
   onUploaded,
   className = "",
   disabled = false,
+  raw = false,
+  naming = "timestamped",
+  fileNameFor,
 }: {
   bucket: AdminBucket;
   /** Optional sub-folder inside the bucket (e.g. "terpkings" or a product id). */
@@ -130,6 +140,17 @@ export function AdminUploader({
   onUploaded: (media: UploadedMedia) => void;
   className?: string;
   disabled?: boolean;
+  /**
+   * Upload the ORIGINAL bytes untouched — no shrinkImage / webp step. For
+   * product images (D-127) the server is the only place that resizes, so a
+   * second lossy encode in the browser is avoided. Size is then validated
+   * against the bucket cap up front.
+   */
+  raw?: boolean;
+  /** "exact" stores the object at `{folder}/{fileName}` with no timestamp prefix. */
+  naming?: "timestamped" | "exact";
+  /** Override the uploaded object's file name (e.g. a UUID for the staging folder). */
+  fileNameFor?: (file: File) => string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>({ phase: "idle" });
@@ -140,18 +161,25 @@ export function AdminUploader({
   const choose = useCallback(
     (file: File | undefined | null) => {
       if (!file) return;
+      if (looksHeic(file)) {
+        setStatus({ phase: "error", message: HEIC_MESSAGE });
+        return;
+      }
       const kind = mediaKindFor(bucket, file.type);
       // Images: MIME check only here — size is enforced AFTER shrinkImage (D-066).
-      const problem = kind === "image" ? validateForBucket(bucket, file.type, 1) : validateForBucket(bucket, file.type, file.size);
+      // Raw mode skips shrinkImage, so the full size is checked now.
+      const problem =
+        kind === "image" && !raw ? validateForBucket(bucket, file.type, 1) : validateForBucket(bucket, file.type, file.size);
       if (problem || !kind) {
         setStatus({ phase: "error", message: problem ?? "Unsupported file." });
         return;
       }
       const url = URL.createObjectURL(file);
       const cap = BUCKET_RULES[bucket].imageMaxBytes;
-      const willShrink = kind === "image" && file.size > cap;
+      const willShrink = kind === "image" && !raw && file.size > cap;
       const willConvert =
         kind === "image" &&
+        !raw &&
         !willShrink &&
         file.type !== "image/webp" &&
         file.size > WEBP_CONVERT_THRESHOLD_BYTES;
@@ -164,10 +192,12 @@ export function AdminUploader({
           ? `${fmtMB(file.size)} is over the ${Math.round(cap / 1048576)} MB cap — will be resized automatically before upload.`
           : willConvert
             ? "Will be converted to webp (q80) before upload."
-            : undefined,
+            : raw && kind === "image"
+              ? "Uploaded as-is; the server makes the web sizes."
+              : undefined,
       });
     },
-    [bucket],
+    [bucket, raw],
   );
 
   async function upload() {
@@ -176,17 +206,17 @@ export function AdminUploader({
 
     let payload: Blob = file;
     let mime = file.type;
-    let fileName = file.name;
+    let fileName = fileNameFor ? fileNameFor(file) : file.name;
     let converted = false;
 
-    if (kind === "image") {
+    if (kind === "image" && !raw) {
       const cap = BUCKET_RULES[bucket].imageMaxBytes;
       setStatus({ phase: "working", step: file.size > cap ? "Resizing to fit under the cap…" : "Optimizing image…", url });
       const r = await shrinkImage(file, { maxBytes: cap });
       if (r.converted) {
         payload = r.blob;
         mime = r.mime;
-        fileName = file.name.replace(/\.(png|jpe?g|webp)$/i, "") + (r.mime === "image/jpeg" ? ".jpg" : ".webp");
+        fileName = fileName.replace(/\.(png|jpe?g|webp)$/i, "") + (r.mime === "image/jpeg" ? ".jpg" : ".webp");
         converted = true;
       }
     }
@@ -205,6 +235,7 @@ export function AdminUploader({
       fileName,
       size: payload.size,
       mime,
+      naming,
     });
     if (!slot.ok) {
       setStatus({ phase: "error", message: slot.error, file, url });

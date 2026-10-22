@@ -38,6 +38,8 @@ export async function createSignedUpload(input: {
   fileName: string;
   size: number;
   mime: string;
+  /** "exact" = `{folder}/{fileName}` with no timestamp prefix (product staging, D-127). */
+  naming?: "timestamped" | "exact";
 }): Promise<SignedUploadResult> {
   const supabase = await createClient();
   const {
@@ -64,7 +66,10 @@ export async function createSignedUpload(input: {
     .toLowerCase()
     .replace(/[^a-z0-9/_-]+/g, "-")
     .replace(/^\/+|\/+$/g, "");
-  const path = `${folder ? folder + "/" : ""}${Date.now()}-${safeFileName(input.fileName)}`;
+  const path =
+    input.naming === "exact"
+      ? `${folder ? folder + "/" : ""}${safeFileName(input.fileName)}`
+      : `${folder ? folder + "/" : ""}${Date.now()}-${safeFileName(input.fileName)}`;
 
   const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(path);
   if (error || !data) {
