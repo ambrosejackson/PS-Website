@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BRANDS } from "@/lib/brands";
-import { slugify } from "@/lib/sheet-sync/map";
+import { slugify } from "@/lib/slug";
 import { AdminUploader } from "@/lib/admin/upload";
 import { CATEGORIES, RESERVED_PRODUCT_SLUGS, tabLabel } from "@/lib/merchCategories";
 import { normalizeImages, type MerchImage, type MerchImageRole } from "@/lib/merchImages";

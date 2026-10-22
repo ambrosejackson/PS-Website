@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { brandByName } from "@/lib/brands";
 import { revalidateFor } from "@/lib/revalidate";
-import { slugify } from "@/lib/sheet-sync/map";
+import { slugify } from "@/lib/slug";
 import { isCategory, RESERVED_PRODUCT_SLUGS } from "@/lib/merchCategories";
 import { normalizeImages, type MerchImage } from "@/lib/merchImages";
 import type { Database } from "@/lib/database.types";

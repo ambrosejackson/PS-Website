@@ -5,7 +5,7 @@ import type { CatalogProduct } from "@/lib/data";
 
 /**
  * Live catalog grid for a brand page — reads the admin-curated catalog
- * (active, not quarantined, allowlisted) and links every card to its SEO
+ * (active, allowlisted) and links every card to its SEO
  * product page. `tone="dark"` for dark brand pages (SSS). Styled empty state
  * when the brand has nothing visible yet.
  */

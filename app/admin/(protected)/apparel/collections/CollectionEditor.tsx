@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { slugify } from "@/lib/sheet-sync/map";
+import { slugify } from "@/lib/slug";
 import { AdminUploader } from "@/lib/admin/upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

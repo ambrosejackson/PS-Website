@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { revalidateFor } from "@/lib/revalidate";
-import { slugify } from "@/lib/sheet-sync/map";
+import { slugify } from "@/lib/slug";
 import type { Database } from "@/lib/database.types";
 
 export type CollectionRow = Database["public"]["Tables"]["merch_collections"]["Row"];
