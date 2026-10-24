@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -88,7 +88,11 @@ export type Database = {
           image_storage_path: string | null
           image_url: string | null
           is_active: boolean
+          lineage: string | null
           name: string
+          psm_image_url: string | null
+          psm_sku_id: string | null
+          psm_synced_at: string | null
           quarantine_reason: string | null
           sheet_row_ref: string | null
           slug: string
@@ -116,7 +120,11 @@ export type Database = {
           image_storage_path?: string | null
           image_url?: string | null
           is_active?: boolean
+          lineage?: string | null
           name: string
+          psm_image_url?: string | null
+          psm_sku_id?: string | null
+          psm_synced_at?: string | null
           quarantine_reason?: string | null
           sheet_row_ref?: string | null
           slug: string
@@ -144,7 +152,11 @@ export type Database = {
           image_storage_path?: string | null
           image_url?: string | null
           is_active?: boolean
+          lineage?: string | null
           name?: string
+          psm_image_url?: string | null
+          psm_sku_id?: string | null
+          psm_synced_at?: string | null
           quarantine_reason?: string | null
           sheet_row_ref?: string | null
           slug?: string
@@ -488,7 +500,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "event_rsvps"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       event_reminders: {
@@ -568,7 +580,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       event_rsvps: {
@@ -684,7 +696,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       events: {
@@ -987,8 +999,10 @@ export type Database = {
       merch_variants: {
         Row: {
           color: string | null
+          height_in: number | null
           id: string
           is_active: boolean
+          length_in: number | null
           price_cents: number
           product_id: string
           provider_variant_id: string | null
@@ -997,14 +1011,14 @@ export type Database = {
           stock_qty: number | null
           stripe_price_id: string | null
           weight_oz: number | null
-          length_in: number | null
           width_in: number | null
-          height_in: number | null
         }
         Insert: {
           color?: string | null
+          height_in?: number | null
           id?: string
           is_active?: boolean
+          length_in?: number | null
           price_cents: number
           product_id: string
           provider_variant_id?: string | null
@@ -1013,14 +1027,14 @@ export type Database = {
           stock_qty?: number | null
           stripe_price_id?: string | null
           weight_oz?: number | null
-          length_in?: number | null
           width_in?: number | null
-          height_in?: number | null
         }
         Update: {
           color?: string | null
+          height_in?: number | null
           id?: string
           is_active?: boolean
+          length_in?: number | null
           price_cents?: number
           product_id?: string
           provider_variant_id?: string | null
@@ -1029,9 +1043,7 @@ export type Database = {
           stock_qty?: number | null
           stripe_price_id?: string | null
           weight_oz?: number | null
-          length_in?: number | null
           width_in?: number | null
-          height_in?: number | null
         }
         Relationships: [
           {
@@ -1484,33 +1496,59 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cancel_rsvp: {
-        Args: { p_ticket_token: string }
-        Returns: Json
-      }
+      cancel_rsvp: { Args: { p_ticket_token: string }; Returns: Json }
       claim_due_reminders: {
         Args: never
-        Returns: Database["public"]["Tables"]["event_reminders"]["Row"][]
+        Returns: {
+          audience: string
+          body_html: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          event_id: string
+          id: string
+          is_marketing: boolean
+          last_error: string | null
+          local_time: string | null
+          name: string
+          offset_days: number | null
+          recipient_count: number | null
+          resolved_send_at: string | null
+          send_at: string | null
+          send_mode: string
+          sent_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "event_reminders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       claim_rsvp: {
         Args: {
-          p_dispensary_city: string | null
-          p_dispensary_name: string | null
-          p_dispensary_psm_account_id: string | null
+          p_dispensary_city: string
+          p_dispensary_name: string
+          p_dispensary_psm_account_id: string
           p_email: string
           p_event_id: string
           p_first_name: string
           p_is_budtender: boolean
           p_last_name: string
           p_marketing_opt_in: boolean
-          p_phone: string | null
+          p_phone: string
           p_source?: string
         }
         Returns: Json
       }
-      release_waitlisted_plate: {
-        Args: { p_rsvp_id: string }
-        Returns: Json
+      release_waitlisted_plate: { Args: { p_rsvp_id: string }; Returns: Json }
+      resolve_reminder_send_at: {
+        Args: { r: Database["public"]["Tables"]["event_reminders"]["Row"] }
+        Returns: string
       }
       strain_key: { Args: { p_name: string }; Returns: string }
     }
