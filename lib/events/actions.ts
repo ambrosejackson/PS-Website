@@ -91,17 +91,20 @@ export async function rsvpAction(_prev: RsvpFormState, fd: FormData): Promise<Rs
     psmAccountId = d?.psm_account_id ?? null;
   }
 
+  // Supabase CLI 2.122 types nullable text RPC args as plain `string`; claim_rsvp accepts
+  // NULL for these four (see 20260922180000_claim_rsvp_budtender_upgrade.sql), so the
+  // casts keep sending null exactly as before the types regen.
   const { data: claim, error } = await admin.rpc("claim_rsvp", {
     p_event_id: ev.id,
     p_first_name: firstName,
     p_last_name: lastName,
     p_email: email,
-    p_phone: phone,
+    p_phone: phone as string,
     p_marketing_opt_in: optIn,
     p_is_budtender: isBudtender,
-    p_dispensary_psm_account_id: isBudtender ? psmAccountId : null,
-    p_dispensary_name: isBudtender ? dispensaryName : null,
-    p_dispensary_city: isBudtender ? dispensaryCity : null,
+    p_dispensary_psm_account_id: (isBudtender ? psmAccountId : null) as string,
+    p_dispensary_name: (isBudtender ? dispensaryName : null) as string,
+    p_dispensary_city: (isBudtender ? dispensaryCity : null) as string,
     p_source: source,
   });
   if (error) {

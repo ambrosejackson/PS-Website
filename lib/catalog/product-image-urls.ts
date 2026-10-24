@@ -92,15 +92,46 @@ export function stagingMime(key: string): ProductImageMime {
   return "image/jpeg";
 }
 
+/* ---------- PSM-hosted images (D-137) ---------- */
+
+/**
+ * Only public objects in PS Management's `product-images` bucket may be
+ * hotlinked. The publish route nulls anything else; the website never holds a
+ * PSM key — these are plain public URLs.
+ */
+export const PSM_IMAGE_URL_PREFIX =
+  "https://skdhqrjxvhegbufykhyp.supabase.co/storage/v1/object/public/product-images/";
+export const PSM_RENDITION_QUALITY = 75;
+
+/** Storage image-transform base for a PSM object URL (`/object/public/` → `/render/image/public/`). */
+export function psmRenderBase(psmImageUrl: string): string {
+  return psmImageUrl.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
+}
+
+/** One PSM rendition URL at the given width (quality 75). */
+export function psmRenditionUrl(psmImageUrl: string, width: ProductImageWidth): string {
+  return `${psmRenderBase(psmImageUrl)}?width=${width}&quality=${PSM_RENDITION_QUALITY}`;
+}
+
+/** `src` (800) + `srcSet` over 400/800/1600 from Storage's image transforms. */
+export function psmRenditionUrls(psmImageUrl: string): { src: string; srcSet: string } {
+  return {
+    src: psmRenditionUrl(psmImageUrl, 800),
+    srcSet: PRODUCT_IMAGE_WIDTHS.map((w) => `${psmRenditionUrl(psmImageUrl, w)} ${w}w`).join(", "),
+  };
+}
+
 /** The legacy placeholder the sheet era wrote into image_url for manual rows. */
 export const LEGACY_PRODUCT_PLACEHOLDER = "/placeholders/product.png";
 
-/** True when a product has nothing real to show (placeholder time). */
+/** True when a product has nothing real to show (placeholder time). A PSM image counts as real. */
 export function productImageIsMissing(p: {
   image_url: string | null;
   image_missing: boolean;
   image_storage_path?: string | null;
+  psm_image_url?: string | null;
 }): boolean {
+  if (p.psm_image_url) return false;
   if (p.image_storage_path) return false;
   return p.image_missing || !p.image_url || p.image_url.trim() === "" || p.image_url === LEGACY_PRODUCT_PLACEHOLDER;
 }

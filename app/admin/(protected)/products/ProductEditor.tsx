@@ -13,11 +13,20 @@ import { ProductImageField } from "./ProductImageField";
 const TERP_CATEGORIES = ["fruit", "haze", "gas", "dessert", "floral"] as const;
 const CATEGORIES = ["Flower", "Pre-Rolls", "Vapes", "Edibles", "Extracts", "Tinctures", "Topicals", "Gear"];
 
-/** Every field, every product (D-130). The image is managed by ProductImageField via the P1 routes. */
+/** Shown on every PSM-synced field (D-137). Keep in sync with actions.ts PSM_MANAGED_MESSAGE. */
+export const PSM_MANAGED_NOTICE =
+  "Managed in PS Management → Resources → Product SKUs. Edit there; the website updates daily or on Publish.";
+
+/**
+ * Every field, every product (D-130). The image is managed by ProductImageField
+ * via the P1 routes. A PSM-synced row (psm_sku_id set, D-137) locks the synced
+ * fields and the image; the server strips them from the update regardless.
+ */
 export function ProductEditor({ product }: { product: ProductRow | null }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const managed = !!product?.psm_sku_id;
 
   const [brand, setBrand] = useState(product?.brand ?? BRANDS[0].name);
   const [name, setName] = useState(product?.name ?? "");
@@ -30,6 +39,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   const [thc, setThc] = useState(product?.thc_range ?? "");
   const [strain, setStrain] = useState<string>(product?.strain_type ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
+  const [lineage, setLineage] = useState(product?.lineage ?? "");
   const [terps, setTerps] = useState<TerpeneEntry[]>(
     (Array.isArray(product?.terpene_profile) ? (product!.terpene_profile as unknown as Partial<TerpeneEntry>[]) : []).map((t) => ({
       name: t.name ?? "",
@@ -99,6 +109,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
       thc_range: thc || null,
       strain_type: (strain || null) as ProductInput["strain_type"],
       description: description || null,
+      lineage: lineage || null,
       terpene_profile: terps,
       terp_category: isTerpKings ? terpCategory || null : null,
       is_active: isActive,
@@ -123,6 +134,13 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
   return (
     <form onSubmit={submit} className="grid gap-6 md:grid-cols-[1fr_320px]">
       <div className="space-y-5 rounded border bg-white p-5">
+        {managed && (
+          <p className="rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-900">
+            <span className="mr-2 rounded bg-blue-100 px-1.5 py-0.5 font-medium">PSM</span>
+            {PSM_MANAGED_NOTICE}
+            {product?.psm_synced_at ? ` Last synced ${new Date(product.psm_synced_at).toLocaleString()}.` : ""}
+          </p>
+        )}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="p-brand">Brand</Label>
@@ -130,7 +148,8 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
               id="p-brand"
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
-              className="h-9 w-full rounded-md border px-3 text-sm"
+              disabled={managed}
+              className="h-9 w-full rounded-md border px-3 text-sm disabled:bg-neutral-50 disabled:text-neutral-500"
             >
               {BRANDS.map((b) => (
                 <option key={b.slug} value={b.name}>
@@ -141,7 +160,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p-name">Name</Label>
-            <Input id="p-name" value={name} onChange={(e) => onNameChange(e.target.value)} required />
+            <Input id="p-name" value={name} onChange={(e) => onNameChange(e.target.value)} required disabled={managed} />
           </div>
         </div>
 
@@ -162,7 +181,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="p-cat">Category</Label>
-            <Input id="p-cat" list="p-cat-list" value={category} onChange={(e) => setCategory(e.target.value)} />
+            <Input id="p-cat" list="p-cat-list" value={category} onChange={(e) => setCategory(e.target.value)} disabled={managed} />
             <datalist id="p-cat-list">
               {CATEGORIES.map((c) => (
                 <option key={c} value={c} />
@@ -171,11 +190,11 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p-format">Format / type</Label>
-            <Input id="p-format" value={format} onChange={(e) => setFormat(e.target.value)} placeholder="Top Shelf, 5-Pack, All-In-One…" />
+            <Input id="p-format" value={format} onChange={(e) => setFormat(e.target.value)} placeholder="Top Shelf, 5-Pack, All-In-One…" disabled={managed} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p-weight">Weight</Label>
-            <Input id="p-weight" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="3.5g" />
+            <Input id="p-weight" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="3.5g" disabled={managed} />
           </div>
         </div>
 
@@ -186,7 +205,13 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="p-strain">Strain type</Label>
-            <select id="p-strain" value={strain} onChange={(e) => setStrain(e.target.value)} className="h-9 w-full rounded-md border px-3 text-sm">
+            <select
+              id="p-strain"
+              value={strain}
+              onChange={(e) => setStrain(e.target.value)}
+              disabled={managed}
+              className="h-9 w-full rounded-md border px-3 text-sm disabled:bg-neutral-50 disabled:text-neutral-500"
+            >
               <option value="">—</option>
               <option value="indica">Indica</option>
               <option value="sativa">Sativa</option>
@@ -196,13 +221,19 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
         </div>
 
         <div className="space-y-1.5">
+          <Label htmlFor="p-lineage">Lineage</Label>
+          <Input id="p-lineage" value={lineage} onChange={(e) => setLineage(e.target.value)} placeholder="Parent A × Parent B" disabled={managed} />
+        </div>
+
+        <div className="space-y-1.5">
           <Label htmlFor="p-desc">Description</Label>
           <textarea
             id="p-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={6}
-            className="w-full rounded-md border px-3 py-2 text-sm"
+            disabled={managed}
+            className="w-full rounded-md border px-3 py-2 text-sm disabled:bg-neutral-50 disabled:text-neutral-500"
           />
         </div>
 
@@ -262,12 +293,15 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           <button
             type="button"
             onClick={() => setIsActive((v) => !v)}
-            className={`w-full rounded px-3 py-2 text-xs font-bold uppercase tracking-wide ${
+            disabled={managed}
+            title={managed ? PSM_MANAGED_NOTICE : undefined}
+            className={`w-full rounded px-3 py-2 text-xs font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-60 ${
               isActive ? "bg-green-600 text-white" : "bg-neutral-200 text-neutral-700"
             }`}
           >
             {isActive ? "Shown on site" : "Hidden"}
           </button>
+          {managed && <p className="text-[11px] text-neutral-500">Visibility is set in PS Management.</p>}
           <div className="space-y-1.5">
             <Label htmlFor="p-sort">Sort order (within brand)</Label>
             <Input id="p-sort" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
@@ -278,6 +312,7 @@ export function ProductEditor({ product }: { product: ProductRow | null }) {
           productId={product?.id ?? null}
           image={image}
           onChange={(next) => setImage(next)}
+          psmImageUrl={managed ? (product?.psm_image_url ?? null) : undefined}
         />
       </aside>
     </form>
