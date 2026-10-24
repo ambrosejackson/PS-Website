@@ -5,7 +5,12 @@ import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { ProductAvailability } from "@/components/site/ProductAvailability";
 import { ProductCard } from "@/components/site/ProductCard";
 import { ProductImage } from "@/components/site/ProductImage";
-import { PRODUCT_IMAGE_SIZES_DETAIL, productImageIsMissing, productImageUrls } from "@/lib/catalog/product-image-urls";
+import {
+  PRODUCT_IMAGE_SIZES_DETAIL,
+  productImageIsMissing,
+  productImageUrls,
+  psmRenditionUrl,
+} from "@/lib/catalog/product-image-urls";
 import { SectionHeader } from "@/components/site/SectionHeader";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
@@ -60,8 +65,14 @@ export async function generateMetadata({
   };
 }
 
-/** Largest real image for OG / structured data: the 1600 rendition, else a legacy link, else nothing. */
-function shareImage(p: { image_url: string | null; image_storage_path: string | null; image_missing: boolean }): string | null {
+/** Largest real image for OG / structured data: the PSM 1600 transform (D-137), else the 1600 rendition, else a legacy link, else nothing. */
+function shareImage(p: {
+  image_url: string | null;
+  image_storage_path: string | null;
+  image_missing: boolean;
+  psm_image_url: string | null;
+}): string | null {
+  if (p.psm_image_url) return psmRenditionUrl(p.psm_image_url, 1600);
   if (p.image_storage_path) return productImageUrls(p.image_storage_path)[1600];
   return productImageIsMissing(p) ? null : p.image_url;
 }

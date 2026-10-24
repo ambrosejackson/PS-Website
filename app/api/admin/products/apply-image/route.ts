@@ -65,6 +65,11 @@ export async function POST(request: Request) {
       failed.push({ id, error: "Product not found." });
       continue;
     }
+    if (target.psm_sku_id) {
+      // The image of a PSM-synced product is PSM's (D-137).
+      failed.push({ id, error: "Image is managed in PS Management → Resources → Product SKUs." });
+      continue;
+    }
     try {
       const copied = await copyProductImage(admin, source.image_storage_path, id);
       if (target.image_storage_path && target.image_storage_path !== copied.storagePath) {

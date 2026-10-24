@@ -29,6 +29,8 @@ export const maxDuration = 60;
 type Ctx = { params: Promise<{ id: string }> };
 
 const ROW_SELECT = "*";
+/** The image of a PSM-synced product is PSM's (D-137). */
+const PSM_IMAGE_MESSAGE = "Image is managed in PS Management → Resources → Product SKUs. Edit there; the website updates daily or on Publish.";
 
 export async function POST(request: Request, { params }: Ctx) {
   const ctx = await adminContext();
@@ -50,6 +52,7 @@ export async function POST(request: Request, { params }: Ctx) {
   const { data: product, error: readErr } = await admin.from("catalog_products").select(ROW_SELECT).eq("id", id).maybeSingle();
   if (readErr) return json({ error: readErr.message }, 500);
   if (!product) return json({ error: "Product not found." }, 404);
+  if (product.psm_sku_id) return json({ error: PSM_IMAGE_MESSAGE }, 409);
 
   const staging = admin.storage.from(PRODUCT_IMAGE_BUCKET);
   try {
@@ -100,6 +103,7 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   const { data: product, error: readErr } = await admin.from("catalog_products").select(ROW_SELECT).eq("id", id).maybeSingle();
   if (readErr) return json({ error: readErr.message }, 500);
   if (!product) return json({ error: "Product not found." }, 404);
+  if (product.psm_sku_id) return json({ error: PSM_IMAGE_MESSAGE }, 409);
 
   try {
     await deleteProductImage(admin, product.image_storage_path);

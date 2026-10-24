@@ -9,6 +9,7 @@ import {
   isProductImageMime,
   productImageIsMissing,
   productImageUrls,
+  psmRenditionUrls,
 } from "@/lib/catalog/product-image-urls";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -39,15 +40,40 @@ export function ProductImageField({
   productId,
   image,
   onChange,
+  psmImageUrl,
 }: {
   productId: string | null;
   image: ProductImageState;
   onChange: (next: ProductImageState) => void;
+  /**
+   * Defined (string or null) for a PSM-synced product (D-137): the field is
+   * read-only and shows PSM's image; the P1 routes refuse writes for these rows.
+   */
+  psmImageUrl?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<"processing" | "removing" | null>(null);
   const [error, setError] = useState<string | null>(image.image_error);
   const [uploaderKey, setUploaderKey] = useState(0);
+
+  if (psmImageUrl !== undefined) {
+    return (
+      <div className="space-y-3 rounded border bg-white p-4">
+        <Label>Main image</Label>
+        {psmImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={psmRenditionUrls(psmImageUrl).src} alt="" className="aspect-square w-full rounded bg-neutral-50 object-contain" />
+        ) : (
+          <div className="flex aspect-square w-full items-center justify-center rounded bg-neutral-100 text-xs text-neutral-400">
+            no image in PS Management
+          </div>
+        )}
+        <p className="text-[11px] text-neutral-500">
+          Managed in PS Management → Resources → Product SKUs. Edit there; the website updates daily or on Publish.
+        </p>
+      </div>
+    );
+  }
 
   const preview = image.image_storage_path
     ? productImageUrls(image.image_storage_path)[400]

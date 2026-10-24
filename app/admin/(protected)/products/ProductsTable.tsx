@@ -4,7 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BRANDS } from "@/lib/brands";
-import { APPLY_IMAGE_MAX_TARGETS, productImageIsMissing, productImageUrls } from "@/lib/catalog/product-image-urls";
+import {
+  APPLY_IMAGE_MAX_TARGETS,
+  productImageIsMissing,
+  productImageUrls,
+  psmRenditionUrls,
+} from "@/lib/catalog/product-image-urls";
 import { Button } from "@/components/ui/button";
 import {
   duplicateProduct,
@@ -28,10 +33,26 @@ function badge(text: string, tone: "grey" | "amber" | "red" | "green" | "blue") 
   return <span className={`rounded px-2 py-0.5 text-[11px] font-medium ${cls}`}>{text}</span>;
 }
 
-/** Admin thumbnail: the 400 rendition when processed, else whatever image_url holds. */
+/** Admin thumbnail: PSM's image when synced (D-137), else the 400 rendition when processed, else whatever image_url holds. */
 function thumbUrl(r: ProductRow): string | null {
+  if (r.psm_image_url) return psmRenditionUrls(r.psm_image_url).src;
   if (r.image_storage_path) return productImageUrls(r.image_storage_path)[400];
   return productImageIsMissing(r) ? null : r.image_url;
+}
+
+const PSM_TITLE = "Managed in PS Management → Resources → Product SKUs. Edit there; the website updates daily or on Publish.";
+
+/** "Synced 2h ago" for the PSM badge. */
+function syncedAgo(iso: string | null): string {
+  if (!iso) return "Synced";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "Synced";
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "Synced just now";
+  if (m < 60) return `Synced ${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `Synced ${h}h ago`;
+  return `Synced ${Math.floor(h / 24)}d ago`;
 }
 
 interface ApplyResult {
@@ -140,6 +161,25 @@ export function ProductsTable({
     });
   }
 
+  /** Bulk Hide / Show: PSM-synced rows are skipped server-side; say so (D-137). */
+  function bulkActive(active: boolean) {
+    setError(null);
+    setNotice(null);
+    start(async () => {
+      const res = await setProductsActive([...selected], active);
+      if (!res.ok) setError(res.error);
+      else {
+        const word = active ? "Shown" : "Hidden";
+        setNotice(
+          res.data.skipped
+            ? `${word} ${res.data.count}. Skipped ${res.data.skipped} PSM-synced product${res.data.skipped === 1 ? "" : "s"} — visibility is set in PS Management.`
+            : `${word}.`,
+        );
+      }
+      router.refresh();
+    });
+  }
+
   function toggleSelect(id: string) {
     setSelected((s) => {
       const n = new Set(s);
@@ -177,9 +217,15 @@ export function ProductsTable({
   }
 
   async function applyImageFrom(source: ProductRow) {
-    const targets = [...selected].filter((id) => id !== source.id);
+    const managedIds = new Set(rows.filter((r) => !!r.psm_sku_id).map((r) => r.id));
+    const skippedManaged = [...selected].filter((id) => id !== source.id && managedIds.has(id)).length;
+    const targets = [...selected].filter((id) => id !== source.id && !managedIds.has(id));
     if (!targets.length) {
-      setError("Select at least one other product first.");
+      setError(
+        skippedManaged
+          ? "Every selected product is PSM-synced — its image is managed in PS Management."
+          : "Select at least one other product first.",
+      );
       return;
     }
     setApplyBusy(true);
@@ -217,7 +263,12 @@ export function ProductsTable({
           (failed.length > 5 ? "…" : ""),
       );
     }
-    if (updated) setNotice(`Applied ${source.name}'s image to ${updated} product${updated === 1 ? "" : "s"}.`);
+    if (updated) {
+      setNotice(
+        `Applied ${source.name}'s image to ${updated} product${updated === 1 ? "" : "s"}.` +
+          (skippedManaged ? ` Skipped ${skippedManaged} PSM-synced product${skippedManaged === 1 ? "" : "s"}.` : ""),
+      );
+    }
     setApplyOpen(false);
     setSelected(new Set());
     router.refresh();
@@ -278,10 +329,10 @@ export function ProductsTable({
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded border border-neutral-300 bg-neutral-50 p-3 text-sm">
           <span className="font-medium">{selected.size} selected</span>
-          <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => setProductsActive([...selected], false), "Hidden.")}>
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => bulkActive(false)}>
             Hide
           </Button>
-          <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => setProductsActive([...selected], true), "Shown.")}>
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => bulkActive(true)}>
             Show
           </Button>
           <Button size="sm" variant="outline" disabled={pending || applyBusy} onClick={() => setApplyOpen(true)}>
@@ -366,8 +417,14 @@ export function ProductsTable({
                         {r.name}
                       </Link>
                       {!r.is_active && badge("hidden", "grey")}
+                      {r.psm_sku_id && (
+                        <span title={PSM_TITLE} className="inline-flex items-center gap-1">
+                          {badge("PSM", "blue")}
+                          <span className="text-[11px] text-neutral-500">{syncedAgo(r.psm_synced_at)}</span>
+                        </span>
+                      )}
                       {productImageIsMissing(r) && badge("no image", "amber")}
-                      {r.image_storage_path && badge("processed", "green")}
+                      {r.image_storage_path && !r.psm_image_url && badge("processed", "green")}
                       {r.is_active &&
                         badge(
                           n === 0 ? "0 stores on menu" : `${n} ${n === 1 ? "store" : "stores"} on menu`,
@@ -387,9 +444,9 @@ export function ProductsTable({
                       <button
                         type="button"
                         onClick={() => run(() => setProductActive(r.id, false))}
-                        disabled={pending}
-                        title="Hide from the site (nothing is deleted)"
-                        className="rounded bg-green-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-green-700 disabled:opacity-50"
+                        disabled={pending || !!r.psm_sku_id}
+                        title={r.psm_sku_id ? `Visibility is set in PS Management. ${PSM_TITLE}` : "Hide from the site (nothing is deleted)"}
+                        className="rounded bg-green-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Shown
                       </button>
@@ -397,9 +454,9 @@ export function ProductsTable({
                       <button
                         type="button"
                         onClick={() => run(() => restoreProduct(r.id))}
-                        disabled={pending}
-                        title="Show on the site again"
-                        className="rounded border border-green-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-green-700 hover:bg-green-50 disabled:opacity-50"
+                        disabled={pending || !!r.psm_sku_id}
+                        title={r.psm_sku_id ? `Visibility is set in PS Management. ${PSM_TITLE}` : "Show on the site again"}
+                        className="rounded border border-green-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Restore
                       </button>

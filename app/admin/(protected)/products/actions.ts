@@ -22,6 +22,24 @@ import type { Database } from "@/lib/database.types";
 type ProductRow = Database["public"]["Tables"]["catalog_products"]["Row"];
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
+/**
+ * Rows with a psm_sku_id are synced from PS Management (D-137): these fields
+ * and the image belong to PSM and are stripped from every admin write here,
+ * whatever the form posts. Website-only fields (slug, thc_range,
+ * terpene_profile, terp_category, sort_order) stay editable.
+ */
+const PSM_SYNCED_FIELDS = [
+  "name", "brand", "description", "category", "format", "weight", "strain_type", "lineage", "is_active",
+] as const;
+const PSM_MANAGED_MESSAGE =
+  "Managed in PS Management → Resources → Product SKUs. Edit there; the website updates daily or on Publish.";
+
+function stripSyncedFields<T extends Record<string, unknown>>(fields: T): Omit<T, (typeof PSM_SYNCED_FIELDS)[number]> {
+  const out = { ...fields };
+  for (const k of PSM_SYNCED_FIELDS) delete out[k];
+  return out;
+}
+
 async function requireAdmin(): Promise<boolean> {
   const supabase = await createClient();
   const {
@@ -38,14 +56,18 @@ function visibilityPatch(active: boolean) {
   return { is_active: active };
 }
 
-/** Inline SHOW/HIDE (is_active). */
+/** Inline SHOW/HIDE (is_active). Refused for PSM-synced rows — visibility is PSM's (D-137). */
 export async function setProductActive(id: string, active: boolean): Promise<ActionResult> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const db = admin();
+  const { data: row } = await db.from("catalog_products").select("psm_sku_id").eq("id", id).maybeSingle();
+  if (!row) return { ok: false, error: "Product not found." };
+  if (row.psm_sku_id) return { ok: false, error: `Visibility is set in PS Management for this product. ${PSM_MANAGED_MESSAGE}` };
   const { data, error } = await db
     .from("catalog_products")
     .update(visibilityPatch(active))
     .eq("id", id)
+    .is("psm_sku_id", null)
     .select("brand, slug")
     .single();
   if (error || !data) return { ok: false, error: error?.message ?? "Update failed." };
@@ -53,21 +75,27 @@ export async function setProductActive(id: string, active: boolean): Promise<Act
   return { ok: true, data: undefined };
 }
 
-/** Bulk SHOW/HIDE for the list's row selection. */
-export async function setProductsActive(ids: string[], active: boolean): Promise<ActionResult<{ count: number }>> {
+/** Bulk SHOW/HIDE for the list's row selection. PSM-synced rows are skipped and counted (D-137). */
+export async function setProductsActive(
+  ids: string[],
+  active: boolean,
+): Promise<ActionResult<{ count: number; skipped: number }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
   const unique = [...new Set(ids)].filter(Boolean);
-  if (!unique.length) return { ok: true, data: { count: 0 } };
+  if (!unique.length) return { ok: true, data: { count: 0, skipped: 0 } };
   const db = admin();
+  const { data: managed } = await db.from("catalog_products").select("id").in("id", unique).not("psm_sku_id", "is", null);
+  const skipped = managed?.length ?? 0;
   const { data, error } = await db
     .from("catalog_products")
     .update(visibilityPatch(active))
     .in("id", unique)
+    .is("psm_sku_id", null)
     .select("brand, slug");
   if (error) return { ok: false, error: error.message };
   const targets: RevalidateTarget[] = (data ?? []).map((r) => ({ kind: "products", brand: r.brand, slug: r.slug }));
   if (targets.length) revalidateFor(...targets);
-  return { ok: true, data: { count: data?.length ?? 0 } };
+  return { ok: true, data: { count: data?.length ?? 0, skipped } };
 }
 
 /** Restore = show a hidden product. */
@@ -153,6 +181,7 @@ export interface ProductInput {
   thc_range: string | null;
   strain_type: "indica" | "sativa" | "hybrid" | null;
   description: string | null;
+  lineage?: string | null;
   terpene_profile: TerpeneEntry[];
   terp_category: string | null;
   is_active: boolean;
@@ -203,6 +232,7 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     thc_range: input.thc_range?.trim() || null,
     strain_type: strain,
     description: input.description?.trim() || null,
+    lineage: input.lineage?.trim() || null,
     terpene_profile: terps as unknown as Database["public"]["Tables"]["catalog_products"]["Insert"]["terpene_profile"],
     terp_category: terpCategory,
     is_active: !!input.is_active,
@@ -215,12 +245,14 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult<{ i
     if (slug !== existing.slug && !(await slugFree(slug, input.id))) {
       return { ok: false, error: `Slug "${slug}" is already in use.` };
     }
-    const { error } = await db.from("catalog_products").update(fields).eq("id", input.id);
+    // PSM-synced row: only the website-only fields may change, whatever the form posted (D-137).
+    const patch = existing.psm_sku_id ? stripSyncedFields(fields) : fields;
+    const { error } = await db.from("catalog_products").update(patch).eq("id", input.id);
     if (error) return { ok: false, error: error.message };
 
     revalidateFor(
       { kind: "products", brand: existing.brand, slug: existing.slug },
-      { kind: "products", brand: canonicalBrand, slug },
+      { kind: "products", brand: existing.psm_sku_id ? existing.brand : canonicalBrand, slug },
     );
     return { ok: true, data: { id: input.id, slug } };
   }
@@ -252,7 +284,8 @@ export async function saveProductAndReturn(input: ProductInput): Promise<ActionR
 
 /**
  * Duplicate: same fields, name suffixed " (copy)", slug re-derived and made
- * unique, hidden, no image, manual source. Returns the new row's id.
+ * unique, hidden, no image, manual source. A copy of a PSM-synced row is a
+ * plain manual product (psm_sku_id null — D-137). Returns the new row's id.
  */
 export async function duplicateProduct(id: string): Promise<ActionResult<{ id: string; slug: string }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
@@ -274,11 +307,15 @@ export async function duplicateProduct(id: string): Promise<ActionResult<{ id: s
       thc_range: src.thc_range,
       strain_type: src.strain_type,
       description: src.description,
+      lineage: src.lineage,
       terpene_profile: src.terpene_profile,
       terp_category: src.terp_category,
       sort_order: src.sort_order == null ? await nextSortOrder(src.brand) : src.sort_order + 1,
       is_active: false,
       source: "manual",
+      psm_sku_id: null,
+      psm_image_url: null,
+      psm_synced_at: null,
       image_url: null,
       image_storage_path: null,
       image_missing: true,
