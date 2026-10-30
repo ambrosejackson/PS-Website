@@ -108,9 +108,16 @@ export function psmRenderBase(psmImageUrl: string): string {
   return psmImageUrl.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/");
 }
 
-/** One PSM rendition URL at the given width (quality 75). */
+/**
+ * One PSM rendition URL at the given width (quality 75).
+ *
+ * `resize=contain` is load-bearing (D-138): Storage's image transform defaults to
+ * `resize=cover`, and with only `width` given it keeps the original height and crops
+ * the width — a 3000×3000 source came back as a 400×3000 strip. `contain` scales
+ * proportionally with no crop, so a square source returns width×width.
+ */
 export function psmRenditionUrl(psmImageUrl: string, width: ProductImageWidth): string {
-  return `${psmRenderBase(psmImageUrl)}?width=${width}&quality=${PSM_RENDITION_QUALITY}`;
+  return `${psmRenderBase(psmImageUrl)}?width=${width}&quality=${PSM_RENDITION_QUALITY}&resize=contain`;
 }
 
 /** `src` (800) + `srcSet` over 400/800/1600 from Storage's image transforms. */
