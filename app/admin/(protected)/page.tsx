@@ -5,42 +5,15 @@ import { chicagoDayKey } from "@/lib/admin/chicago";
 import { money } from "@/lib/commerce/config";
 import { FULFILLMENT_LABEL, FULFILLMENT_TONE, shortOrderId } from "@/components/site/OrderSummary";
 import { SalesChart } from "@/components/admin/SalesChart";
+import { DASH, Empty, Kpi, Panel, plural } from "@/components/admin/panels";
 
 export const dynamic = "force-dynamic";
-
-const DASH = "—";
 
 const QUICK_ACTIONS = [
   { href: "/admin/products/new", label: "Product" },
   { href: "/admin/apparel/new", label: "Apparel" },
   { href: "/admin/blog/new", label: "Blog post" },
 ];
-
-function Panel({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="rounded border bg-white p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="font-condensed text-base font-bold uppercase tracking-tight">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded border bg-white p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-neutral-500">{sub}</p>}
-    </div>
-  );
-}
-
-function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
 
 function TodoRow({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -55,9 +28,6 @@ function TodoRow({ href, children }: { href: string; children: React.ReactNode }
   );
 }
 
-function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="rounded border border-dashed p-4 text-sm text-neutral-400">{children}</p>;
-}
 
 /** /admin — dashboard over the website's own tables (admin dashboard PRD, P1). */
 export default async function AdminHomePage() {
@@ -128,7 +98,15 @@ export default async function AdminHomePage() {
           sub={kpis.avgOrderCents === null ? "no paid orders yet" : "revenue ÷ orders"}
         />
         <Kpi label="Visitors 7d" value={kpis.visitors7.toLocaleString("en-US")} sub={plural(kpis.pageviews7, "page view")} />
-        <Kpi label="Conversion 30d" value={DASH} sub="available in Phase 3" />
+        <Kpi
+          label="Conversion 30d"
+          value={kpis.conversion30.rate === null ? DASH : `${(kpis.conversion30.rate * 100).toFixed(1)}%`}
+          sub={
+            kpis.conversion30.rate === null
+              ? "no sessions yet"
+              : `${kpis.conversion30.purchases} of ${kpis.conversion30.sessions.toLocaleString("en-US")} sessions`
+          }
+        />
       </div>
 
       <details className="group">

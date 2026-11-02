@@ -55,6 +55,21 @@ const PHONE_RE = /(?:\d[\s().-]*){7,}/;
 
 export type Props = Record<string, string | number | boolean | null>;
 
+/** Hostname of a referrer URL, without a leading "www."; null if unparsable. */
+export function referrerHost(referrer: string): string | null {
+  try {
+    const host = new URL(referrer).hostname.toLowerCase();
+    return host.replace(/^www\./, "") || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Our own hosts never count as referrers. */
+export function isOwnHost(host: string): boolean {
+  return host === "privatestock.co" || host.endsWith(".privatestock.co") || host === "localhost";
+}
+
 /**
  * Accepts a small, flat object of primitives with no email/phone-shaped
  * strings. Returns the cleaned props or null when the value is unacceptable.
