@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/lib/cart/context";
+import { getAnalyticsIds, trackCheckoutStart } from "@/lib/analytics/client";
 import { SERVICE_LABEL, SHIP_COUNTRIES, ZIP_RE, money } from "@/lib/commerce/config";
 import { preorderLine } from "@/lib/commerce/preorder";
 import { ShippingPicker } from "@/components/shop/ShippingPicker";
@@ -62,6 +63,12 @@ export function CheckoutClient({
   async function payWithStripe() {
     setError(null);
     setStripeBusy(true);
+    trackCheckoutStart({
+      cents: cart.lines.reduce((s, l) => s + l.priceCents * l.qty, 0),
+      items: cart.lines.reduce((s, l) => s + l.qty, 0),
+      rail: "stripe",
+    });
+    const web = getAnalyticsIds();
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -72,6 +79,8 @@ export function CheckoutClient({
           email: email.trim() || null,
           shipZip: cart.shipping.zip,
           shipService: cart.shipping.service,
+          webSessionId: web.sessionId,
+          webVisitorId: web.visitorId,
         }),
       });
       const body = await res.json().catch(() => ({}));

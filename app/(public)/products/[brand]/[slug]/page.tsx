@@ -5,6 +5,7 @@ import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { ProductAvailability } from "@/components/site/ProductAvailability";
 import { ProductCard } from "@/components/site/ProductCard";
 import { ProductImage } from "@/components/site/ProductImage";
+import { ProductViewTracker } from "@/components/site/ProductViewTracker";
 import {
   PRODUCT_IMAGE_SIZES_DETAIL,
   productImageIsMissing,
@@ -125,6 +126,7 @@ export default async function ProductPage({
   return (
     <main>
       <HeroSwitcher heroes={heroes} heightClassName="h-[35svh]" />
+      <ProductViewTracker productId={product.id} kind="catalog" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -8,6 +8,7 @@ import { galleryImages, normalizeImages } from "@/lib/merchImages";
 import { isProductSoldOut, STOCK_BADGE_LABEL, stockBadge } from "@/lib/merchStock";
 import { preorderLine } from "@/lib/commerce/preorder";
 import { colorsOf, sizeOptions, variantLabel } from "@/components/shop/product-utils";
+import { ProductViewTracker } from "@/components/site/ProductViewTracker";
 
 /**
  * Apparel product detail (client): gallery (lib/merchImages — the selected
@@ -93,6 +94,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
 
   return (
     <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+      <ProductViewTracker productId={product.id} kind="apparel" />
       <Suspense fallback={null}>
         <QueryColor onColor={applyColor} />
       </Suspense>

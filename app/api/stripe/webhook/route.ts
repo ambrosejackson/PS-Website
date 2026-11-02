@@ -8,6 +8,7 @@ import {
   type ShippingAddressJson,
 } from "@/lib/commerce/orders";
 import { getStripe, stripeConfigured } from "@/lib/commerce/stripe";
+import { applyStripeRefund } from "@/lib/analytics/server";
 
 /**
  * Stripe webhook (D-041): `checkout.session.completed` (and
@@ -20,7 +21,9 @@ import { getStripe, stripeConfigured } from "@/lib/commerce/stripe";
  * Dashboard: Developers → Webhooks → Add endpoint →
  *   https://<deployment>/api/stripe/webhook, events: checkout.session.completed,
  *   checkout.session.async_payment_succeeded, checkout.session.async_payment_failed,
- *   checkout.session.expired → copy the signing secret into STRIPE_WEBHOOK_SECRET.
+ *   checkout.session.expired, charge.refunded (D-140: refunded_cents / refunded_at on
+ *   the order, located by stripe_payment_intent) → copy the signing secret into
+ *   STRIPE_WEBHOOK_SECRET.
  */
 export const dynamic = "force-dynamic";
 
@@ -117,6 +120,19 @@ export async function POST(request: Request) {
       case "checkout.session.expired":
         await markFailed(event.data.object as Stripe.Checkout.Session);
         break;
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const pi = charge.payment_intent;
+        const paymentIntentId = typeof pi === "string" ? pi : (pi?.id ?? null);
+        if (paymentIntentId) {
+          const r = await applyStripeRefund(createAdminClient(), {
+            paymentIntentId,
+            amountRefundedCents: charge.amount_refunded,
+          });
+          if (!r.ok) console.warn("[stripe/webhook] charge.refunded not applied:", r.reason);
+        }
+        break;
+      }
       default:
         break;
     }
