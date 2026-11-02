@@ -10,6 +10,8 @@ import {
 } from "@/lib/admin/chicago";
 import { countOrdersToShip, countUnreadMessages, type Db } from "@/lib/admin/nav-counts";
 import { isCategory } from "@/lib/merchCategories";
+import { isOwnHost, referrerHost } from "@/lib/analytics/schema";
+import { conversionLast30 } from "@/lib/admin/analytics";
 
 /**
  * /admin dashboard queries (admin dashboard PRD, P1). Service-role reads,
@@ -38,6 +40,8 @@ export interface DashboardData {
     /** null when no event starts today or later (card is omitted). */
     rsvps: number | null;
     preordersPending: number;
+    /** Purchase sessions ÷ pageview sessions, last 30 Chicago days (D-141); rate null at zero sessions. */
+    conversion30: { purchases: number; sessions: number; rate: number | null };
   };
   sales: {
     days: { key: string; label: string }[];
@@ -113,20 +117,6 @@ function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
-}
-
-/** Hostname of a referrer URL, without a leading "www."; null if unparsable. */
-export function referrerHost(referrer: string): string | null {
-  try {
-    const host = new URL(referrer).hostname.toLowerCase();
-    return host.replace(/^www\./, "") || null;
-  } catch {
-    return null;
-  }
-}
-
-function isOwnHost(host: string): boolean {
-  return host === "privatestock.co" || host.endsWith(".privatestock.co") || host === "localhost";
 }
 
 async function paidOrdersSince(db: Db, since: Date): Promise<PaidOrderRow[]> {
@@ -257,6 +247,7 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
     productsNoImage,
     lowStock,
     recent,
+    conversion30,
   ] = await Promise.all([
     paidOrdersSince(db, start30),
     trafficLast7(db, start7),
@@ -280,6 +271,7 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
       .not("status", "in", "(pending,failed)")
       .order("created_at", { ascending: false })
       .limit(10),
+    conversionLast30(db, today),
   ]);
 
   const { series, topProducts } = await salesAndTopProducts(db, orders, keyIndex, keys30.length);
@@ -310,6 +302,7 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
       subscribers7,
       rsvps,
       preordersPending,
+      conversion30,
     },
     sales: {
       days: keys30.map((key) => ({ key, label: shortDayLabel(key) })),
