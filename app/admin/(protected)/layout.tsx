@@ -1,23 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin/allowlist";
-import { Button } from "@/components/ui/button";
-
-// Order locked in the /admin build-out session (D-038..D-044).
-const SECTIONS = [
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/apparel", label: "Apparel" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/heroes", label: "Heroes" },
-  { href: "/admin/banners", label: "Banners" },
-  { href: "/admin/social-media", label: "Social Media" },
-  { href: "/admin/blog", label: "Blog" },
-  { href: "/admin/subscribers", label: "Subscribers" },
-  { href: "/admin/messages", label: "Messages" },
-  { href: "/admin/events", label: "Events" },
-  { href: "/admin/staff", label: "Check-in Staff" },
-];
+import { getNavCounts } from "@/lib/admin/nav-counts";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export default async function AdminLayout({
   children,
@@ -33,31 +18,14 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
+  // Badge counts (orders to ship, unread messages). Sections and link order
+  // live in components/admin/AdminSidebar.tsx.
+  const counts = await getNavCounts();
+
   return (
-    <div className="flex min-h-screen bg-neutral-100">
-      <aside className="flex w-56 flex-col border-r bg-white p-4">
-        <Link href="/admin" className="mb-6 font-semibold tracking-tight">
-          Private Stock Admin
-        </Link>
-        <nav className="flex flex-1 flex-col gap-1">
-          {SECTIONS.map((s) => (
-            <Link
-              key={s.href}
-              href={s.href}
-              className="rounded px-3 py-2 text-sm hover:bg-neutral-100"
-            >
-              {s.label}
-            </Link>
-          ))}
-        </nav>
-        <form action="/admin/logout" method="post" className="mt-6">
-          <Button variant="outline" size="sm" type="submit" className="w-full">
-            Sign out
-          </Button>
-        </form>
-        <p className="mt-3 truncate text-xs text-neutral-500">{user?.email}</p>
-      </aside>
-      <main className="flex-1 p-8">{children}</main>
+    <div className="flex min-h-screen flex-col bg-neutral-100 md:flex-row">
+      <AdminSidebar email={user?.email ?? null} counts={counts} />
+      <main className="flex-1 p-4 md:p-8">{children}</main>
     </div>
   );
 }
