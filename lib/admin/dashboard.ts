@@ -31,6 +31,8 @@ export interface DashboardData {
   kpis: {
     today: { cents: number; orders: number };
     d7: { cents: number; orders: number };
+    /** The seven days before d7 (Monday digest comparison, D-142). */
+    prev7: { cents: number; orders: number };
     d30: { cents: number; orders: number };
     /** null when there were no paid orders in 30 days. */
     avgOrderCents: number | null;
@@ -57,6 +59,8 @@ export interface DashboardData {
   };
   recentOrders: RecentOrder[];
   topProducts: { title: string; qty: number }[];
+  /** Same ranking over the last 7 days only (Monday digest, D-142). */
+  topProducts7: { title: string; qty: number }[];
   topReferrers: { host: string; count: number }[];
 }
 
@@ -152,6 +156,8 @@ async function salesAndTopProducts(db: Db, orders: PaidOrderRow[], keyIndex: Map
   // are item subtotals (qty × unit price), so they exclude shipping, tax and
   // discounts and will not sum to "All".
   const qtyByTitle = new Map<string, number>();
+  const qtyByTitle7 = new Map<string, number>();
+  const firstOf7 = nDays - 7;
   const ids = [...dayOf.keys()];
   for (const batch of chunk(ids, 200)) {
     const { data, error } = await db
@@ -167,14 +173,16 @@ async function salesAndTopProducts(db: Db, orders: PaidOrderRow[], keyIndex: Map
       else other[idx] += line;
       const title = it.title ?? "Untitled";
       qtyByTitle.set(title, (qtyByTitle.get(title) ?? 0) + it.qty);
+      if (idx >= firstOf7) qtyByTitle7.set(title, (qtyByTitle7.get(title) ?? 0) + it.qty);
     }
   }
-  const topProducts = [...qtyByTitle.entries()]
-    .map(([title, qty]) => ({ title, qty }))
-    .sort((a, b) => b.qty - a.qty)
-    .slice(0, 8);
+  const rank = (m: Map<string, number>) =>
+    [...m.entries()]
+      .map(([title, qty]) => ({ title, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 8);
 
-  return { series: { all, apparel, other }, topProducts };
+  return { series: { all, apparel, other }, topProducts: rank(qtyByTitle), topProducts7: rank(qtyByTitle7) };
 }
 
 async function trafficLast7(db: Db, since: Date) {
@@ -274,20 +282,22 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
     conversionLast30(db, today),
   ]);
 
-  const { series, topProducts } = await salesAndTopProducts(db, orders, keyIndex, keys30.length);
+  const { series, topProducts, topProducts7 } = await salesAndTopProducts(db, orders, keyIndex, keys30.length);
 
-  const sum = (from: number) => {
+  /** Totals over day indexes [from, to) of the 30-day window. */
+  const sum = (from: number, to = keys30.length) => {
     let cents = 0;
     let n = 0;
-    for (let i = from; i < keys30.length; i++) cents += series.all[i];
+    for (let i = from; i < to; i++) cents += series.all[i];
     for (const o of orders) {
       const idx = keyIndex.get(orderDayKey(o));
-      if (idx !== undefined && idx >= from) n++;
+      if (idx !== undefined && idx >= from && idx < to) n++;
     }
     return { cents, orders: n };
   };
   const d30 = sum(0);
   const d7 = sum(keys30.length - 7);
+  const prev7 = sum(keys30.length - 14, keys30.length - 7);
   const todayTotals = sum(keys30.length - 1);
 
   return {
@@ -295,6 +305,7 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
     kpis: {
       today: todayTotals,
       d7,
+      prev7,
       d30,
       avgOrderCents: d30.orders > 0 ? Math.round(d30.cents / d30.orders) : null,
       visitors7: traffic.visitors7,
@@ -311,6 +322,7 @@ export async function getDashboardData(now: Date = new Date()): Promise<Dashboar
     todo: { ordersToShip, preordersReady, withProvider, unreadMessages, productsNoImage, lowStock },
     recentOrders: (recent.data ?? []) as RecentOrder[],
     topProducts,
+    topProducts7,
     topReferrers: traffic.topReferrers,
   };
 }
