@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   CalendarDays,
+  Contact,
   FileText,
   Home,
   Image as ImageIcon,
@@ -13,9 +14,11 @@ import {
   Menu,
   MessageSquare,
   Package,
+  Search,
   Share2,
   Shirt,
   ShoppingBag,
+  Ticket,
   UserCheck,
   Users,
   X,
@@ -24,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { NavCounts } from "@/lib/admin/nav-counts";
+import { openCommandPalette } from "@/components/admin/CommandPalette";
 
 interface NavItem {
   href: string;
@@ -50,7 +54,11 @@ const SECTIONS: NavSection[] = [
   },
   {
     title: "Commerce",
-    items: [{ href: "/admin/orders", label: "Orders", icon: ShoppingBag, badge: "ordersToShip" }],
+    items: [
+      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, badge: "ordersToShip" },
+      { href: "/admin/customers", label: "Customers", icon: Contact },
+      { href: "/admin/discounts", label: "Discounts", icon: Ticket },
+    ],
   },
   {
     title: "Catalog",
@@ -128,9 +136,21 @@ export function AdminSidebar({ email, counts }: { email: string | null; counts: 
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <Link href="/admin" className="mb-6 font-semibold tracking-tight">
+        <Link href="/admin" className="mb-4 font-semibold tracking-tight">
           Private Stock Admin
         </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            openCommandPalette();
+          }}
+          className="mb-4 flex w-full items-center gap-2 rounded border bg-white px-2.5 py-1.5 text-sm text-neutral-500 hover:bg-neutral-100"
+        >
+          <Search className="size-4 shrink-0" aria-hidden />
+          <span>Search…</span>
+          <kbd className="ml-auto rounded border px-1 font-mono text-[10px] text-neutral-400">⌘K</kbd>
+        </button>
         <nav className="flex flex-1 flex-col gap-4 overflow-y-auto">
           {SECTIONS.map((section, i) => (
             <div key={section.title ?? i} className="flex flex-col gap-1">
