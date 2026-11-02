@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { personaForPath } from "@/lib/personas";
 import { createStripePromotionCode, stripeConfigured } from "@/lib/commerce/stripe";
+import { generateCode } from "@/lib/commerce/discount-codes";
 
 /**
  * Core of the newsletter signup, shared by POST /api/subscribe and the account
@@ -14,16 +15,6 @@ import { createStripePromotionCode, stripeConfigured } from "@/lib/commerce/stri
  * Callers own validation and consent: only call this with a well-formed,
  * lowercased email and after the visitor has explicitly opted in.
  */
-
-const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L
-
-function generateCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  const suffix = Array.from(bytes)
-    .map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length])
-    .join("");
-  return `PS15-${suffix}`;
-}
 
 export type SubscribeResult =
   | { ok: true; alreadySubscribed: boolean; discountCode: string | null }
@@ -73,7 +64,7 @@ export async function subscribeEmail(
   // promotion code is created now (max_redemptions 1, first_time_transaction);
   // without it the row keeps a stub id and lib/commerce/pricing.validatePromo
   // creates the Stripe side lazily the first time the code is used.
-  const code = generateCode();
+  const code = generateCode(15);
   let stripePromotionCodeId = "stub_pending_stripe";
   if (stripeConfigured()) {
     try {
