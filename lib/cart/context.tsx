@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { trackAddToCart } from "@/lib/analytics/client";
 import {
   CART_STORAGE_KEY,
   MAX_QTY_PER_LINE,
@@ -232,6 +233,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       : [...current, { ...line, qty: Math.min(MAX_QTY_PER_LINE, Math.max(1, qty)) }];
     writeLines(next);
     setOpen(true);
+    // Single emit point for add_to_cart (D-140); every Add button routes through here.
+    const added = Math.min(MAX_QTY_PER_LINE, Math.max(1, qty));
+    trackAddToCart({ productId: line.productId, variantId: line.variantId, qty: added, cents: line.priceCents * added });
   }, []);
 
   const setQty = useCallback((variantId: string, qty: number) => {

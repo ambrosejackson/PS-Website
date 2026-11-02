@@ -21,6 +21,8 @@ interface Body {
   promoCode?: string | null;
   address?: ShippingAddressJson;
   shipService?: string;
+  webSessionId?: string | null;
+  webVisitorId?: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,6 +37,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
   const email = body.email?.trim().toLowerCase() ?? "";
+  const webSessionId = typeof body.webSessionId === "string" ? body.webSessionId.slice(0, 64) : null;
+  const webVisitorId = typeof body.webVisitorId === "string" ? body.webVisitorId.slice(0, 64) : null;
   const a = body.address ?? {};
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "Enter a valid email for your receipt." }, { status: 400 });
   if (!a.name?.trim() || !a.line1?.trim() || !a.city?.trim() || !a.state?.trim() || !a.postal_code?.trim()) {
@@ -80,6 +84,8 @@ export async function POST(request: Request) {
       shippingQuoteId: cart.shippingQuoteId,
       shippingQuoteFallback: cart.shippingQuoteFallback,
       shipsAfter: cart.shipsAfter,
+      webSessionId,
+      webVisitorId,
     });
 
     const pp = await createPayPalOrder({

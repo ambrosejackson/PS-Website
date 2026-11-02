@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database, Json } from "@/lib/database.types";
 import type { PricedLine } from "@/lib/commerce/pricing";
+import { recordPurchaseEvent } from "@/lib/analytics/server";
 
 /**
  * Orders persistence shared by both rails. A PENDING order (+ item snapshots)
@@ -43,6 +44,9 @@ export async function createPendingOrder(input: {
   shippingQuoteFallback?: boolean;
   /** Pre-order promise frozen at order time (D-123). */
   shipsAfter?: string | null;
+  /** web_events session / visitor at checkout start, for the server-side purchase event (D-140). */
+  webSessionId?: string | null;
+  webVisitorId?: string | null;
 }): Promise<string> {
   const db = createAdminClient();
   const { data: order, error } = await db
@@ -66,6 +70,8 @@ export async function createPendingOrder(input: {
       shipping_quote_id: input.shippingQuoteId ?? null,
       shipping_quote_fallback: input.shippingQuoteFallback ?? false,
       ships_after: input.shipsAfter ?? null,
+      web_session_id: input.webSessionId ?? null,
+      web_visitor_id: input.webVisitorId ?? null,
     })
     .select("id")
     .single();
@@ -116,6 +122,8 @@ export async function finalizeOrderPaid(
   await updateOrder(orderId, { ...patch, status: "paid", paid_at: new Date().toISOString() });
   await redeemDiscountCode(existing.discount_code_id ?? patch.discount_code_id ?? null);
   const order = await getOrderWithItems(orderId);
+  // Server-side `purchase` analytics row (D-140). Fail-soft; never blocks the paid flow.
+  if (order) await recordPurchaseEvent(createAdminClient(), order);
   return order ? { order, alreadyPaid: false } : null;
 }
 

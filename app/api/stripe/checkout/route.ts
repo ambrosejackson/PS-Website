@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     email?: string | null;
     shipZip?: string;
     shipService?: string;
+    webSessionId?: string | null;
+    webVisitorId?: string | null;
   };
   try {
     body = await request.json();
@@ -45,6 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
   const email = body.email?.trim().toLowerCase() || null;
+  const webSessionId = typeof body.webSessionId === "string" ? body.webSessionId.slice(0, 64) : null;
+  const webVisitorId = typeof body.webVisitorId === "string" ? body.webVisitorId.slice(0, 64) : null;
 
   if (!isShippingService(body.shipService)) {
     return NextResponse.json({ error: "Pick a shipping option on the cart page first." }, { status: 400 });
@@ -75,6 +79,8 @@ export async function POST(request: Request) {
       shippingQuoteId: cart.shippingQuoteId,
       shippingQuoteFallback: cart.shippingQuoteFallback,
       shipsAfter: cart.shipsAfter,
+      webSessionId,
+      webVisitorId,
     });
 
     const origin = siteOrigin(request);
@@ -82,7 +88,12 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       client_reference_id: orderId,
-      metadata: { order_id: orderId },
+      metadata: {
+        order_id: orderId,
+        // Copy of orders.web_session_id / web_visitor_id for attribution (D-140); the order row is the source of truth.
+        ...(webSessionId ? { web_session_id: webSessionId } : {}),
+        ...(webVisitorId ? { web_visitor_id: webVisitorId } : {}),
+      },
       customer_email: email ?? undefined,
       customer_creation: "if_required",
       line_items: cart.lines.map((l) => ({

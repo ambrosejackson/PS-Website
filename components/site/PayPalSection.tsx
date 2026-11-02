@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useCart } from "@/lib/cart/context";
+import { getAnalyticsIds, trackCheckoutStart } from "@/lib/analytics/client";
 import type { ShippingService } from "@/lib/commerce/config";
 import type { ShippingAddress } from "@/components/site/CheckoutClient";
 
@@ -60,6 +61,12 @@ export function PayPalSection({
             forceReRender={[cart.lines, email, address, promoCode, shipService]}
             createOrder={async () => {
               setError(null);
+              trackCheckoutStart({
+                cents: cart.lines.reduce((s, l) => s + l.priceCents * l.qty, 0),
+                items: cart.lines.reduce((s, l) => s + l.qty, 0),
+                rail: "paypal",
+              });
+              const web = getAnalyticsIds();
               const res = await fetch("/api/paypal/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -69,6 +76,8 @@ export function PayPalSection({
                   address,
                   promoCode,
                   shipService,
+                  webSessionId: web.sessionId,
+                  webVisitorId: web.visitorId,
                 }),
               });
               const body = await res.json().catch(() => ({}));
