@@ -71,16 +71,13 @@ interface PaidOrderRow {
   created_at: string;
   paid_at: string | null;
   total_cents: number | null;
+  refunded_cents: number;
   ships_after: string | null;
 }
 
-/**
- * Net revenue for one paid order.
- * P2 (refunds): swap the body for `(o.total_cents ?? 0) - (o.refunded_cents ?? 0)`
- * once the refunded_cents column exists. Do not reference it before then.
- */
-export function orderRevenueCents(o: { total_cents: number | null }): number {
-  return o.total_cents ?? 0;
+/** Net revenue for one paid order: total less the cumulative Stripe refund (D-140). */
+export function orderRevenueCents(o: { total_cents: number | null; refunded_cents: number | null }): number {
+  return (o.total_cents ?? 0) - (o.refunded_cents ?? 0);
 }
 
 /** Chicago day key an order is bucketed on: paid_at, else created_at. */
@@ -137,7 +134,7 @@ async function paidOrdersSince(db: Db, since: Date): Promise<PaidOrderRow[]> {
   return fetchAll<PaidOrderRow>((from, to) =>
     db
       .from("orders")
-      .select("id, created_at, paid_at, total_cents, ships_after")
+      .select("id, created_at, paid_at, total_cents, refunded_cents, ships_after")
       .eq("status", "paid")
       .neq("fulfillment_status", "canceled")
       // Superset of the window; exact bucketing happens in JS on paid_at ?? created_at.
