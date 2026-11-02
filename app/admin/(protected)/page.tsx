@@ -13,6 +13,7 @@ const QUICK_ACTIONS = [
   { href: "/admin/products/new", label: "Product" },
   { href: "/admin/apparel/new", label: "Apparel" },
   { href: "/admin/blog/new", label: "Blog post" },
+  { href: "/admin/discounts/new", label: "Discount" },
 ];
 
 function TodoRow({ href, children }: { href: string; children: React.ReactNode }) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dayKeyRange, MAX_ROLLUP_DAYS, nightlyDayKeys, rollupDays } from "@/lib/analytics/rollup";
+import { cronAuthorized } from "@/lib/admin/cron-auth";
 
 /**
  * Nightly analytics rollup + raw-event purge (D-140). Scheduled in vercel.json
@@ -26,17 +27,6 @@ const PURGE_BATCH = 5000;
 const TIME_BUDGET_MS = 240_000;
 
 type Db = ReturnType<typeof createAdminClient>;
-
-function authorized(request: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const header = request.headers.get("authorization") ?? "";
-  const expected = `Bearer ${secret}`;
-  if (header.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < header.length; i++) diff |= header.charCodeAt(i) ^ expected.charCodeAt(i);
-  return diff === 0;
-}
 
 async function purgeOld(db: Db, deadline: number) {
   const cutoff = new Date(Date.now() - PURGE_DAYS * 86_400_000).toISOString();
@@ -76,7 +66,7 @@ async function purgeOld(db: Db, deadline: number) {
 }
 
 export async function GET(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!cronAuthorized(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const started = Date.now();
   const url = new URL(request.url);
   const from = url.searchParams.get("from");

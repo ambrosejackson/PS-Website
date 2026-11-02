@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/analytics-rollup",
       "schedule": "10 9 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "37 13 * * 1"
     }
   ]
 }

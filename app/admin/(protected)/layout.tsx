@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdminEmail } from "@/lib/admin/allowlist";
 import { getNavCounts } from "@/lib/admin/nav-counts";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { CommandPalette } from "@/components/admin/CommandPalette";
 
 export default async function AdminLayout({
   children,
@@ -26,6 +27,7 @@ export default async function AdminLayout({
     <div className="flex min-h-screen flex-col bg-neutral-100 md:flex-row">
       <AdminSidebar email={user?.email ?? null} counts={counts} />
       <main className="flex-1 p-4 md:p-8">{children}</main>
+      <CommandPalette />
     </div>
   );
 }

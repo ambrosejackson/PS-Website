@@ -2,32 +2,34 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { money } from "@/lib/commerce/config";
 import { FULFILLMENT_LABEL, FULFILLMENT_TONE, shortOrderId } from "@/components/site/OrderSummary";
+import { applyOrdersFilters, ordersSearch, parseOrdersFilters } from "@/lib/admin/orders-list";
+import { PanelLink } from "@/components/admin/panels";
 
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["new", "placed_with_provider", "packed", "shipped", "delivered", "canceled"] as const;
 
-/** /admin/orders — paid orders, newest first; search by email / id; filter by status (D-041). */
+/** /admin/orders — paid orders, newest first; search by email / id; filter by status (D-041); CSV of the current filter (D-142). */
 export default async function AdminOrdersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; status?: string; all?: string }>;
 }) {
-  const { q = "", status = "", all } = await searchParams;
+  const filters = parseOrdersFilters(await searchParams);
+  const { q, status, all } = filters;
   const db = createAdminClient();
-  let query = db
-    .from("orders")
-    .select("id, created_at, email, customer_name, payment_provider, status, fulfillment_status, total_cents, promo_code, shipping_service, shipping_quote_fallback, ships_after")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  // Default view hides abandoned pending/failed checkouts; ?all=1 shows them.
-  if (!all) query = query.in("status", ["paid", "submitted_to_provider", "shipped", "delivered", "refunded"]);
-  if (status) query = query.eq("fulfillment_status", status);
-  const needle = q.trim().toLowerCase();
-  if (needle) {
-    query = needle.length >= 8 && /^[0-9a-f-]+$/.test(needle) ? query.ilike("id", `${needle}%`) : query.ilike("email", `%${needle}%`);
-  }
+  // Same filter as the CSV export (lib/admin/orders-list.ts); the page shows the newest 200.
+  const query = applyOrdersFilters(
+    db
+      .from("orders")
+      .select("id, created_at, email, customer_name, payment_provider, status, fulfillment_status, total_cents, promo_code, shipping_service, shipping_quote_fallback, ships_after")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    filters,
+  );
   const { data: rows, error } = await query;
+  const search = ordersSearch(filters);
+  const exportHref = `/api/admin/orders/export${search ? `?${search}` : ""}`;
 
   const counts: Record<string, number> = {};
   const { data: countRows } = await db.from("orders").select("fulfillment_status").in("status", ["paid", "submitted_to_provider", "shipped", "delivered"]);
@@ -59,7 +61,7 @@ export default async function AdminOrdersPage({
           ))}
         </select>
         <label className="flex items-center gap-1 text-xs text-neutral-600">
-          <input type="checkbox" name="all" value="1" defaultChecked={!!all} /> include pending / failed
+          <input type="checkbox" name="all" value="1" defaultChecked={all} /> include pending / failed
         </label>
         <button type="submit" className="rounded bg-neutral-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white">
           Filter
@@ -67,6 +69,9 @@ export default async function AdminOrdersPage({
         <Link href="/admin/orders" className="text-xs text-neutral-500 underline">
           Clear
         </Link>
+        <span className="ml-auto">
+          <PanelLink href={exportHref}>Export CSV</PanelLink>
+        </span>
       </form>
 
       {error && <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error.message}</p>}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/admin/allowlist";
-import { getStripe, stripeConfigured } from "@/lib/commerce/stripe";
+import { expireDiscountCode } from "@/lib/commerce/discounts";
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -110,8 +110,8 @@ export async function exportSubscribersCsv(f: SubscriberFilters): Promise<Action
 
 /**
  * Removal request: delete the subscriber row and expire the linked discount
- * code (expires_at = now) + deactivate its Stripe promotion code when one
- * exists and Stripe is configured (stub ids are skipped).
+ * code via the shared helper (expires_at = now + Stripe promotion code
+ * deactivated when one exists; stub ids are skipped) (D-142).
  */
 export async function deleteSubscriber(id: string): Promise<ActionResult<{ stripeDeactivated: boolean }>> {
   if (!(await requireAdmin())) return { ok: false, error: "Unauthorized." };
@@ -120,17 +120,10 @@ export async function deleteSubscriber(id: string): Promise<ActionResult<{ strip
   if (!sub) return { ok: false, error: "Subscriber not found." };
   let stripeDeactivated = false;
   if (sub.discount_code_id) {
-    const { data: dc } = await db.from("discount_codes").select("id, stripe_promotion_code_id, redeemed_at").eq("id", sub.discount_code_id).maybeSingle();
-    if (dc) {
-      await db.from("discount_codes").update({ expires_at: new Date().toISOString() }).eq("id", dc.id);
-      if (dc.stripe_promotion_code_id && !dc.stripe_promotion_code_id.startsWith("stub") && stripeConfigured()) {
-        try {
-          await getStripe().promotionCodes.update(dc.stripe_promotion_code_id, { active: false });
-          stripeDeactivated = true;
-        } catch (e) {
-          console.error("[subscribers] stripe promo deactivate failed:", e instanceof Error ? e.message : e);
-        }
-      }
+    try {
+      stripeDeactivated = (await expireDiscountCode(db, sub.discount_code_id)).stripeDeactivated;
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Could not expire the discount code." };
     }
   }
   const { error } = await db.from("subscribers").delete().eq("id", id);

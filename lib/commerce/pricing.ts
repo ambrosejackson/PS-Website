@@ -145,11 +145,13 @@ export interface ValidPromo {
 }
 
 /**
- * Validate a newsletter code: exists, not redeemed, not expired, and (when we
- * know the email) the customer has no prior paid order. Returns null when no
- * code was supplied; throws PricingError with a customer-safe message otherwise.
- * When Stripe is configured and the row still has the pre-Stripe stub id, the
- * real promotion code is created now so the card rail can use it.
+ * Validate a discount code: exists, not redeemed, not expired, and — for
+ * newsletter codes only (subscriber_id set) — the customer has no prior paid
+ * order when we know the email. Admin-issued codes (subscriber_id NULL, D-142)
+ * carry no first-order rule. Returns null when no code was supplied; throws
+ * PricingError with a customer-safe message otherwise. When Stripe is
+ * configured and the row still has the pre-Stripe stub id, the real promotion
+ * code is created now so the card rail can use it.
  */
 export async function validatePromo(code: string | null | undefined, email: string | null): Promise<ValidPromo | null> {
   const c = (code ?? "").trim().toUpperCase();
@@ -159,7 +161,8 @@ export async function validatePromo(code: string | null | undefined, email: stri
   if (!row) throw new PricingError("That promo code isn't valid.");
   if (row.redeemed_at) throw new PricingError("That promo code has already been used.");
   if (row.expires_at && new Date(row.expires_at) < new Date()) throw new PricingError("That promo code has expired.");
-  if (email) {
+  const isNewsletterCode = row.subscriber_id !== null;
+  if (email && isNewsletterCode) {
     const { count } = await db
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -169,7 +172,12 @@ export async function validatePromo(code: string | null | undefined, email: stri
   }
   let stripeId = row.stripe_promotion_code_id;
   if (stripeId.startsWith("stub") && stripeConfigured()) {
-    stripeId = await createStripePromotionCode(row.code);
+    stripeId = await createStripePromotionCode(
+      row.code,
+      isNewsletterCode
+        ? { kind: "newsletter" }
+        : { kind: "admin", pct: row.pct, expiresAt: row.expires_at ? new Date(row.expires_at) : null },
+    );
     await db.from("discount_codes").update({ stripe_promotion_code_id: stripeId }).eq("id", row.id);
   }
   return { id: row.id, code: row.code, pct: row.pct, stripePromotionCodeId: stripeId };
