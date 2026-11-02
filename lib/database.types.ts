@@ -1160,6 +1160,10 @@ export type Database = {
       }
       orders: {
         Row: {
+          refunded_at: string | null
+          refunded_cents: number
+          web_session_id: string | null
+          web_visitor_id: string | null
           created_at: string
           customer_name: string | null
           discount_cents: number | null
@@ -1191,6 +1195,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          refunded_at?: string | null
+          refunded_cents?: number
+          web_session_id?: string | null
+          web_visitor_id?: string | null
           created_at?: string
           customer_name?: string | null
           discount_cents?: number | null
@@ -1222,6 +1230,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          refunded_at?: string | null
+          refunded_cents?: number
+          web_session_id?: string | null
+          web_visitor_id?: string | null
           created_at?: string
           customer_name?: string | null
           discount_cents?: number | null
@@ -1460,6 +1472,10 @@ export type Database = {
       }
       web_events: {
         Row: {
+          brand: string | null
+          device: string | null
+          props: Json | null
+          visitor_id: string | null
           element: string | null
           event_type: string | null
           id: number
@@ -1470,6 +1486,10 @@ export type Database = {
           utm: Json | null
         }
         Insert: {
+          brand?: string | null
+          device?: string | null
+          props?: Json | null
+          visitor_id?: string | null
           element?: string | null
           event_type?: string | null
           id?: never
@@ -1480,6 +1500,10 @@ export type Database = {
           utm?: Json | null
         }
         Update: {
+          brand?: string | null
+          device?: string | null
+          props?: Json | null
+          visitor_id?: string | null
           element?: string | null
           event_type?: string | null
           id?: never
@@ -1488,6 +1512,36 @@ export type Database = {
           session_id?: string | null
           ts?: string
           utm?: Json | null
+        }
+        Relationships: []
+      }
+      web_events_daily: {
+        Row: {
+          brand: string
+          day: string
+          event_type: string
+          events: number
+          path: string
+          sessions: number
+          visitors: number
+        }
+        Insert: {
+          brand?: string
+          day: string
+          event_type: string
+          events?: number
+          path: string
+          sessions?: number
+          visitors?: number
+        }
+        Update: {
+          brand?: string
+          day?: string
+          event_type?: string
+          events?: number
+          path?: string
+          sessions?: number
+          visitors?: number
         }
         Relationships: []
       }
