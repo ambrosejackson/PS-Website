@@ -18,7 +18,7 @@ import { FALLBACK_HERO, getBrandMerch, getCatalogProducts, getHeroesForPage } fr
  * sections flow as a one-pager.
  */
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 const GOLD = "#b8860b";
 

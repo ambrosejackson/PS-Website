@@ -15,7 +15,7 @@ import { FALLBACK_HERO, getHeroesForPage, getStoreLocations } from "@/lib/data";
  * nav is intentionally not recreated.
  */
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Higher Self",

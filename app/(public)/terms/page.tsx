@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SimplePage } from "@/components/site/SimplePage";
 
-export const revalidate = 300;
+export const revalidate = 86400;
 export const metadata: Metadata = { title: "Terms of Use" };
 
 export default function TermsPage() {

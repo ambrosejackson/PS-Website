@@ -17,7 +17,7 @@ import { InstagramIcon } from "@/components/site/social-icons";
  * compliance paragraph kept above the global footer (D-010).
  */
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Savage Squad Strains",

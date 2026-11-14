@@ -4,7 +4,7 @@ import { ProductCatalog } from "@/components/site/ProductCatalog";
 import { Footer } from "@/components/site/Footer";
 import { getCatalogProducts, getHeroesForPage } from "@/lib/data";
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Products",

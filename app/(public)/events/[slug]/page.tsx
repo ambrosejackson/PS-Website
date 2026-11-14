@@ -8,8 +8,10 @@ import { getDispensaryOptions, getEventBySlug, getPlateStats, rsvpIsOpen } from 
 import { eventContent } from "@/lib/events/content";
 import { eventDate, eventTimeRange, eventUrl, siteUrl } from "@/lib/events/format";
 
-// Plates-left changes as people RSVP; a short ISR window keeps it close to live.
-export const revalidate = 30;
+// This route has no generateStaticParams, so it renders on demand and plates-left is
+// live; `revalidate` only applies if the route is ever made static. The RSVP / cancel
+// actions and admin saves already revalidate the path for that case (D-143).
+export const revalidate = 3600;
 
 type Params = { params: Promise<{ slug: string }> };
 

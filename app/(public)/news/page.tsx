@@ -4,7 +4,7 @@ import { HeroSwitcher } from "@/components/site/HeroSwitcher";
 import { Footer } from "@/components/site/Footer";
 import { getHeroesForPage, getPublishedPosts } from "@/lib/data";
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "In the News",

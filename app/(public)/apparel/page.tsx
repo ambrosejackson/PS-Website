@@ -9,7 +9,7 @@ import { ShippingLine } from "@/components/shop/ShippingLine";
 import { ShopSubNav } from "@/components/shop/ShopSubNav";
 import { getApparelHome } from "@/lib/merch/queries";
 
-export const revalidate = 300;
+export const revalidate = 86400;
 export const metadata: Metadata = {
   title: "Apparel",
   description:
