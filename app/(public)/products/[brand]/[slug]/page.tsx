@@ -35,7 +35,7 @@ import { strainDisplayName } from "@/lib/strainKey";
  * NEVER prices (guardrail #2).
  */
 
-export const revalidate = 300;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const products = await getCatalogProducts();

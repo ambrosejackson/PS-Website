@@ -12,7 +12,7 @@ import { getHeroesForPage, getPostBySlug, getPublishedPosts } from "@/lib/data";
  * Article structured data; body rendered from TipTap JSON (or legacy text).
  * Revalidated on publish/save via lib/revalidate ("blog" target).
  */
-export const revalidate = 300;
+export const revalidate = 86400;
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://privatestock.co";
 

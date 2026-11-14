@@ -4,7 +4,7 @@ import { RewardsHero } from "@/components/site/RewardsHero";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { Footer } from "@/components/site/Footer";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Your Rewards",

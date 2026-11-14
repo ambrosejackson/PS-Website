@@ -20,7 +20,7 @@ import {
   getSocialImages,
 } from "@/lib/data";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export default async function LandingPage() {
   const [heroes, banners, products, merch, posts, social] = await Promise.all([

@@ -44,7 +44,8 @@ export async function getHeroesForPage(page: string): Promise<HeroAsset[]> {
     .select("*")
     .eq("page", page)
     .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
   if (error || !data) return [];
   return data;
 }
@@ -71,7 +72,8 @@ export async function getBanners(): Promise<BannerSlide[]> {
     .eq("is_active", true)
     .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
     .or(`ends_at.is.null,ends_at.gte.${nowIso}`)
-    .order("sort_order", { ascending: true });
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
   if (error || !data) return [];
   return data;
 }
@@ -86,7 +88,9 @@ export async function getSocialImages(brand: string | null = null): Promise<Soci
   if (!supabase) return [];
   let query = supabase.from("content_social_images").select("*").eq("is_active", true);
   query = brand === null ? query.is("brand", null) : query.eq("brand", brand);
-  const { data, error } = await query.order("sort_order", { ascending: true });
+  const { data, error } = await query
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
   if (error || !data) return [];
   return data;
 }
@@ -98,7 +102,8 @@ export async function getPublishedPosts(limit?: number): Promise<BlogPost[]> {
     .from("blog_posts")
     .select("*")
     .eq("is_published", true)
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .order("id", { ascending: true });
   if (limit) query = query.limit(limit);
   const { data, error } = await query;
   if (error || !data) return [];
@@ -128,7 +133,8 @@ export async function getCatalogProducts(brand?: string): Promise<CatalogProduct
     .eq("is_active", true)
     .order("brand", { ascending: true })
     .order("sort_order", { ascending: true, nullsFirst: false })
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true });
   if (brand) query = query.eq("brand", brand);
   const { data, error } = await query;
   if (error || !data) return [];
@@ -157,7 +163,8 @@ export async function getMerchProducts(): Promise<MerchProduct[]> {
     .from("merch_products")
     .select("*")
     .eq("is_active", true)
-    .order("sort_order", { ascending: true, nullsFirst: false });
+    .order("sort_order", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true });
   if (error || !data) return [];
   return data;
 }
@@ -171,7 +178,11 @@ export async function getMerchListings(): Promise<MerchListing[]> {
     .select("*, merch_variants(*)")
     .eq("is_active", true)
     .order("sort_order", { ascending: true, nullsFirst: false })
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true })
+    .order("color", { referencedTable: "merch_variants", ascending: true })
+    .order("size", { referencedTable: "merch_variants", ascending: true })
+    .order("id", { referencedTable: "merch_variants", ascending: true });
   if (error || !data) return [];
   return data as MerchListing[];
 }
@@ -189,7 +200,11 @@ export async function getBrandMerch(brandName: string): Promise<MerchListing[]> 
     .eq("is_active", true)
     .eq("brand", brandName)
     .order("sort_order", { ascending: true, nullsFirst: false })
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true })
+    .order("color", { referencedTable: "merch_variants", ascending: true })
+    .order("size", { referencedTable: "merch_variants", ascending: true })
+    .order("id", { referencedTable: "merch_variants", ascending: true });
   if (error || !data) return [];
   return data as MerchListing[];
 }
@@ -202,6 +217,9 @@ export async function getMerchListingBySlug(slug: string): Promise<MerchListing 
     .select("*, merch_variants(*)")
     .eq("slug", slug)
     .eq("is_active", true)
+    .order("color", { referencedTable: "merch_variants", ascending: true })
+    .order("size", { referencedTable: "merch_variants", ascending: true })
+    .order("id", { referencedTable: "merch_variants", ascending: true })
     .maybeSingle();
   return (data as MerchListing | null) ?? null;
 }
@@ -229,7 +247,8 @@ export async function getStoreLocations(): Promise<StoreLocation[]> {
   const { data, error } = await supabase
     .from("store_locations")
     .select("*")
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true });
   if (error || !data) return [];
   return data;
 }
@@ -251,7 +270,11 @@ export async function getStoreLocationsWithProducts(): Promise<StoreWithProducts
   const { data, error } = await supabase
     .from("store_locations")
     .select("*, product_availability(*)")
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true })
+    .order("brand", { referencedTable: "product_availability", ascending: true })
+    .order("product_name", { referencedTable: "product_availability", ascending: true })
+    .order("variant", { referencedTable: "product_availability", ascending: true });
   if (error || !data) return [];
   return data.map((row) => {
     const { product_availability: products, ...store } = row as StoreLocation & {
@@ -305,7 +328,10 @@ export async function getAvailabilityForProduct(
     .from("product_availability")
     .select("*, store_locations(*)")
     .eq("brand", product.brand)
-    .eq("strain_key", key);
+    .eq("strain_key", key)
+    .order("store_id", { ascending: true })
+    .order("product_name", { ascending: true })
+    .order("variant", { ascending: true });
   if (error || !data) return [];
 
   const page = pageSizeSignature(product);
@@ -358,7 +384,8 @@ export async function getStoresForBrand(brand: string): Promise<StoreLocation[]>
     .from("store_locations")
     .select("*")
     .contains("brands", [brand])
-    .order("name");
+    .order("name")
+    .order("id");
   if (error || !data) return [];
   return data;
 }
