@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { send } from "@/lib/email";
@@ -114,6 +115,9 @@ export async function rsvpAction(_prev: RsvpFormState, fd: FormData): Promise<Rs
   }
   const c = claim as { id: string; ticket_token: string; plate_status: PlateStatus; plate_waitlist_position: number | null; duplicate: boolean; upgraded?: boolean };
   const upgraded = c.upgraded === true;
+  // Keeps the event page's plates-left line current if that route is ever statically
+  // cached (D-143; today it renders on demand). A plain duplicate changes no counts.
+  if (!c.duplicate || upgraded) revalidatePath(`/events/${ev.slug}`);
 
   const { data: row } = await admin.from("event_rsvps").select("*").eq("id", c.id).single();
 
@@ -160,6 +164,8 @@ export async function cancelRsvpAction(_prev: TicketActionState, fd: FormData): 
   const { data: row } = await admin.from("event_rsvps").select("*, events(*)").eq("ticket_token", token).single();
   if (row) {
     const { events: ev, ...rsvp } = row as RsvpRow & { events: EventRow };
+    // A cancellation can free a plate: same on-demand refresh as rsvpAction (D-143).
+    revalidatePath(`/events/${ev.slug}`);
     after(() => syncRsvp(admin, ev, rsvp));
   }
   return { status: "done", message: "Your RSVP is cancelled. Thanks for letting us know." };

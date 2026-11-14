@@ -44,7 +44,8 @@ export async function getActiveCollections(): Promise<ShopCollection[]> {
     .or(`starts_at.is.null,starts_at.lte.${now}`)
     .or(`ends_at.is.null,ends_at.gte.${now}`)
     .order("sort_order", { ascending: true })
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .order("id", { ascending: true });
   return data ?? [];
 }
 
@@ -94,6 +95,10 @@ export async function getProductsRange(
     .eq("is_active", true)
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("released_at", { ascending: false })
+    .order("id", { ascending: true })
+    .order("color", { referencedTable: "merch_variants", ascending: true })
+    .order("size", { referencedTable: "merch_variants", ascending: true })
+    .order("id", { referencedTable: "merch_variants", ascending: true })
     .range(from, to);
   if (filter.slug !== SHOP_ALL_SLUG) {
     if (!collectionId) return { products: [], total: 0 };
@@ -137,6 +142,7 @@ export async function getCollectionPage(filter: ProductFilter & { page?: number 
           .eq("collection_id", collection.id)
           .eq("is_active", true)
           .order("insert_after", { ascending: true })
+          .order("id", { ascending: true })
       : Promise.resolve({ data: [] as ShopBanner[] }),
   ]);
   return {
@@ -169,7 +175,7 @@ export async function getApparelHome(): Promise<ApparelHome> {
     supabase.from("merch_settings").select("*").eq("id", true).maybeSingle(),
     getHeroesForPage("/apparel"),
     getActiveCollections(),
-    supabase.from("merch_tab_tiles").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
+    supabase.from("merch_tab_tiles").select("*").eq("is_active", true).order("sort_order", { ascending: true }).order("tab", { ascending: true }),
   ]);
   const settings = settingsRes.data ?? null;
   const count = Math.min(24, Math.max(4, settings?.new_releases_count ?? 12));
@@ -184,6 +190,10 @@ export async function getApparelHome(): Promise<ApparelHome> {
       .eq("is_active", true)
       .order("released_at", { ascending: false })
       .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .order("color", { referencedTable: "merch_variants", ascending: true })
+      .order("size", { referencedTable: "merch_variants", ascending: true })
+      .order("id", { referencedTable: "merch_variants", ascending: true })
       .limit(count),
     featuredCollection
       ? getProductsRange({ slug: featuredCollection.slug }, 0, FEATURED_LIMIT - 1, featuredCollection.id).then((r) => r.products)

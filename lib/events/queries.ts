@@ -17,7 +17,8 @@ export async function getDispensaryOptions(): Promise<DispensaryOption[]> {
     .from("dispensaries")
     .select("psm_account_id, name, city")
     .eq("is_active", true)
-    .order("name");
+    .order("name")
+    .order("psm_account_id");
   return (data ?? []).map((d) => ({ id: d.psm_account_id, name: d.name, city: d.city ?? "" }));
 }
 
