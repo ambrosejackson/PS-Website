@@ -38,6 +38,8 @@ export interface CartLine {
   qty: number;
   /** Pre-order: ISO date the product ships by (D-123). Display only. */
   shipsAfter?: string | null;
+  /** Made-to-order line resolved server-side for POD products (D-147). Display only; null/absent = in-house. */
+  madeToOrder?: string | null;
 }
 
 export type ShippingStatus = "idle" | "loading" | "ready" | "error";

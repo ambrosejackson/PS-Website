@@ -50,6 +50,7 @@ export function QuickAddModal({
         variantId: picked.variant.id,
         productId: product.id,
         shipsAfter: product.ships_after ?? null,
+        madeToOrder: product.madeToOrder ?? null,
         slug: product.slug,
         name: product.name,
         variantLabel: variantLabel(picked.variant),

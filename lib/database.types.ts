@@ -765,6 +765,36 @@ export type Database = {
         }
         Relationships: []
       }
+      fulfillment_providers: {
+        Row: {
+          dashboard_url: string | null
+          is_active: boolean
+          key: string
+          label: string
+          production_days_max: number | null
+          production_days_min: number | null
+          updated_at: string
+        }
+        Insert: {
+          dashboard_url?: string | null
+          is_active?: boolean
+          key: string
+          label: string
+          production_days_max?: number | null
+          production_days_min?: number | null
+          updated_at?: string
+        }
+        Update: {
+          dashboard_url?: string | null
+          is_active?: boolean
+          key?: string
+          label?: string
+          production_days_max?: number | null
+          production_days_min?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       merch_collection_banners: {
         Row: {
           alt: string | null
@@ -876,6 +906,7 @@ export type Database = {
           provider_product_id: string | null
           released_at: string
           ships_after: string | null
+          size_chart_image: Json | null
           slug: string
           sort_order: number | null
           updated_at: string
@@ -895,6 +926,7 @@ export type Database = {
           provider_product_id?: string | null
           released_at?: string
           ships_after?: string | null
+          size_chart_image?: Json | null
           slug: string
           sort_order?: number | null
           updated_at?: string
@@ -914,6 +946,7 @@ export type Database = {
           provider_product_id?: string | null
           released_at?: string
           ships_after?: string | null
+          size_chart_image?: Json | null
           slug?: string
           sort_order?: number | null
           updated_at?: string

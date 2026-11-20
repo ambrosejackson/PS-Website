@@ -19,6 +19,7 @@ import {
   Shirt,
   ShoppingBag,
   Ticket,
+  Truck,
   UserCheck,
   Users,
   X,
@@ -65,6 +66,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { href: "/admin/products", label: "Products", icon: Package },
       { href: "/admin/apparel", label: "Apparel", icon: Shirt },
+      { href: "/admin/fulfillment", label: "Fulfillment", icon: Truck },
     ],
   },
   {

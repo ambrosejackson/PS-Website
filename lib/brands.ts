@@ -61,6 +61,8 @@ export const BRANDS: readonly Brand[] = [
 ] as const;
 
 export const BRAND_SLUGS = BRANDS.map((b) => b.slug);
+/** `?brand=` value for house-branded merch (merch_products.brand IS NULL). Pure so client chips can import it. */
+export const HOUSE_BRAND_SLUG = "private-stock";
 export const BRAND_NAMES = BRANDS.map((b) => b.name);
 
 export function brandBySlug(slug: string): Brand | undefined {

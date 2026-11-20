@@ -60,6 +60,7 @@ export function ProductCard({
       variantId: o.variant.id,
       productId: product.id,
       shipsAfter: product.ships_after ?? null,
+      madeToOrder: product.madeToOrder ?? null,
       slug: product.slug,
       name: product.name,
       variantLabel: variantLabel(o.variant),

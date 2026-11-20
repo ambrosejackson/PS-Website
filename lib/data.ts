@@ -1,40 +1,59 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Database } from "@/lib/database.types";
+import { FALLBACK_HERO, type HeroAsset } from "@/lib/hero-fallback";
+import { sizeChartImage, type MerchImage } from "@/lib/merchImages";
+import { isPod, madeToOrderLine } from "@/lib/commerce/providers";
+import { getProviderMap } from "@/lib/commerce/providers.server";
 import { isAllowlistedBrand } from "@/lib/brands";
 import { showRealAvailability } from "@/lib/showRealAvailability";
 import { strainKey } from "@/lib/strainKey";
 
 type Tables = Database["public"]["Tables"];
-export type HeroAsset = Tables["content_heroes"]["Row"];
+export { FALLBACK_HERO };
+export type { HeroAsset };
 export type BannerSlide = Tables["content_banners"]["Row"];
 export type SocialImage = Tables["content_social_images"]["Row"];
 export type BlogPost = Tables["blog_posts"]["Row"];
 export type CatalogProduct = Tables["catalog_products"]["Row"];
 export type MerchProduct = Tables["merch_products"]["Row"];
 export type MerchVariant = Tables["merch_variants"]["Row"];
-/** Storefront shape: product + its variants (active products only; variants filtered client-side by is_active). */
-export type MerchListing = MerchProduct & { merch_variants: MerchVariant[] };
+/** Raw row + variants exactly as the DB returns them. Server-side only — never hand this to a client component. */
+export type MerchListingRaw = MerchProduct & { merch_variants: MerchVariant[] };
+export type MerchVariantPublic = Omit<MerchVariant, "provider_variant_id">;
+/**
+ * Storefront shape: product + its variants (active products only; variants filtered client-side by is_active).
+ * Provider data is stripped (D-147): the browser receives only `madeToOrder` — the finished
+ * line string resolved server-side, null for in-house products — and `sizeChart` (D-149).
+ */
+export type MerchListing = Omit<MerchProduct, "fulfillment_provider" | "provider_product_id" | "size_chart_image"> & {
+  merch_variants: MerchVariantPublic[];
+  madeToOrder: string | null;
+  sizeChart: MerchImage | null;
+};
+
+/**
+ * Strip vendor fields from storefront rows and attach the resolved made-to-order line.
+ * The provider table is read once per call, and only when at least one row is POD.
+ */
+export async function toPublicListings(rows: MerchListingRaw[]): Promise<MerchListing[]> {
+  const providers = rows.some((r) => isPod(r.fulfillment_provider)) ? await getProviderMap() : null;
+  return rows.map((row) => {
+    const { fulfillment_provider, provider_product_id, size_chart_image, merch_variants, ...rest } = row;
+    void provider_product_id;
+    return {
+      ...rest,
+      merch_variants: (merch_variants ?? []).map((v) => {
+        const { provider_variant_id, ...pub } = v;
+        void provider_variant_id;
+        return pub;
+      }),
+      madeToOrder: isPod(fulfillment_provider) ? madeToOrderLine(providers?.get(fulfillment_provider) ?? null) : null,
+      sizeChart: sizeChartImage(size_chart_image),
+    };
+  });
+}
 export type StoreLocation = Tables["store_locations"]["Row"];
 export type ProductAvailability = Tables["product_availability"]["Row"];
-
-/** Fallback default hero when the DB is unreachable or a page has no rows yet. */
-export const FALLBACK_HERO: HeroAsset = {
-  id: "fallback",
-  page: "/",
-  nav_target: null,
-  media_url: "/placeholders/hero-default.webp",
-  media_type: "image",
-  poster_url: null,
-  media_url_mobile: null,
-  has_audio: false,
-  audio_autoplay: false,
-  audio_volume: 70,
-  theme: "dark",
-  video_loop: true,
-  is_default: true,
-  sort_order: 0,
-  is_active: true,
-};
 
 export async function getHeroesForPage(page: string): Promise<HeroAsset[]> {
   const supabase = createPublicClient();
@@ -184,7 +203,7 @@ export async function getMerchListings(): Promise<MerchListing[]> {
     .order("size", { referencedTable: "merch_variants", ascending: true })
     .order("id", { referencedTable: "merch_variants", ascending: true });
   if (error || !data) return [];
-  return data as MerchListing[];
+  return toPublicListings(data as MerchListingRaw[]);
 }
 
 /**
@@ -206,7 +225,7 @@ export async function getBrandMerch(brandName: string): Promise<MerchListing[]> 
     .order("size", { referencedTable: "merch_variants", ascending: true })
     .order("id", { referencedTable: "merch_variants", ascending: true });
   if (error || !data) return [];
-  return data as MerchListing[];
+  return toPublicListings(data as MerchListingRaw[]);
 }
 
 export async function getMerchListingBySlug(slug: string): Promise<MerchListing | null> {
@@ -221,7 +240,8 @@ export async function getMerchListingBySlug(slug: string): Promise<MerchListing 
     .order("size", { referencedTable: "merch_variants", ascending: true })
     .order("id", { referencedTable: "merch_variants", ascending: true })
     .maybeSingle();
-  return (data as MerchListing | null) ?? null;
+  if (!data) return null;
+  return (await toPublicListings([data as MerchListingRaw]))[0] ?? null;
 }
 
 /** Lowest active-variant price in cents, or null when the product has no purchasable variant. */

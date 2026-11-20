@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { BRANDS } from "@/lib/brands";
+import { BRANDS, HOUSE_BRAND_SLUG } from "@/lib/brands";
 import { TABS } from "@/lib/merchCategories";
-import { HOUSE_BRAND_SLUG } from "@/lib/merch/queries";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 export type SubNavCollection = { name: string; slug: string };

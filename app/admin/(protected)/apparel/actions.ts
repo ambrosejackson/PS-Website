@@ -8,13 +8,13 @@ import { revalidateFor } from "@/lib/revalidate";
 import { slugify } from "@/lib/slug";
 import { isCategory, RESERVED_PRODUCT_SLUGS } from "@/lib/merchCategories";
 import { normalizeImages, type MerchImage } from "@/lib/merchImages";
-import type { Database } from "@/lib/database.types";
+import type { Database, Json } from "@/lib/database.types";
 
 type MerchRow = Database["public"]["Tables"]["merch_products"]["Row"];
 type VariantRow = Database["public"]["Tables"]["merch_variants"]["Row"];
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
-import { FULFILLMENT_PROVIDERS, type FulfillmentProvider } from "./apparel-config";
+import { isPod, isProviderKey, type ProviderKey } from "@/lib/commerce/providers";
 
 async function requireAdmin(): Promise<boolean> {
   const supabase = await createClient();
@@ -91,6 +91,8 @@ export interface VariantInput {
   length_in?: string;
   width_in?: string;
   height_in?: string;
+  /** POD only: how the vendor names this size / colour, e.g. "Black / XL" (D-145). Free text. */
+  provider_variant_id?: string;
 }
 
 export interface MerchInput {
@@ -102,7 +104,11 @@ export interface MerchInput {
   brand: string | null;
   /** Ordered; tagged per docs/MERCH-MEDIA.md. */
   images: MerchImage[];
-  fulfillment_provider: FulfillmentProvider;
+  fulfillment_provider: ProviderKey;
+  /** POD only: vendor product URL or ID (free text). Kept when switching back to in-house. */
+  provider_product_id: string;
+  /** One image in the `images` entry shape; null = remove; undefined = unchanged (D-149). */
+  size_chart_image?: MerchImage | null;
   is_active: boolean;
   sort_order: number | null;
   collection_id: string | null;
@@ -151,8 +157,32 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
   }
   if (input.brand && !brandByName(input.brand)) return { ok: false, error: "Brand must be Private Stock or an allowlisted brand." };
   const brand = input.brand ? brandByName(input.brand)!.name : null;
-  if (!FULFILLMENT_PROVIDERS.includes(input.fulfillment_provider)) {
-    return { ok: false, error: "Fulfillment provider must be self, printify or tapstitch." };
+  if (!isProviderKey(input.fulfillment_provider)) return { ok: false, error: "Pick a fulfillment option from the list." };
+  if (isPod(input.fulfillment_provider)) {
+    // The vendor must exist in fulfillment_providers; an inactive one is allowed only if the product already uses it.
+    const [{ data: prov }, { data: current }] = await Promise.all([
+      db.from("fulfillment_providers").select("key, is_active").eq("key", input.fulfillment_provider).maybeSingle(),
+      input.id
+        ? db.from("merch_products").select("fulfillment_provider").eq("id", input.id).maybeSingle()
+        : Promise.resolve({ data: null as { fulfillment_provider: string } | null }),
+    ]);
+    if (!prov) {
+      return { ok: false, error: "That vendor is not set up — check /admin/fulfillment (migration 20261120120000_pod_providers.sql must be applied)." };
+    }
+    if (!prov.is_active && current?.fulfillment_provider !== input.fulfillment_provider) {
+      return { ok: false, error: "That vendor is inactive. Re-activate it under Fulfillment or pick another option." };
+    }
+  }
+  const providerProductId = (input.provider_product_id ?? "").trim().slice(0, 500) || null;
+  // D-149: undefined = leave the column alone (also keeps ordinary saves working before the migration).
+  let sizeChart: Json | null | undefined;
+  if (input.size_chart_image !== undefined) {
+    if (input.size_chart_image === null) sizeChart = null;
+    else {
+      const [img] = normalizeImages([input.size_chart_image]);
+      if (!img || !/^https?:\/\//.test(img.url)) return { ok: false, error: "Upload the size chart image first." };
+      sizeChart = { url: img.url, ...(img.alt ? { alt: img.alt } : {}) };
+    }
   }
   if (input.category && !isCategory(input.category)) return { ok: false, error: "Pick a category from the list." };
   const threshold = Math.round(Number(input.low_stock_threshold));
@@ -195,6 +225,7 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     length_in: number | null;
     width_in: number | null;
     height_in: number | null;
+    provider_variant_id: string | null;
   }[] = [];
   const skus = new Set<string>();
   for (const v of input.variants ?? []) {
@@ -227,6 +258,7 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
       length_in: measures.length_in as number | null,
       width_in: measures.width_in as number | null,
       height_in: measures.height_in as number | null,
+      provider_variant_id: (v.provider_variant_id ?? "").trim().slice(0, 200) || null,
     });
   }
 
@@ -237,6 +269,8 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
     brand,
     images: images as unknown as Database["public"]["Tables"]["merch_products"]["Insert"]["images"],
     fulfillment_provider: input.fulfillment_provider,
+    provider_product_id: providerProductId,
+    ...(sizeChart !== undefined ? { size_chart_image: sizeChart } : {}),
     is_active: !!input.is_active,
     sort_order: input.sort_order ?? null,
     collection_id: input.collection_id || null,
@@ -294,6 +328,7 @@ export async function saveMerch(input: MerchInput): Promise<ActionResult<{ id: s
       length_in: v.length_in,
       width_in: v.width_in,
       height_in: v.height_in,
+      provider_variant_id: v.provider_variant_id,
     };
     if (v.id) {
       const { error } = await db.from("merch_variants").update(row).eq("id", v.id).eq("product_id", productId);

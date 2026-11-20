@@ -1,6 +1,6 @@
 import { createPublicClient } from "@/lib/supabase/public";
-import { FALLBACK_HERO, getHeroesForPage, type HeroAsset, type MerchListing } from "@/lib/data";
-import { brandBySlug } from "@/lib/brands";
+import { FALLBACK_HERO, getHeroesForPage, toPublicListings, type HeroAsset, type MerchListing, type MerchListingRaw } from "@/lib/data";
+import { brandBySlug, HOUSE_BRAND_SLUG } from "@/lib/brands";
 import { categoriesForTab, isTab } from "@/lib/merchCategories";
 import type { Database } from "@/lib/database.types";
 
@@ -23,8 +23,7 @@ export type ShopSettings = Tables["merch_settings"]["Row"];
 export const PAGE_SIZE = 24;
 export const FEATURED_LIMIT = 16;
 export const SHOP_ALL_SLUG = "all";
-/** `?brand=` value for house-branded products (merch_products.brand IS NULL). */
-export const HOUSE_BRAND_SLUG = "private-stock";
+export { HOUSE_BRAND_SLUG };
 
 const PRODUCT_SELECT = "*, merch_variants(*)";
 
@@ -112,7 +111,7 @@ export async function getProductsRange(
   else if (brand) q = q.eq("brand", brand);
   const { data, count, error } = await q;
   if (error || !data) return { products: [], total: 0 };
-  return { products: data as ShopProduct[], total: count ?? data.length };
+  return { products: await toPublicListings(data as MerchListingRaw[]), total: count ?? data.length };
 }
 
 export interface CollectionPage {
@@ -203,7 +202,7 @@ export async function getApparelHome(): Promise<ApparelHome> {
   return {
     settings,
     hero: heroes.length ? heroes : [FALLBACK_HERO],
-    newReleases: (newReleasesRes.data ?? []) as ShopProduct[],
+    newReleases: await toPublicListings((newReleasesRes.data ?? []) as MerchListingRaw[]),
     featured: featuredCollection ? { collection: featuredCollection, products: featuredProducts } : null,
     // Carousel: never the reserved row, and a card needs a cover.
     collections: collections.filter((c) => c.slug !== SHOP_ALL_SLUG && !!c.cover_image_url),

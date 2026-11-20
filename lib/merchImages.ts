@@ -54,6 +54,11 @@ export function normalizeImages(raw: unknown): MerchImage[] {
   return out;
 }
 
+/** `merch_products.size_chart_image` (D-149): ONE entry in the `images` shape, or null. */
+export function sizeChartImage(raw: unknown): MerchImage | null {
+  return raw == null ? null : (normalizeImages([raw])[0] ?? null);
+}
+
 /** Images tagged with a colour (case-insensitive). Empty when none are tagged. */
 export function imagesForColor(images: MerchImage[], color: string | null | undefined): MerchImage[] {
   const c = norm(color);

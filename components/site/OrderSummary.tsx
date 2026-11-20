@@ -1,4 +1,5 @@
 import { money } from "@/lib/commerce/config";
+import { isPod } from "@/lib/commerce/providers";
 import type { OrderItemRow, OrderWithItems, ShippingAddressJson } from "@/lib/commerce/orders";
 
 /** Shared order renderer (customer page + admin detail): items, totals, address. */
@@ -34,8 +35,8 @@ export function addressLines(a: ShippingAddressJson | null | undefined): string[
 
 export function ProviderTag({ provider }: { provider: string | null }) {
   const p = provider ?? "self";
-  const cls =
-    p === "printify" ? "bg-blue-100 text-blue-900" : p === "tapstitch" ? "bg-pink-100 text-pink-900" : "bg-green-100 text-green-900";
+  // Admin-only (showProvider): POD vendors are one tone, in-house another.
+  const cls = isPod(p) ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900";
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${cls}`}>{p}</span>;
 }
 
