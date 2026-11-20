@@ -7,8 +7,12 @@
  * Both shapes stay valid forever; everything reads through `normalizeImages`
  * so no component does index arithmetic on the raw column.
  *
+ * `role='primary'` is LEGACY (D-144): still read, never written by the admin.
+ * Order is the source of truth — images[0] is the cover, and the first image
+ * tagged with a colour is that colour's main image.
+ *
  * Resolution rules (D-073, reference-driven per D-081):
- *   card primary  = first role='primary', else images[0]
+ *   card primary  = first role='primary' (legacy), else images[0]
  *   card hover    = first role='hover' ONLY — no tag, no crossfade (D-081)
  *   colour chosen = resolve primary/hover among images whose `color` matches
  *                   first, then fall back to the untagged rules above.
@@ -76,12 +80,22 @@ export function hoverImage(images: MerchImage[], color?: string | null): MerchIm
   return pool.find((i) => i.role === "hover" && i.url !== primary?.url) ?? null;
 }
 
-/** PDP gallery: the selected colour's images first (if any), then the rest, de-duplicated by URL. */
+/** Lift the first image tagged `primary` (what `primaryImage()` picks) to the front; order is otherwise untouched. */
+function primaryFirst(list: MerchImage[]): MerchImage[] {
+  const idx = list.findIndex((i) => i.role === "primary");
+  return idx <= 0 ? list : [list[idx], ...list.slice(0, idx), ...list.slice(idx + 1)];
+}
+
+/**
+ * PDP gallery: the selected colour's images first (if any), then the rest, de-duplicated by URL.
+ * Within each group a legacy `role='primary'` image leads (D-144 backstop so the product page
+ * agrees with `primaryImage()` on old rows); order is otherwise preserved.
+ */
 export function galleryImages(images: MerchImage[], color?: string | null): MerchImage[] {
   const scoped = imagesForColor(images, color);
   const seen = new Set<string>();
   const out: MerchImage[] = [];
-  for (const i of [...scoped, ...images]) {
+  for (const i of [...primaryFirst(scoped), ...primaryFirst(images)]) {
     if (seen.has(i.url)) continue;
     seen.add(i.url);
     out.push(i);
