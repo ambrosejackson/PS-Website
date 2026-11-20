@@ -6,7 +6,7 @@ import { BRANDS } from "@/lib/brands";
 import { slugify } from "@/lib/slug";
 import { AdminUploader } from "@/lib/admin/upload";
 import { CATEGORIES, RESERVED_PRODUCT_SLUGS, tabLabel } from "@/lib/merchCategories";
-import { normalizeImages, type MerchImage, type MerchImageRole } from "@/lib/merchImages";
+import { normalizeImages, sizeChartImage, type MerchImage, type MerchImageRole } from "@/lib/merchImages";
 import { STOCK_BADGE_LABEL, stockBadge } from "@/lib/merchStock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,13 +19,8 @@ import {
   type VariantInput,
   type VariantRow,
 } from "./actions";
-import {
-  FULFILLMENT_LABEL,
-  FULFILLMENT_PROVIDERS,
-  HOUSE_BRAND,
-  suggestSku,
-  type FulfillmentProvider,
-} from "./apparel-config";
+import { HOUSE_BRAND, suggestSku, type ProviderOption } from "./apparel-config";
+import { isPod, isProviderKey, type ProviderKey } from "@/lib/commerce/providers";
 
 export type CollectionOption = { id: string; name: string; slug: string };
 
@@ -45,10 +40,13 @@ export function ApparelEditor({
   product,
   variants,
   collections,
+  providers,
 }: {
   product: MerchRow | null;
   variants: VariantRow[];
   collections: CollectionOption[];
+  /** In-house + the fulfillment_providers rows (D-146); labels are admin-only. */
+  providers: ProviderOption[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -63,11 +61,13 @@ export function ApparelEditor({
   const [images, setImages] = useState<ImageDraft[]>(() =>
     normalizeImages(product?.images).map((i, n) => ({ ...i, key: `${n}-${i.url}` })),
   );
-  const [provider, setProvider] = useState<FulfillmentProvider>(
-    (FULFILLMENT_PROVIDERS as readonly string[]).includes(product?.fulfillment_provider ?? "")
-      ? (product!.fulfillment_provider as FulfillmentProvider)
-      : "self",
-  );
+  const initialProvider = product?.fulfillment_provider;
+  const [provider, setProvider] = useState<ProviderKey>(isProviderKey(initialProvider) ? initialProvider : "self");
+  const [providerProductId, setProviderProductId] = useState(product?.provider_product_id ?? "");
+  // D-149: one optional size-chart image; `dirty` gates whether the save touches the column.
+  const [sizeChart, setSizeChart] = useState<MerchImage | null>(() => sizeChartImage(product?.size_chart_image));
+  const [sizeChartDirty, setSizeChartDirty] = useState(false);
+  const pod = isPod(provider);
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [sortOrder, setSortOrder] = useState<string>(product?.sort_order?.toString() ?? "");
   const [collectionId, setCollectionId] = useState<string>(product?.collection_id ?? "");
@@ -90,6 +90,7 @@ export function ApparelEditor({
       length_in: m(v.length_in),
       width_in: m(v.width_in),
       height_in: m(v.height_in),
+      provider_variant_id: v.provider_variant_id ?? "",
       skuTouched: true,
     })),
   );
@@ -177,6 +178,7 @@ export function ApparelEditor({
         length_in: "",
         width_in: "",
         height_in: "",
+        provider_variant_id: "",
         skuTouched: false,
       },
     ]);
@@ -241,6 +243,8 @@ export function ApparelEditor({
       // D-144: `primary` is legacy — read for old rows, never written back by the admin.
       images: images.map((i) => ({ url: i.url, alt: i.alt, color: i.color, role: i.role === "primary" ? null : i.role })),
       fulfillment_provider: provider,
+      provider_product_id: providerProductId,
+      ...(sizeChartDirty ? { size_chart_image: sizeChart } : {}),
       is_active: isActive,
       sort_order: sortOrder.trim() ? Number(sortOrder) : null,
       collection_id: collectionId || null,
@@ -260,6 +264,7 @@ export function ApparelEditor({
         length_in: r.length_in,
         width_in: r.width_in,
         height_in: r.height_in,
+        provider_variant_id: r.provider_variant_id,
       })),
     };
     start(async () => {
@@ -322,13 +327,30 @@ export function ApparelEditor({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="m-provider">Who fulfills this when ordered</Label>
-              <select id="m-provider" value={provider} onChange={(e) => setProvider(e.target.value as FulfillmentProvider)} className={selectCls}>
-                {FULFILLMENT_PROVIDERS.map((p) => (
-                  <option key={p} value={p}>
-                    {FULFILLMENT_LABEL[p]}
+              <select id="m-provider" value={provider} onChange={(e) => setProvider(e.target.value as ProviderKey)} className={selectCls}>
+                {providers.map((p) => (
+                  <option key={p.key} value={p.key} disabled={!p.is_active && p.key !== provider}>
+                    {p.label}
+                    {p.is_active ? "" : " (inactive)"}
                   </option>
                 ))}
+                {!providers.some((p) => p.key === provider) && <option value={provider}>{provider} (not in Fulfillment settings)</option>}
               </select>
+              {pod && (
+                <>
+                  <Label htmlFor="m-provider-product" className="mt-3 block">
+                    Vendor product link
+                  </Label>
+                  <Input
+                    id="m-provider-product"
+                    value={providerProductId}
+                    onChange={(e) => setProviderProductId(e.target.value)}
+                    placeholder="https://… or the vendor's product ID"
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-xs text-neutral-500">Made to order — stock is not tracked.</p>
+                </>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="m-collection">Collection</Label>
@@ -403,6 +425,7 @@ export function ApparelEditor({
                       Stock
                     </th>
                     <th className="py-1 pr-2">SKU</th>
+                    {pod && <th className="py-1 pr-2" title="How the vendor names this size / colour">Vendor variant</th>}
                     <th className="py-1 pr-2" title="Packed weight in ounces and box size in inches — used for USPS rates. Blank = store default (12 oz, 10×8×2).">
                       Packed oz · L×W×H in
                     </th>
@@ -439,6 +462,16 @@ export function ApparelEditor({
                           className="h-8 min-w-44 font-mono text-xs"
                         />
                       </td>
+                      {pod && (
+                        <td className="py-1 pr-2">
+                          <Input
+                            value={r.provider_variant_id ?? ""}
+                            onChange={(e) => updateRow(r.key, { provider_variant_id: e.target.value })}
+                            placeholder="Black / XL"
+                            className="h-8 w-32 text-xs"
+                          />
+                        </td>
+                      )}
                       <td className="py-1 pr-2">
                         <div className="flex items-center gap-1">
                           <Input value={r.weight_oz ?? ""} onChange={(e) => updateRow(r.key, { weight_oz: e.target.value })} placeholder="oz" inputMode="decimal" className={`h-8 w-14 ${!(r.weight_oz ?? "").trim() ? "border-amber-400" : ""}`} title="Packed weight, ounces" />
@@ -467,10 +500,14 @@ export function ApparelEditor({
               </table>
             </div>
           )}
-          <p className="text-xs text-neutral-500">
-            Stock blank = made to order (Printify/Tapstitch) — never badged. A number = tracked: <strong>0</strong> = that size sold out (disabled on the card),
-            1–threshold = Low Stock, all sizes 0 = Sold Out.
-          </p>
+          {pod ? (
+            <p className="text-xs text-neutral-500">Made to order — stock is not tracked. Leave Stock blank; an existing number is kept until you clear it.</p>
+          ) : (
+            <p className="text-xs text-neutral-500">
+              Stock blank = made to order — never badged. A number = tracked: <strong>0</strong> = that size sold out (disabled on the card),
+              1–threshold = Low Stock, all sizes 0 = Sold Out.
+            </p>
+          )}
         </div>
 
         {error && <p className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">{error}</p>}
@@ -577,6 +614,44 @@ export function ApparelEditor({
             label="Drop apparel image (add as many as you like)"
             onUploaded={(m) => setImages((arr) => [...arr, { key: `${Date.now()}-${m.url}`, url: m.url }])}
           />
+        </div>
+
+        <div className="space-y-3 rounded border bg-white p-4">
+          <Label>Size chart (optional)</Label>
+          <p className="text-xs text-neutral-500">
+            One image. The product page shows a <strong>Size chart</strong> link beside the size picker that opens it.
+          </p>
+          {sizeChart && (
+            <div className="flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={sizeChart.url} alt="" className="h-24 w-24 shrink-0 rounded bg-neutral-50 object-contain" />
+              <div className="flex min-w-0 flex-col gap-2">
+                <a href={sizeChart.url} target="_blank" rel="noreferrer" className="truncate text-xs text-neutral-500 underline">
+                  {sizeChart.url}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSizeChart(null);
+                    setSizeChartDirty(true);
+                  }}
+                  className="self-start text-xs text-red-600 underline"
+                >
+                  Remove size chart
+                </button>
+              </div>
+            </div>
+          )}
+          <AdminUploader
+            bucket="apparel"
+            folder={slug ? `${slug}/size-chart` : "size-chart"}
+            label={sizeChart ? "Drop a new image to replace the size chart" : "Drop the size chart image"}
+            onUploaded={(m) => {
+              setSizeChart({ url: m.url });
+              setSizeChartDirty(true);
+            }}
+          />
+          {sizeChartDirty && <p className="text-xs text-amber-700">Size chart change is saved with the product.</p>}
         </div>
       </aside>
     </form>

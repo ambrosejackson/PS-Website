@@ -38,6 +38,7 @@ const PAGES: Item[] = [
   { label: "New apparel", href: "/admin/apparel/new" },
   { label: "Apparel collections", href: "/admin/apparel/collections" },
   { label: "Apparel home", href: "/admin/apparel/home" },
+  { label: "Fulfillment", href: "/admin/fulfillment" },
   { label: "Heroes", href: "/admin/heroes" },
   { label: "Banners", href: "/admin/banners" },
   { label: "Blog", href: "/admin/blog" },

@@ -9,6 +9,7 @@ import { isProductSoldOut, STOCK_BADGE_LABEL, stockBadge } from "@/lib/merchStoc
 import { preorderLine } from "@/lib/commerce/preorder";
 import { colorsOf, sizeOptions, variantLabel } from "@/components/shop/product-utils";
 import { ProductViewTracker } from "@/components/site/ProductViewTracker";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * Apparel product detail (client): gallery (lib/merchImages — the selected
@@ -20,6 +21,8 @@ import { ProductViewTracker } from "@/components/site/ProductViewTracker";
  */
 
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+/** Under the made-to-order line (D-148). The vendor itself is never named here. */
+const RETURNS_LINE = "Returns accepted for defects or wrong items only.";
 
 function QueryColor({ onColor }: { onColor: (c: string) => void }) {
   const params = useSearchParams();
@@ -40,6 +43,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
   const [imgIdx, setImgIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
   const cart = useCart();
 
   const gallery = useMemo(() => galleryImages(images, color), [images, color]);
@@ -78,6 +82,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
         variantId: effectiveSelected.id,
         productId: product.id,
         shipsAfter: product.ships_after ?? null,
+        madeToOrder: product.madeToOrder ?? null,
         slug: product.slug,
         name: product.name,
         variantLabel: variantLabel(effectiveSelected),
@@ -91,6 +96,13 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
   }
 
   const current = gallery[Math.min(imgIdx, Math.max(0, gallery.length - 1))];
+  const showSizes = options.length > 1 || (options.length === 1 && options[0].size !== "One Size");
+  // D-149: one optional size-chart image per product, opened in the shared Dialog.
+  const sizeChartButton = product.sizeChart ? (
+    <button type="button" onClick={() => setChartOpen(true)} className="nav-underline font-condensed text-xs font-semibold uppercase tracking-wide text-ink">
+      Size chart
+    </button>
+  ) : null;
 
   return (
     <div className="grid gap-10 md:grid-cols-2 md:gap-16">
@@ -142,11 +154,19 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
           {product.name}
         </h1>
         <p className="mt-3 text-xl text-ink">{priceLabel}</p>
-        {preorderLine(product.ships_after) && (
+        {/* Pre-order wins when a product has both a ships-by date and a POD provider (D-147). */}
+        {preorderLine(product.ships_after) ? (
           <p className="mt-3 inline-block border border-ink px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.14em] text-ink">
             {preorderLine(product.ships_after)}
           </p>
-        )}
+        ) : product.madeToOrder ? (
+          <div className="mt-3">
+            <p className="inline-block border border-ink px-3 py-1.5 font-condensed text-xs font-semibold uppercase tracking-[0.14em] text-ink">
+              {product.madeToOrder}
+            </p>
+            <p className="mt-2 text-xs text-neutral-500">{RETURNS_LINE}</p>
+          </div>
+        ) : null}
         {product.description && <p className="mt-6 leading-relaxed text-neutral-600">{product.description}</p>}
 
         {variants.length === 0 ? (
@@ -177,9 +197,12 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
                 </div>
               </div>
             )}
-            {(options.length > 1 || (options.length === 1 && options[0].size !== "One Size")) && (
+            {showSizes && (
               <div>
-                <p className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">Size</p>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">Size</p>
+                  {sizeChartButton}
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Size">
                   {options.map((o) => (
                     <button
@@ -204,6 +227,7 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
                 {needsColor && <p className="mt-2 text-xs text-neutral-500">Pick a color first.</p>}
               </div>
             )}
+            {!showSizes && sizeChartButton && <div>{sizeChartButton}</div>}
             <div>
               <p className="font-condensed text-xs font-semibold uppercase tracking-wide text-neutral-400">Quantity</p>
               <div className="mt-2 inline-flex items-center border border-hairline">
@@ -238,6 +262,17 @@ export function ApparelDetail({ product }: { product: MerchListing }) {
           </div>
         )}
       </div>
+
+      {product.sizeChart && (
+        <Dialog open={chartOpen} onOpenChange={setChartOpen}>
+          <DialogContent className="w-[min(900px,calc(100%-2rem))] max-w-none rounded-none bg-white p-4 motion-reduce:animate-none sm:max-w-none md:p-6">
+            <DialogTitle className="font-condensed text-sm font-semibold uppercase tracking-wide text-ink">Size chart</DialogTitle>
+            <DialogDescription className="sr-only">Size chart for {product.name}.</DialogDescription>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={product.sizeChart.url} alt={`${product.name} size chart`} className="max-h-[75svh] w-full object-contain" />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

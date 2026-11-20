@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stockBadge } from "@/lib/merchStock";
+import { loadProviders } from "@/lib/commerce/providers.server";
 import { Button } from "@/components/ui/button";
 import { ApparelTable, type ApparelListRow, type CollectionFilterOption } from "./ApparelTable";
 import { ApparelTabs } from "./ApparelTabs";
@@ -16,17 +17,20 @@ export default async function AdminApparelPage({
   const { saved } = await searchParams;
   let rows: ApparelListRow[] = [];
   let collections: CollectionFilterOption[] = [];
+  let providerLabels: Record<string, string> = {};
   let loadError: string | null = null;
   try {
     const db = createAdminClient();
-    const [p, c] = await Promise.all([
+    const [p, c, providers] = await Promise.all([
       db
         .from("merch_products")
         .select("*, merch_collections(name), merch_variants(id, size, color, price_cents, stock_qty, is_active, weight_oz)")
         .order("sort_order", { ascending: true, nullsFirst: false })
         .order("name", { ascending: true }),
       db.from("merch_collections").select("id, name, slug").order("sort_order", { ascending: true }),
+      loadProviders(),
     ]);
+    providerLabels = Object.fromEntries(providers.map((r) => [r.key, r.label]));
     if (p.error) loadError = p.error.message;
     else
       rows = (p.data ?? []).map((row) => {
@@ -55,8 +59,8 @@ export default async function AdminApparelPage({
           <h1 className="font-condensed text-2xl font-bold uppercase tracking-tight">Apparel</h1>
           <p className="mt-2 max-w-prose text-sm text-neutral-600">
             Merch & apparel sold through Stripe / PayPal. Each product carries who fulfills it
-            (self / Printify / Tapstitch — you place provider orders by hand, D-040), its collection and
-            category, and its size/color variants with prices and optional tracked stock.
+            (in-house, or a print-on-demand vendor from Fulfillment — you place vendor orders by hand, D-040 / D-145),
+            its collection and category, and its size/color variants with prices and optional tracked stock.
           </p>
         </div>
         <Button render={<Link href="/admin/apparel/new">New apparel product</Link>} />
@@ -70,7 +74,7 @@ export default async function AdminApparelPage({
       {loadError ? (
         <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{loadError}</p>
       ) : (
-        <ApparelTable rows={rows} collections={collections} />
+        <ApparelTable rows={rows} collections={collections} providerLabels={providerLabels} />
       )}
     </div>
   );

@@ -16,7 +16,7 @@ import {
   useHeroAudio,
 } from "@/components/site/hero-audio";
 import { HeroContext } from "@/components/site/hero-context";
-import { FALLBACK_HERO, type HeroAsset } from "@/lib/data";
+import { FALLBACK_HERO, type HeroAsset } from "@/lib/hero-fallback";
 
 /**
  * Full-bleed hero with the site Header and nav-hover media swapping (build plan

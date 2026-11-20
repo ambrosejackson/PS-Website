@@ -34,6 +34,7 @@ export function TKComicActions({ printIssue }: { printIssue: MerchListing | null
       variantId: variant.id,
       productId: printIssue.id,
       shipsAfter: printIssue.ships_after ?? null,
+      madeToOrder: printIssue.madeToOrder ?? null,
       slug: printIssue.slug,
       name: printIssue.name,
       variantLabel: [variant.size, variant.color].filter(Boolean).join(" · "),

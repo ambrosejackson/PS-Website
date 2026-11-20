@@ -31,7 +31,7 @@ you need is in neither document, ASK Ambrose — do not guess schema, IDs, URLs,
    Bar geometry for BOTH treatments lives in `components/site/header-chrome.ts` and is imported by `Header` AND `FullscreenMenu`. The closed header and the open menu must stay positionally identical (D-015): never hard-code gutter/gap/icon/logo sizes in one of the two.
 6. Age gate (21+) on entry, cookie-based. Brand subpaths reuse the cookie; direct/forwarded entry without it shows the brand-styled gate. Cookie consent gates ALL non-essential scripts; analytics are first-party only (`web_events`).
 7. Newsletter persona tag is exactly `Website Sign-up – {Brand}`; non-brand pages tag `Private Stock`. Store persona + brand_context + source_path on every subscriber row.
-8. Merch only through Stripe (cards, Apple Pay, Google Pay, Link, Cash App Pay). No THC commerce anywhere on this site. Keep merch presentation clean of plant-touching commerce.
+8. Merch only through Stripe (cards, Apple Pay, Google Pay, Link, Cash App Pay) and PayPal. No THC commerce anywhere on this site. Keep merch presentation clean of plant-touching commerce.
 9. SEO is a launch gate: every product, brand, and blog post gets its own statically-renderable page with metadata + structured data; 301 map lives in `next.config.js`.
 10. No cannabis-related SMS through Twilio or standard 10DLC routes (carriers reject it, Twilio error 30940). Event reminders are email-only; any SMS needs a cannabis-compliant provider Ambrose has approved (D-014).
 

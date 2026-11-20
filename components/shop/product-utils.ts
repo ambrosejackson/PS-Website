@@ -1,5 +1,5 @@
 import type { ShopProduct } from "@/lib/merch/queries";
-import type { MerchVariant } from "@/lib/data";
+import type { MerchVariantPublic as MerchVariant } from "@/lib/data";
 import { sortSizes } from "@/lib/merchCategories";
 import { isVariantSoldOut } from "@/lib/merchStock";
 import { money } from "@/lib/commerce/config";

@@ -27,7 +27,10 @@ export function CartLines({ lines, onNavigate, compact = false }: { lines: CartL
               {l.name}
             </Link>
             <p className="mt-0.5 text-xs text-neutral-500">{l.variantLabel || l.sku}</p>
-            {preorderLine(l.shipsAfter) && <p className="mt-0.5 text-xs font-medium text-ink">{preorderLine(l.shipsAfter)}</p>}
+            {/* Pre-order wins when a product has both (D-147). */}
+            {(preorderLine(l.shipsAfter) ?? l.madeToOrder) && (
+              <p className="mt-0.5 text-xs font-medium text-ink">{preorderLine(l.shipsAfter) ?? l.madeToOrder}</p>
+            )}
             <p className="mt-1 text-sm text-ink">{money(l.priceCents)}</p>
             <div className="mt-2 flex items-center gap-3">
               <div className="inline-flex items-center border border-hairline">

@@ -1,6 +1,7 @@
 "use server";
 
 import { createPublicClient } from "@/lib/supabase/public";
+import { toPublicListings, type MerchListingRaw } from "@/lib/data";
 import { getCollectionBySlug, getProductsRange, PAGE_SIZE, SHOP_ALL_SLUG, type ShopProduct } from "@/lib/merch/queries";
 
 /**
@@ -45,5 +46,6 @@ export async function pairWithProducts(input: { productId: string; excludeProduc
     .order("sort_order", { ascending: true, nullsFirst: false })
     .order("released_at", { ascending: false })
     .limit(12);
-  return ((data ?? []) as ShopProduct[]).filter((p) => !exclude.has(p.id) && p.merch_variants.some((v) => v.is_active)).slice(0, 3);
+  const rows = ((data ?? []) as MerchListingRaw[]).filter((p) => !exclude.has(p.id) && p.merch_variants.some((v) => v.is_active)).slice(0, 3);
+  return toPublicListings(rows);
 }

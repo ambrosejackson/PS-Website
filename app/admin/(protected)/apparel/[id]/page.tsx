@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ApparelEditor, type CollectionOption } from "../ApparelEditor";
 import type { MerchRow, VariantRow } from "../actions";
+import { providerOptions } from "../apparel-config";
+import { loadProviders } from "@/lib/commerce/providers.server";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,7 @@ export default async function AdminApparelEditPage({
   }
   const { data: cols } = await db.from("merch_collections").select("id, name, slug").order("sort_order", { ascending: true });
   const collections: CollectionOption[] = (cols ?? []).filter((c) => c.slug !== "all");
+  const providers = providerOptions(await loadProviders());
 
   return (
     <div className="space-y-6">
@@ -57,7 +60,7 @@ export default async function AdminApparelEditPage({
         </p>
       )}
       {/* D-144: remount on every save so the form holds the saved rows (new variants get their ids). */}
-      <ApparelEditor key={product?.updated_at ?? "new"} product={product} variants={variants} collections={collections} />
+      <ApparelEditor key={product?.updated_at ?? "new"} product={product} variants={variants} collections={collections} providers={providers} />
     </div>
   );
 }

@@ -8,7 +8,8 @@ import { CATEGORIES, categoryLabel } from "@/lib/merchCategories";
 import { normalizeImages } from "@/lib/merchImages";
 import { STOCK_BADGE_LABEL } from "@/lib/merchStock";
 import { deleteMerch, reorderMerch, setMerchActive, type MerchRow } from "./actions";
-import { FULFILLMENT_PROVIDERS, HOUSE_BRAND } from "./apparel-config";
+import { HOUSE_BRAND } from "./apparel-config";
+import { isPod } from "@/lib/commerce/providers";
 
 export type ApparelListRow = MerchRow & {
   collectionName: string | null;
@@ -25,7 +26,16 @@ export type CollectionFilterOption = { id: string; name: string };
 const money = (c: number) => `$${(c / 100).toFixed(2)}`;
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export function ApparelTable({ rows, collections }: { rows: ApparelListRow[]; collections: CollectionFilterOption[] }) {
+export function ApparelTable({
+  rows,
+  collections,
+  providerLabels,
+}: {
+  rows: ApparelListRow[];
+  collections: CollectionFilterOption[];
+  /** fulfillment_providers key → admin label (D-146). */
+  providerLabels: Record<string, string>;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -158,9 +168,11 @@ export function ApparelTable({ rows, collections }: { rows: ApparelListRow[]; co
                     <span className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{STOCK_BADGE_LABEL[r.badge]}</span>
                   )}
                   <span className="rounded bg-neutral-100 px-2 py-0.5 text-[11px]">{r.brand ?? HOUSE_BRAND}</span>
-                  <span className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-800">
-                    {FULFILLMENT_PROVIDERS.includes(r.fulfillment_provider as never) ? r.fulfillment_provider : "self"}
-                  </span>
+                  {isPod(r.fulfillment_provider) && (
+                    <span className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-800" title="Made to order — you place the order with this vendor by hand">
+                      {providerLabels[r.fulfillment_provider] ?? r.fulfillment_provider}
+                    </span>
+                  )}
                   {r.collectionName ? (
                     <span className="rounded bg-violet-50 px-2 py-0.5 text-[11px] text-violet-800">{r.collectionName}</span>
                   ) : (
