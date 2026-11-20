@@ -193,6 +193,20 @@ export function ApparelEditor({
   function patchImage(key: string, p: Partial<MerchImage>) {
     setImages((arr) => arr.map((i) => (i.key === key ? { ...i, ...p } : i)));
   }
+  /**
+   * "Make cover": move the image to position 0 (D-144 — order is the single source of truth).
+   * The cover cannot also be the hover image (hoverImage() skips a hover whose URL equals the
+   * primary), so a hover tag on the moved image is cleared.
+   */
+  function makeCover(from: number) {
+    setImages((arr) => {
+      if (from <= 0 || from >= arr.length) return arr;
+      const next = [...arr];
+      const [moved] = next.splice(from, 1);
+      next.unshift(moved.role === "hover" ? { ...moved, role: null } : moved);
+      return next;
+    });
+  }
   /** "Set as hover": this image becomes the (only) hover image for its colour. */
   function setAsHover(key: string) {
     setImages((arr) => {
@@ -224,7 +238,8 @@ export function ApparelEditor({
       slug,
       description: description || null,
       brand: brandValue,
-      images: images.map((i) => ({ url: i.url, alt: i.alt, color: i.color, role: i.role })),
+      // D-144: `primary` is legacy — read for old rows, never written back by the admin.
+      images: images.map((i) => ({ url: i.url, alt: i.alt, color: i.color, role: i.role === "primary" ? null : i.role })),
       fulfillment_provider: provider,
       is_active: isActive,
       sort_order: sortOrder.trim() ? Number(sortOrder) : null,
@@ -253,7 +268,8 @@ export function ApparelEditor({
         setError(res.error);
         return;
       }
-      router.push(`/admin/apparel?saved=${encodeURIComponent(res.data.slug)}`);
+      // D-144: stay on the editor; the page remounts the form with the saved rows (key = updated_at).
+      router.replace(`/admin/apparel/${res.data.id}?saved=${Date.now()}`);
       router.refresh();
     });
   }
@@ -485,10 +501,11 @@ export function ApparelEditor({
         </div>
 
         <div className="space-y-3 rounded border bg-white p-4">
-          <Label>Images (first = cover · drag to reorder · 1:1)</Label>
+          <Label>Images (1:1)</Label>
           <p className="text-xs text-neutral-500">
-            Tag each image with its colour so swatches and the PDP resolve per colour. Mark one image per colour as <strong>hover</strong> for the
-            card crossfade — untagged images never crossfade.
+            First image is the main photo everywhere. Drag to reorder, or use <strong>Make cover</strong>. Tag each image with its colour; the first
+            image of a colour is that colour&apos;s main photo. Mark one image per colour as <strong>hover</strong> — the hover swap shows on shop grid
+            cards only, not on the product page.
           </p>
           {images.length > 0 && (
             <ul className="space-y-2">
@@ -524,9 +541,13 @@ export function ApparelEditor({
                       </select>
                       <select value={img.role ?? ""} onChange={(e) => patchImage(img.key, { role: (e.target.value || null) as MerchImageRole | null })} className={smallSelect} title="Role">
                         <option value="">role: —</option>
-                        <option value="primary">primary</option>
                         <option value="hover">hover</option>
                       </select>
+                      {i !== 0 && (
+                        <button type="button" onClick={() => makeCover(i)} className="rounded border px-1.5 py-0.5 text-[11px] hover:bg-neutral-100">
+                          Make cover
+                        </button>
+                      )}
                       {img.role !== "hover" && (
                         <button type="button" onClick={() => setAsHover(img.key)} className="rounded border px-1.5 py-0.5 text-[11px] hover:bg-neutral-100">
                           Set as hover
